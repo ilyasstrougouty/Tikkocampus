@@ -1,0 +1,12 @@
+venv/
+__pycache__/
+*.db
+temp_processing/
+cookies.txt
+debug_output.txt
+debug.json
+debug_ytdlp.py
+.pytest_cache/
+*.mp4
+output.txt
+test_results.txt
