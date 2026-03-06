@@ -4,3 +4,4 @@ pytest-mock
 faster-whisper
 chromadb
 langchain-text-splitters
+litellm
