@@ -2,3 +2,5 @@ yt-dlp
 pytest
 pytest-mock
 faster-whisper
+chromadb
+langchain-text-splitters
