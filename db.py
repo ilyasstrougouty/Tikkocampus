@@ -14,7 +14,8 @@ def init_db():
             upload_date TEXT,
             caption TEXT,
             creator_name TEXT,
-            file_path TEXT
+            file_path TEXT,
+            transcript TEXT
         )
     ''')
     conn.commit()
