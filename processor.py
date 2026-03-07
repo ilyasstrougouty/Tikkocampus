@@ -3,8 +3,9 @@ import sqlite3
 import subprocess
 from faster_whisper import WhisperModel
 
+from config import DB_PATH, TEMP_PROCESSING_DIR
+
 # --- Configuration ---
-DB_PATH = 'tiktok_data.db'
 # 'base' or 'small' are best for local machines. 'large-v3' will require a strong GPU.
 WHISPER_MODEL_SIZE = 'base' 
 
@@ -31,10 +32,13 @@ def extract_audio(video_path, audio_path):
     except subprocess.CalledProcessError:
         return False
 
-def run_processing_pipeline():
+def run_processing_pipeline(status_callback=None):
     # 1. LOAD THE MODEL ONCE
     # Warning: Never put this inside the loop, or you will cause a massive memory leak.
-    print(f"Loading Whisper '{WHISPER_MODEL_SIZE}' model into memory...")
+    msg = f"Loading Whisper '{WHISPER_MODEL_SIZE}' model into memory..."
+    print(msg)
+    if status_callback: status_callback(msg)
+    
     # Change device="cuda" if you have an Nvidia GPU setup properly
     model = WhisperModel(WHISPER_MODEL_SIZE, device="cpu", compute_type="int8") 
     
@@ -47,14 +51,28 @@ def run_processing_pipeline():
     queue = cursor.fetchall()
     
     if not queue:
-        print("Queue is empty. No new videos to process.")
+        msg = "Queue is empty. No new videos to process."
+        print(msg)
+        if status_callback: status_callback(msg)
         conn.close()
         return
 
-    print(f"Found {len(queue)} videos pending transcription.")
+    total_videos = len(queue)
+    msg = f"Found {total_videos} videos pending transcription."
+    print(msg)
+    if status_callback: status_callback(msg)
 
     # 3. PROCESS THE BATCH
-    for video_id, file_path in queue:
+    for i, (video_id, file_path) in enumerate(queue):
+        # Calculate ETA (rough estimate of 15 seconds per video on CPU)
+        remaining = total_videos - i
+        eta_seconds = remaining * 15
+        eta_str = f"{eta_seconds}s" if eta_seconds < 60 else f"{eta_seconds//60}m {eta_seconds%60}s"
+        
+        status_msg = f"Processing {i+1} of {total_videos}... (ETA: ~{eta_str})"
+        print(f"\n{status_msg}")
+        if status_callback: status_callback(status_msg)
+        
         if not os.path.exists(file_path):
             print(f"[!] File missing for {video_id}. Skipping...")
             continue
@@ -84,10 +102,12 @@ def run_processing_pipeline():
         
         # 🚨 CRITICAL DISK CLEANUP 🚨
         os.remove(wav_path)
-        print(f"[SUCCESS] {video_id} transcribed and saved. Temp files deleted.\n")
+        print(f"[SUCCESS] {video_id} transcribed and saved. Temp files deleted.")
 
     conn.close()
-    print("Phase 2 pipeline complete.")
+    msg = "Phase 2 pipeline complete."
+    print(msg)
+    if status_callback: status_callback(msg)
 
 if __name__ == "__main__":
     run_processing_pipeline()

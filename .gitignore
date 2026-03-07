@@ -10,3 +10,7 @@ debug_ytdlp.py
 *.mp4
 output.txt
 test_results.txt
+.env
+chroma_db/
+browser_profile/
+*.txt

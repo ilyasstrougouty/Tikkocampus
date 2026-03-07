@@ -7,6 +7,15 @@ DB_PATH = 'tiktok_data.db'
 CHROMA_PATH = './chroma_db'
 COLLECTION_NAME = 'tiktok_creator_collection'
 
+def reset_chroma():
+    """Wipes the existing Chroma collection for a fresh start."""
+    try:
+        chroma_client = chromadb.PersistentClient(path=CHROMA_PATH)
+        chroma_client.delete_collection(name=COLLECTION_NAME)
+        print("ChromaDB collection wiped clean.")
+    except Exception:
+        pass # Collection might not exist yet
+
 def run_embedding_pipeline():
     # 1. Initialize Vector Database
     print("Initializing ChromaDB...")

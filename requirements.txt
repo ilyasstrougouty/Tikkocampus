@@ -5,3 +5,9 @@ faster-whisper
 chromadb
 langchain-text-splitters
 litellm
+eel
+fastapi
+uvicorn
+pywebview
+playwright
+python-multipart

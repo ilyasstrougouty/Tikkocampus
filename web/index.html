@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>TikTok RAG Engine</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+
+    <!-- LOGIN VIEW -->
+    <div id="login-view" class="glass-panel"
+        style="width: 80%; max-width: 600px; padding: 40px; text-align: center; display: flex; flex-direction: column; gap: 30px;">
+        <h2>Welcome to TikTok RAG</h2>
+        <p style="color: #94a3b8; font-size: 14px;">TikTok requires authentication to scrape profiles. Choose a method
+            below.</p>
+
+        <!-- Method 1: App Login -->
+        <div
+            style="background: rgba(0,0,0,0.2); padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+            <h3>Method 1: Native App Login</h3>
+            <p style="color: #94a3b8; font-size: 13px; margin-bottom: 15px;">Securely log into your account using the
+                built-in browser window.</p>
+            <button id="auth-btn" onclick="startAuthFlow()" style="background-color: #f43f5e; width: 100%;">Login to
+                TikTok</button>
+            <div id="auth-status" style="margin-top: 10px; font-size: 13px; color: #fbbf24;"></div>
+        </div>
+
+        <div style="color: #64748b; font-weight: bold;">OR</div>
+
+        <!-- Method 2: Cookie Upload -->
+        <div
+            style="background: rgba(0,0,0,0.2); padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+            <h3>Method 2: Upload Cookies.txt</h3>
+            <p style="color: #94a3b8; font-size: 13px; margin-bottom: 15px;">Use the Chrome extension (Get cookies.txt
+                LOCALLY) to export your session, then upload it here if your IP is rate-limited.</p>
+
+            <div id="drop-zone"
+                style="border: 2px dashed rgba(255,255,255,0.2); border-radius: 10px; padding: 30px; cursor: pointer; transition: 0.2s;">
+                <span id="drop-text" style="color: #94a3b8;">Drag & Drop <code>cookies.txt</code> here or click to
+                    browse</span>
+                <input type="file" id="cookie-file" accept=".txt" style="display: none;"
+                    onchange="handleFileUpload(this.files[0])">
+            </div>
+            <div id="upload-status" style="margin-top: 10px; font-size: 13px; color: #4ade80;"></div>
+        </div>
+    </div>
+
+    <!-- MAIN APP VIEW (Hidden by default) -->
+    <div id="main-view" class="glass-panel chat-container" style="display: none;">
+        <div style="margin-bottom: 20px; display: flex; gap: 10px; align-items: center;">
+            <input type="text" id="tiktok-url" placeholder="Enter TikTok Profile URL... (e.g. @mrbeast)"
+                style="flex-grow: 1;">
+            <button id="scrape-btn" onclick="startProcessing()">Scrape & Process Data</button>
+        </div>
+
+        <div id="process-status" style="margin-bottom: 20px; font-weight: bold; color: #e2e8f0;">Idle</div>
+
+        <div id="chat-box">
+            <div class="message ai glass-panel">
+                System Initialized. I am hooked into the Vector Database. What do you want to know about the scraped
+                videos?
+            </div>
+        </div>
+
+        <div class="input-area">
+            <input type="text" id="chat-input" placeholder="Ask a question about the videos...">
+            <button id="send-btn" onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+
+</html>

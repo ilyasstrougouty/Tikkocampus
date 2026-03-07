@@ -21,6 +21,14 @@ def init_db():
     conn.commit()
     conn.close()
 
+def reset_database():
+    """Wipes all video records so a fresh scrape starts clean."""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('DELETE FROM videos')
+    conn.commit()
+    conn.close()
+
 def insert_video_metadata(video_id, upload_date, caption, creator_name, file_path):
     """Inserts or updates a video record in the database."""
     conn = get_connection()

@@ -1,0 +1,89 @@
+/* Dark Mode Base */
+body {
+    margin: 0;
+    height: 100vh;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    /* A deep dark background with subtle gradient to show off the glass blur */
+    background: linear-gradient(135deg, #0f172a, #1e1b4b, #111827);
+    color: #e2e8f0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* The Frosted Glass Container */
+.glass-panel {
+    background: rgba(255, 255, 255, 0.03); /* Barely visible white */
+    backdrop-filter: blur(12px);           /* The blur effect */
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1); /* Subtle edge highlight */
+    border-radius: 16px;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+}
+
+.chat-container {
+    width: 90%;
+    height: 90%;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+#chat-box {
+    flex-grow: 1;
+    overflow-y: auto;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* Message Bubbles */
+.message {
+    padding: 12px 18px;
+    border-radius: 12px;
+    max-width: 80%;
+    line-height: 1.5;
+}
+
+.message.user {
+    align-self: flex-end;
+    background: #3b82f6; /* Solid color for user */
+    color: white;
+}
+
+.message.ai {
+    align-self: flex-start;
+    /* The AI responses inherit the glass effect */
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.input-area {
+    display: flex;
+    gap: 10px;
+}
+
+input {
+    flex-grow: 1;
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(0, 0, 0, 0.2);
+    color: white;
+    outline: none;
+}
+
+button {
+    padding: 0 25px;
+    border-radius: 10px;
+    border: none;
+    background: #3b82f6;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.2s;
+}
+
+button:hover { background: #2563eb; }
