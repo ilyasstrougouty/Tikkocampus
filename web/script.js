@@ -3,7 +3,96 @@ let pollInterval;
 // --- UI Navigation ---
 function showMainApp() {
     document.getElementById('login-view').style.display = 'none';
-    document.getElementById('main-view').style.display = 'flex';
+    document.getElementById('dashboard-view').style.display = 'flex';
+    document.getElementById('chat-view').style.display = 'none';
+    loadHistory();
+    loadSettings();
+}
+
+function showDashboard() {
+    document.getElementById('dashboard-view').style.display = 'flex';
+    document.getElementById('chat-view').style.display = 'none';
+    // Update tab styles
+    document.getElementById('tab-dashboard').style.background = 'rgba(255,255,255,0.1)';
+    document.getElementById('tab-dashboard').style.color = '#e2e8f0';
+    document.getElementById('tab-dashboard').style.borderBottom = '2px solid #4ade80';
+    document.getElementById('tab-chat').style.background = 'transparent';
+    document.getElementById('tab-chat').style.color = '#64748b';
+    document.getElementById('tab-chat').style.borderBottom = '2px solid transparent';
+}
+
+function showChat() {
+    document.getElementById('dashboard-view').style.display = 'none';
+    document.getElementById('chat-view').style.display = 'flex';
+    // Update tab styles on chat view
+    document.getElementById('tab-chat-2').style.background = 'rgba(255,255,255,0.1)';
+    document.getElementById('tab-chat-2').style.color = '#e2e8f0';
+    document.getElementById('tab-chat-2').style.borderBottom = '2px solid #4ade80';
+    document.getElementById('tab-dashboard-2').style.background = 'transparent';
+    document.getElementById('tab-dashboard-2').style.color = '#64748b';
+    document.getElementById('tab-dashboard-2').style.borderBottom = '2px solid transparent';
+}
+
+// --- Load Saved Settings ---
+async function loadSettings() {
+    try {
+        const res = await fetch('/api/settings');
+        const data = await res.json();
+
+        // Pre-select the saved model
+        const modelSelect = document.getElementById('model-select');
+        if (data.model) {
+            for (let opt of modelSelect.options) {
+                if (opt.value === data.model) { opt.selected = true; break; }
+            }
+        }
+
+        // Pre-select the saved transcription method
+        const transcriptionSelect = document.getElementById('transcription-method');
+        if (data.transcription_method) {
+            for (let opt of transcriptionSelect.options) {
+                if (opt.value === data.transcription_method) { opt.selected = true; break; }
+            }
+        }
+
+        // Show active config status
+        const statusEl = document.getElementById('settings-status');
+        const modelLabel = modelSelect.options[modelSelect.selectedIndex].text;
+        const transLabel = transcriptionSelect.options[transcriptionSelect.selectedIndex].text;
+        const keyStatus = data.has_groq_key ? '🔑 Groq key saved' :
+            data.has_openai_key ? '🔑 OpenAI key saved' : '⚠️ No API key set';
+
+        statusEl.innerHTML = `<span style="color: #94a3b8;">Active: <b style="color:#e2e8f0">${modelLabel}</b> · <b style="color:#e2e8f0">${transLabel}</b> · ${keyStatus}</span>`;
+    } catch (e) {
+        console.error('Failed to load settings:', e);
+    }
+}
+
+// --- History ---
+async function loadHistory() {
+    try {
+        const res = await fetch('/api/history');
+        const data = await res.json();
+        const list = document.getElementById('history-list');
+
+        if (!data.history || data.history.length === 0) {
+            list.innerHTML = '<p style="color: #64748b; font-size: 13px; margin: 5px 0;">No previous scrapes yet.</p>';
+            return;
+        }
+
+        list.innerHTML = data.history.map(item => {
+            const date = new Date(item.scraped_at).toLocaleDateString();
+            return `<div onclick="showChat()" 
+                style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; margin: 4px 0; 
+                border-radius: 8px; background: rgba(255,255,255,0.04); cursor: pointer; transition: 0.2s; border: 1px solid rgba(255,255,255,0.06);"
+                onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.04)'">
+                <span style="color: #e2e8f0; font-size: 13px;">@${item.creator_name || 'unknown'}</span>
+                <span style="color: #64748b; font-size: 12px;">${item.video_count} videos · ${date}</span>
+            </div>`;
+        }).join('');
+    } catch (e) {
+        console.error('Failed to load history:', e);
+    }
 }
 
 // --- Method 1: App Login Flow ---
@@ -103,6 +192,7 @@ async function handleFileUpload(file) {
 
 async function startProcessing() {
     const target = document.getElementById('tiktok-url').value;
+    const videoCount = parseInt(document.getElementById('video-count').value) || 10;
     const statusText = document.getElementById('process-status');
     const scrapeBtn = document.getElementById('scrape-btn');
 
@@ -118,7 +208,7 @@ async function startProcessing() {
         const startResponse = await fetch('/api/process', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ target_url: target })
+            body: JSON.stringify({ target_url: target, max_videos: videoCount })
         });
 
         if (!startResponse.ok) {
@@ -147,6 +237,9 @@ async function startProcessing() {
                     // Unlock the chat interface
                     document.getElementById('chat-input').disabled = false;
                     document.getElementById('send-btn').disabled = false;
+                    loadHistory(); // Refresh history with the new scrape
+                    // Auto-switch to chat page
+                    setTimeout(() => showChat(), 1500);
                 }
 
                 // Unlock the scrape button
@@ -215,3 +308,35 @@ document.getElementById("chat-input").addEventListener("keypress", function (eve
         sendMessage();
     }
 });
+
+// --- LLM Settings ---
+async function saveSettings() {
+    const model = document.getElementById('model-select').value;
+    const apiKey = document.getElementById('api-key-input').value;
+    const transcriptionMethod = document.getElementById('transcription-method').value;
+    const statusEl = document.getElementById('settings-status');
+
+    if (!apiKey && !model.startsWith('ollama/') && transcriptionMethod !== 'local') {
+        statusEl.innerText = "⚠️ Please enter an API key.";
+        statusEl.style.color = "#fbbf24";
+        return;
+    }
+
+    try {
+        const res = await fetch('/api/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ model: model, api_key: apiKey, transcription_method: transcriptionMethod })
+        });
+
+        if (!res.ok) throw new Error("Failed to save.");
+
+        const modelLabel = document.getElementById('model-select').options[document.getElementById('model-select').selectedIndex].text;
+        const transLabel = document.getElementById('transcription-method').options[document.getElementById('transcription-method').selectedIndex].text;
+        statusEl.innerHTML = `✅ <b>Saved!</b> Chat: <b>${modelLabel}</b> · Transcription: <b>${transLabel}</b> · 🔑 Key stored`;
+        statusEl.style.color = "#4ade80";
+    } catch (e) {
+        statusEl.innerText = `❌ Error: ${e.message}`;
+        statusEl.style.color = "#f87171";
+    }
+}

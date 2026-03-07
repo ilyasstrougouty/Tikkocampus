@@ -72,10 +72,15 @@ def download_profile_videos(profile_url, max_downloads=MAX_VIDEOS_PER_PROFILE):
                 file_path=file_path
             )
             extracted_count += 1
+            
+            # Enforce our own download limit AFTER successful extraction
+            if extracted_count >= max_downloads:
+                raise yt_dlp.utils.MaxDownloadsReached()
 
     ydl_opts = {
         'outtmpl': f'{TEMP_PROCESSING_DIR}/%(id)s.%(ext)s',
-        'max_downloads': max_downloads,
+        # We do NOT set max_downloads here — yt-dlp's counter is unreliable.
+        # Instead we enforce the limit manually in the progress_hooks above.
         'quiet': False,
         'cookiefile': 'cookies.txt',        # Use a dedicated cookies file
         'sleep_interval': 5,                # rate limiting: pause randomly 

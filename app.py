@@ -30,11 +30,12 @@ task_state = {
 
 class ProcessRequest(BaseModel):
     target_url: str
+    max_videos: int = 10
 
 class ChatRequest(BaseModel):
     query: str
 
-def run_heavy_pipeline(url: str):
+def run_heavy_pipeline(url: str, max_videos: int = 10):
     """Executes the 3 phases of the pipeline sequentially."""
     global task_state
     try:
@@ -43,17 +44,29 @@ def run_heavy_pipeline(url: str):
         db.reset_database()
         embedder.reset_chroma()
         
-        task_state["status"] = "Phase 1: Scraping videos from TikTok..."
-        scraper.download_profile_videos(url, max_downloads=5) 
+        task_state["status"] = f"Phase 1: Scraping {max_videos} videos from TikTok..."
+        scraper.download_profile_videos(url, max_downloads=max_videos) 
         
         # Pass a callback to processor to update ETA on the frontend
         def status_update_callback(msg):
             task_state["status"] = f"Phase 2: {msg}"
-            
-        processor.run_processing_pipeline(status_callback=status_update_callback)
+        
+        transcription_method = os.environ.get("TRANSCRIPTION_METHOD", "local")
+        processor.run_processing_pipeline(status_callback=status_update_callback, method=transcription_method)
         
         task_state["status"] = "Phase 3: Chunking text and building Vector DB..."
         embedder.run_embedding_pipeline()
+        
+        # Save to history
+        import sqlite3
+        conn = sqlite3.connect(db.DB_PATH if hasattr(db, 'DB_PATH') else 'tiktok_data.db')
+        c = conn.cursor()
+        c.execute('SELECT creator_name, COUNT(*) FROM videos GROUP BY creator_name LIMIT 1')
+        row = c.fetchone()
+        conn.close()
+        creator = row[0] if row else 'unknown'
+        count = row[1] if row else 0
+        db.save_scrape_history(url, creator, count)
         
         task_state["status"] = "Done"
     except Exception as e:
@@ -112,7 +125,7 @@ async def trigger_pipeline(req: ProcessRequest, background_tasks: BackgroundTask
     task_state["error"] = None
     
     # Hand the heavy function to FastAPI to run in the background
-    background_tasks.add_task(run_heavy_pipeline, req.target_url)
+    background_tasks.add_task(run_heavy_pipeline, req.target_url, req.max_videos)
     
     # Immediately return a success message so the browser doesn't timeout
     return {"message": "Job started in the background."}
@@ -130,6 +143,71 @@ async def chat_endpoint(req: ChatRequest):
         return {"response": response}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+class SettingsRequest(BaseModel):
+    model: str
+    api_key: str = ""
+    transcription_method: str = "local"
+
+@app.post("/api/settings")
+async def save_settings(req: SettingsRequest):
+    """Save the user's LLM model and API key to memory AND to .env file."""
+    env_updates = {"LLM_MODEL": req.model, "TRANSCRIPTION_METHOD": req.transcription_method}
+    os.environ["TRANSCRIPTION_METHOD"] = req.transcription_method
+    
+    # Set the correct environment variable based on the model provider
+    if req.api_key:
+        if req.model.startswith("groq/"):
+            os.environ["GROQ_API_KEY"] = req.api_key
+            env_updates["GROQ_API_KEY"] = req.api_key
+        elif req.model.startswith("gpt") or req.model.startswith("openai"):
+            os.environ["OPENAI_API_KEY"] = req.api_key
+            env_updates["OPENAI_API_KEY"] = req.api_key
+    
+    # Update the active model in the chat module
+    chat.LLM_MODEL = req.model
+    
+    # Persist to .env file
+    env_path = ".env"
+    env_lines = {}
+    if os.path.exists(env_path):
+        with open(env_path, "r") as f:
+            for line in f:
+                line = line.strip()
+                if "=" in line and not line.startswith("#"):
+                    key, val = line.split("=", 1)
+                    env_lines[key.strip()] = val.strip()
+    
+    env_lines.update(env_updates)
+    
+    with open(env_path, "w") as f:
+        for key, val in env_lines.items():
+            f.write(f"{key}={val}\n")
+    
+    return {"message": f"Settings saved. Model set to {req.model}"}
+
+@app.get("/api/settings")
+async def get_settings():
+    """Returns the currently active settings so the UI can display them."""
+    import chat
+    model = getattr(chat, 'LLM_MODEL', os.environ.get('LLM_MODEL', 'groq/llama-3.1-8b-instant'))
+    transcription = os.environ.get("TRANSCRIPTION_METHOD", "local")
+    has_groq_key = bool(os.environ.get("GROQ_API_KEY"))
+    has_openai_key = bool(os.environ.get("OPENAI_API_KEY"))
+    return {
+        "model": model,
+        "transcription_method": transcription,
+        "has_groq_key": has_groq_key,
+        "has_openai_key": has_openai_key
+    }
+
+@app.get("/api/history")
+async def get_history():
+    """Returns the list of previously scraped profiles."""
+    import db
+    db.init_db()  # Ensure the table exists
+    history = db.get_scrape_history()
+    return {"history": history}
 
 @app.get("/")
 async def serve_index():

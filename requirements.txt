@@ -11,3 +11,5 @@ uvicorn
 pywebview
 playwright
 python-multipart
+httpx
+python-dotenv
