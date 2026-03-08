@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 import threading
 from fastapi import FastAPI, HTTPException, BackgroundTasks, UploadFile, File
@@ -8,8 +9,14 @@ from pydantic import BaseModel
 import uvicorn
 import webview
 import shutil
-import uvicorn
-import webview
+
+# Resolve base directory (works both from source and PyInstaller bundle)
+if getattr(sys, 'frozen', False):
+    BASE_DIR = sys._MEIPASS
+else:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+WEB_DIR = os.path.join(BASE_DIR, "web")
 
 import scraper
 import processor
@@ -19,7 +26,7 @@ import chat
 app = FastAPI()
 
 # Mount the web directory for static files (HTML, CSS, JS)
-app.mount("/static", StaticFiles(directory="web"), name="static")
+app.mount("/static", StaticFiles(directory=WEB_DIR), name="static")
 
 # --- Global State Tracker ---
 task_state = {
@@ -217,7 +224,7 @@ async def get_history():
 
 @app.get("/")
 async def serve_index():
-    return FileResponse("web/index.html")
+    return FileResponse(os.path.join(WEB_DIR, "index.html"))
 
 def run_server():
     uvicorn.run(app, host="127.0.0.1", port=8000)
@@ -267,4 +274,4 @@ if __name__ == "__main__":
         text_select=True,
         js_api=api
     )
-    webview.start(icon='web/logo.ico')
+    webview.start(icon=os.path.join(WEB_DIR, 'logo.ico'))
