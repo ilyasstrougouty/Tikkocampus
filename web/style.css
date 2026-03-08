@@ -1,24 +1,30 @@
-/* Dark Mode Base */
+/* Dark Black / Glassmorphism Theme Base */
 body {
     margin: 0;
     height: 100vh;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    /* A deep dark background with subtle gradient to show off the glass blur */
-    background: linear-gradient(135deg, #0f172a, #1e1b4b, #111827);
-    color: #e2e8f0;
+    /* Deep dark near-black radial gradient to enhance the frosted glass contrast */
+    background: radial-gradient(circle at center, #18181b, #09090b);
+    color: #f4f4f5;
     display: flex;
     justify-content: center;
     align-items: center;
+    overflow: hidden;
+    /* Prevent body scroll */
 }
 
 /* The Frosted Glass Container */
 .glass-panel {
-    background: rgba(255, 255, 255, 0.03); /* Barely visible white */
-    backdrop-filter: blur(12px);           /* The blur effect */
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.1); /* Subtle edge highlight */
+    background: rgba(24, 24, 27, 0.4);
+    /* Dark translucent base */
+    backdrop-filter: blur(16px);
+    /* Strong glass blur */
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    /* Subtle white rim highlight */
     border-radius: 16px;
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    /* Deep shadow for depth */
 }
 
 .chat-container {
@@ -37,53 +43,105 @@ body {
     display: flex;
     flex-direction: column;
     gap: 15px;
+    padding-right: 10px;
+    /* Space for scrollbar */
+}
+
+/* Custom Scrollbar for dark theme */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
 }
 
 /* Message Bubbles */
 .message {
-    padding: 12px 18px;
+    padding: 14px 20px;
     border-radius: 12px;
-    max-width: 80%;
-    line-height: 1.5;
+    max-width: 85%;
+    line-height: 1.6;
+    font-size: 14px;
 }
 
 .message.user {
     align-self: flex-end;
-    background: #3b82f6; /* Solid color for user */
-    color: white;
+    /* Soft semi-transparent white for user messages to contrast black background */
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #ffffff;
 }
 
 .message.ai {
     align-self: flex-start;
-    /* The AI responses inherit the glass effect */
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    /* Darker glass for AI responses */
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    color: #d4d4d8;
 }
 
 .input-area {
     display: flex;
-    gap: 10px;
+    gap: 12px;
 }
 
-input {
+input[type="text"],
+input[type="password"],
+input[type="number"] {
     flex-grow: 1;
-    padding: 15px;
-    border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    background: rgba(0, 0, 0, 0.2);
+    padding: 14px 18px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.4);
     color: white;
     outline: none;
+    font-family: inherit;
+    transition: 0.2s border-color;
+}
+
+input:focus {
+    border-color: rgba(255, 255, 255, 0.3);
 }
 
 button {
-    padding: 0 25px;
-    border-radius: 10px;
-    border: none;
-    background: #3b82f6;
+    padding: 0 24px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
     color: white;
     cursor: pointer;
-    font-weight: bold;
-    transition: 0.2s;
+    font-weight: 600;
+    transition: all 0.2s;
+    font-family: inherit;
+    backdrop-filter: blur(4px);
 }
 
-button:hover { background: #2563eb; }
+button:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Link overrides */
+a {
+    color: #5eead4;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}

@@ -11,39 +11,63 @@
 
     <!-- LOGIN VIEW -->
     <div id="login-view" class="glass-panel"
-        style="width: 80%; max-width: 600px; padding: 40px; text-align: center; display: flex; flex-direction: column; gap: 30px;">
-        <h2>Welcome to TikTok RAG</h2>
-        <p style="color: #94a3b8; font-size: 14px;">TikTok requires authentication to scrape profiles. Choose a method
-            below.</p>
+        style="width: 85%; max-width: 650px; padding: 50px; text-align: center; display: flex; flex-direction: column; gap: 35px; box-sizing: border-box;">
 
-        <!-- Method 1: App Login -->
-        <div
-            style="background: rgba(0,0,0,0.2); padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
-            <h3>Method 1: Native App Login</h3>
-            <p style="color: #94a3b8; font-size: 13px; margin-bottom: 15px;">Securely log into your account using the
-                built-in browser window.</p>
-            <button id="auth-btn" onclick="startAuthFlow()" style="background-color: #f43f5e; width: 100%;">Login to
-                TikTok</button>
-            <div id="auth-status" style="margin-top: 10px; font-size: 13px; color: #fbbf24;"></div>
+        <div>
+            <h2
+                style="margin: 0 0 10px 0; font-size: 28px; font-weight: 700; background: linear-gradient(90deg, #fff, #a1a1aa); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                Welcome to TikTok RAG</h2>
+            <p style="color: #a1a1aa; font-size: 15px; margin: 0;">Authentication is required to scrape profiles. Choose
+                a method below.</p>
         </div>
 
-        <div style="color: #64748b; font-weight: bold;">OR</div>
-
-        <!-- Method 2: Cookie Upload -->
-        <div
-            style="background: rgba(0,0,0,0.2); padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
-            <h3>Method 2: Upload Cookies.txt</h3>
-            <p style="color: #94a3b8; font-size: 13px; margin-bottom: 15px;">Use the Chrome extension (Get cookies.txt
-                LOCALLY) to export your session, then upload it here if your IP is rate-limited.</p>
-
-            <div id="drop-zone"
-                style="border: 2px dashed rgba(255,255,255,0.2); border-radius: 10px; padding: 30px; cursor: pointer; transition: 0.2s;">
-                <span id="drop-text" style="color: #94a3b8;">Drag & Drop <code>cookies.txt</code> here or click to
-                    browse</span>
-                <input type="file" id="cookie-file" accept=".txt" style="display: none;"
-                    onchange="handleFileUpload(this.files[0])">
+        <div style="display: flex; flex-direction: column; gap: 25px;">
+            <!-- Method 1: App Login -->
+            <div style="background: rgba(255,255,255,0.03); padding: 25px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); text-align: left; transition: 0.3s; cursor: default;"
+                onmouseover="this.style.background='rgba(255,255,255,0.05)'"
+                onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
+                    <h3 style="margin: 0; font-size: 18px; color: #f4f4f5;">Method 1: Native App Login</h3>
+                    <span
+                        style="font-size: 12px; background: rgba(94, 234, 212, 0.1); color: #5eead4; padding: 4px 10px; border-radius: 20px; font-weight: 600;">Recommended</span>
+                </div>
+                <p style="color: #a1a1aa; font-size: 14px; margin: 0 0 20px 0; line-height: 1.5;">Securely log into your
+                    account using a built-in automated browser window.</p>
+                <button id="auth-btn" onclick="startAuthFlow()"
+                    style="width: 100%; padding: 14px; background: #f43f5e; color: white; border: none; font-size: 15px;">Login
+                    to TikTok</button>
+                <div id="auth-status" style="margin-top: 12px; font-size: 13px; color: #fbbf24; text-align: center;">
+                </div>
             </div>
-            <div id="upload-status" style="margin-top: 10px; font-size: 13px; color: #4ade80;"></div>
+
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div style="flex: 1; height: 1px; background: rgba(255,255,255,0.1);"></div>
+                <span
+                    style="color: #71717a; font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">or</span>
+                <div style="flex: 1; height: 1px; background: rgba(255,255,255,0.1);"></div>
+            </div>
+
+            <!-- Method 2: Cookie Upload -->
+            <div style="background: rgba(255,255,255,0.03); padding: 25px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); text-align: left; transition: 0.3s; cursor: default;"
+                onmouseover="this.style.background='rgba(255,255,255,0.05)'"
+                onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+                <h3 style="margin: 0 0 10px 0; font-size: 18px; color: #f4f4f5;">Method 2: Upload Cookies.txt</h3>
+                <p style="color: #a1a1aa; font-size: 14px; margin: 0 0 20px 0; line-height: 1.5;">Use a Chrome extension
+                    (like <i>Get cookies.txt LOCALLY</i>) to export your session if you face IP rate limits.</p>
+
+                <div id="drop-zone"
+                    style="background: rgba(0,0,0,0.2); border: 2px dashed rgba(255,255,255,0.15); border-radius: 12px; padding: 40px 20px; text-align: center; cursor: pointer; transition: all 0.2s;"
+                    onmouseover="this.style.borderColor='rgba(94, 234, 212, 0.5)'; this.style.background='rgba(94, 234, 212, 0.05)'"
+                    onmouseout="this.style.borderColor='rgba(255,255,255,0.15)'; this.style.background='rgba(0,0,0,0.2)'">
+                    <span style="font-size: 24px; display: block; margin-bottom: 10px;">📄</span>
+                    <span id="drop-text" style="color: #d4d4d8; font-size: 15px;">Drag & Drop <code>cookies.txt</code>
+                        or click to browse</span>
+                    <input type="file" id="cookie-file" accept=".txt" style="display: none;"
+                        onchange="handleFileUpload(this.files[0])">
+                </div>
+                <div id="upload-status" style="margin-top: 12px; font-size: 13px; color: #4ade80; text-align: center;">
+                </div>
+            </div>
         </div>
     </div>
 
@@ -52,11 +76,11 @@
         <!-- Navigation Tabs -->
         <div style="display: flex; gap: 0; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1);">
             <button onclick="showDashboard()" id="tab-dashboard"
-                style="flex: 1; padding: 12px; background: rgba(255,255,255,0.1); border: none; color: #e2e8f0; font-weight: bold; border-bottom: 2px solid #4ade80; cursor: pointer; border-radius: 8px 8px 0 0;">
-                🔧 Scraper
+                style="flex: 1; padding: 12px; border-radius: 8px 8px 0 0; border: none; border-bottom: 2px solid #5eead4; background: rgba(255,255,255,0.08); color: white;">
+                🔍 Scraper
             </button>
             <button onclick="showChat()" id="tab-chat"
-                style="flex: 1; padding: 12px; background: transparent; border: none; color: #64748b; font-weight: bold; border-bottom: 2px solid transparent; cursor: pointer; border-radius: 8px 8px 0 0;">
+                style="flex: 1; padding: 12px; border-radius: 8px 8px 0 0; border: none; border-bottom: 2px solid transparent; background: transparent; color: #a1a1aa;">
                 💬 AI Chat
             </button>
         </div>
@@ -103,12 +127,12 @@
                 <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                     <select id="model-select"
                         style="padding: 8px 12px; border-radius: 8px; background: rgba(255,255,255,0.08); color: #e2e8f0; border: 1px solid rgba(255,255,255,0.15); font-size: 13px;">
-                        <option value="groq/llama-3.1-8b-instant">Groq – Llama 3.1 8B (Free)</option>
-                        <option value="groq/llama-3.3-70b-versatile">Groq – Llama 3.3 70B</option>
-                        <option value="groq/gemma2-9b-it">Groq – Gemma 2 9B</option>
-                        <option value="gpt-4o-mini">OpenAI – GPT-4o Mini</option>
-                        <option value="gpt-4o">OpenAI – GPT-4o</option>
-                        <option value="ollama/llama3">Ollama – Llama 3 (Local)</option>
+                        <option value="groq/llama-3.1-8b-instant">Groq - Llama 3.1 8B (Free)</option>
+                        <option value="groq/llama-3.3-70b-versatile">Groq - Llama 3.3 70B</option>
+                        <option value="groq/gemma2-9b-it">Groq - Gemma 2 9B</option>
+                        <option value="gpt-4o-mini">OpenAI - GPT-4o Mini</option>
+                        <option value="gpt-4o">OpenAI - GPT-4o</option>
+                        <option value="ollama/llama3">Ollama - Llama 3 (Local)</option>
                     </select>
                     <input type="password" id="api-key-input" placeholder="Paste your API key here..."
                         style="flex-grow: 1; padding: 8px 12px; border-radius: 8px; background: rgba(255,255,255,0.08); color: #e2e8f0; border: 1px solid rgba(255,255,255,0.15); font-size: 13px;">
@@ -125,11 +149,11 @@
         <!-- Navigation Tabs -->
         <div style="display: flex; gap: 0; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1);">
             <button onclick="showDashboard()" id="tab-dashboard-2"
-                style="flex: 1; padding: 12px; background: transparent; border: none; color: #64748b; font-weight: bold; border-bottom: 2px solid transparent; cursor: pointer; border-radius: 8px 8px 0 0;">
-                🔧 Scraper
+                style="flex: 1; padding: 12px; border-radius: 8px 8px 0 0; border: none; border-bottom: 2px solid transparent; background: transparent; color: #a1a1aa;">
+                🔍 Scraper
             </button>
             <button onclick="showChat()" id="tab-chat-2"
-                style="flex: 1; padding: 12px; background: rgba(255,255,255,0.1); border: none; color: #e2e8f0; font-weight: bold; border-bottom: 2px solid #4ade80; cursor: pointer; border-radius: 8px 8px 0 0;">
+                style="flex: 1; padding: 12px; border-radius: 8px 8px 0 0; border: none; border-bottom: 2px solid #5eead4; background: rgba(255,255,255,0.08); color: white;">
                 💬 AI Chat
             </button>
         </div>

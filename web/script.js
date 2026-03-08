@@ -226,12 +226,16 @@ async function startProcessing() {
 
             // 3. Check if the job finished
             if (!state.is_running && state.status !== "Starting...") {
-                clearInterval(pollInterval); // Stop polling
-
                 if (state.error) {
+                    clearInterval(pollInterval);
                     statusText.innerText = `❌ Error: ${state.error}`;
                     statusText.style.color = "#f87171";
-                } else {
+                } else if (state.status === "failed") {
+                    clearInterval(pollInterval);
+                    statusText.innerText = `❌ Error: ${state.error}`;
+                    statusText.style.color = "#f87171";
+                } else if (state.status === "completed") {
+                    clearInterval(pollInterval);
                     statusText.innerText = "✅ Processing Complete! Data ready.";
                     statusText.style.color = "#4ade80";
                     // Unlock the chat interface
@@ -311,30 +315,43 @@ document.getElementById("chat-input").addEventListener("keypress", function (eve
 
 // --- LLM Settings ---
 async function saveSettings() {
-    const model = document.getElementById('model-select').value;
+    const modelSelection = document.getElementById('model-select').value;
     const apiKey = document.getElementById('api-key-input').value;
-    const transcriptionMethod = document.getElementById('transcription-method').value;
+    const transMethod = document.getElementById('transcription-method').value;
     const statusEl = document.getElementById('settings-status');
 
-    if (!apiKey && !model.startsWith('ollama/') && transcriptionMethod !== 'local') {
-        statusEl.innerText = "⚠️ Please enter an API key.";
-        statusEl.style.color = "#fbbf24";
-        return;
-    }
-
     try {
+        const modelSelect = document.getElementById('model-select');
+        const transcriptionSelect = document.getElementById('transcription-method');
+        const modelLabel = modelSelect.options[modelSelect.selectedIndex].text;
+        const transLabel = transcriptionSelect.options[transcriptionSelect.selectedIndex].text;
+
+        if ((transMethod === 'groq_whisper' || modelSelection.startsWith('groq/') || modelSelection.startsWith('gpt')) && !apiKey) {
+            statusEl.innerText = "⚠️ Please enter an API key.";
+            statusEl.style.color = "#fbbf24";
+            return;
+        }
+
+        statusEl.innerText = "Saving settings...";
+        statusEl.style.color = "#fbbf24";
+
+        const payload = {
+            model: modelSelection,
+            transcription_method: transMethod,
+            api_key: apiKey
+        };
+
         const res = await fetch('/api/settings', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ model: model, api_key: apiKey, transcription_method: transcriptionMethod })
+            body: JSON.stringify(payload)
         });
 
-        if (!res.ok) throw new Error("Failed to save.");
+        if (!res.ok) throw new Error("Failed to save settings");
 
-        const modelLabel = document.getElementById('model-select').options[document.getElementById('model-select').selectedIndex].text;
-        const transLabel = document.getElementById('transcription-method').options[document.getElementById('transcription-method').selectedIndex].text;
         statusEl.innerHTML = `✅ <b>Saved!</b> Chat: <b>${modelLabel}</b> · Transcription: <b>${transLabel}</b> · 🔑 Key stored`;
         statusEl.style.color = "#4ade80";
+
     } catch (e) {
         statusEl.innerText = `❌ Error: ${e.message}`;
         statusEl.style.color = "#f87171";

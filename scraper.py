@@ -83,8 +83,8 @@ def download_profile_videos(profile_url, max_downloads=MAX_VIDEOS_PER_PROFILE):
         # Instead we enforce the limit manually in the progress_hooks above.
         'quiet': False,
         'cookiefile': 'cookies.txt',        # Use a dedicated cookies file
-        'sleep_interval': 5,                # rate limiting: pause randomly 
-        'max_sleep_interval': 15,           # for 5 to 15 seconds
+        'sleep_interval': 1,                # rate limiting: pause randomly 
+        'max_sleep_interval': 3,            # for 1 to 3 seconds
         'match_filter': profile_match_filter,
         'socket_timeout': 60,              # Increase timeout from 20s default to 60s
         'retries': 5,                       # Retry failed downloads up to 5 times
