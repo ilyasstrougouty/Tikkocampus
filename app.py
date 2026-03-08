@@ -216,8 +216,38 @@ async def serve_index():
 def run_server():
     uvicorn.run(app, host="127.0.0.1", port=8000)
 
+class WindowAPI:
+    def __init__(self):
+        self.maximized = False
+
+    def close(self):
+        import os
+        os._exit(0)
+
+    def minimize(self):
+        webview.windows[0].minimize()
+
+    def toggle_maximize(self):
+        win = webview.windows[0]
+        if self.maximized:
+            win.restore()
+            self.maximized = False
+        else:
+            win.maximize()
+            self.maximized = True
+
+import signal
+import sys
+import os
+
+def sigint_handler(signum, frame):
+    print("\nCtrl+C detected! Shutting down TikTok RAG Engine...")
+    os._exit(0)
+
 if __name__ == "__main__":
+    signal.signal(signal.SIGINT, sigint_handler)
     print("Starting Desktop Interface...")
+    
     # Run the FastAPI server in a background thread
     t = threading.Thread(target=run_server)
     t.daemon = True
@@ -226,6 +256,15 @@ if __name__ == "__main__":
     # Wait a tiny bit for the server to start
     time.sleep(1)
     
-    # Open the PyWebView desktop window pointing to our local server
-    webview.create_window("TikTok RAG Engine", "http://127.0.0.1:8000/", width=1000, height=700)
-    webview.start()
+    # Create the frameless PyWebView desktop window
+    api = WindowAPI()
+    window = webview.create_window(
+        "TikTok RAG Engine", 
+        "http://127.0.0.1:8000/", 
+        width=1000, 
+        height=700, 
+        frameless=True, 
+        text_select=True,
+        js_api=api
+    )
+    webview.start(icon='web/logo.ico')

@@ -145,3 +145,12 @@ a {
 a:hover {
     text-decoration: underline;
 }
+
+/* Specific purely to allow PyWebView dragging */
+.pywebview-drag-region {
+    -webkit-app-region: drag;
+}
+
+.window-controls {
+    -webkit-app-region: no-drag;
+}
