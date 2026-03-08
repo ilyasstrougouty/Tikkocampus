@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="web/logo.png" alt="TikTok RAG Engine" width="80">
+  <img src="assets/banner.png" alt="TikTok RAG Engine Banner" width="100%">
   
   <h1>TikTok RAG Engine</h1>
   <p><em>Scrape any TikTok creator's videos, transcribe them with AI, and chat with the content using any LLM.</em></p>
