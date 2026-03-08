@@ -3,10 +3,26 @@ let pollInterval;
 // --- UI Navigation ---
 function showMainApp() {
     document.getElementById('login-view').style.display = 'none';
-    document.getElementById('dashboard-view').style.display = 'flex';
-    document.getElementById('chat-view').style.display = 'none';
+    const appContainer = document.getElementById('dashboard-view');
+    appContainer.style.display = 'flex';
+    appContainer.style.animation = "fadeIn 0.5s ease";
     loadHistory();
     loadSettings();
+}
+
+function toggleSidebar() {
+    const sidebar = document.getElementById('history-sidebar');
+    if (sidebar.style.left === '0px') {
+        sidebar.style.left = '-300px';
+    } else {
+        sidebar.style.left = '0px';
+        loadHistory(); // refresh on open
+    }
+}
+
+function startNewScrape() {
+    toggleSidebar();
+    showDashboard();
 }
 
 function showDashboard() {
@@ -14,23 +30,28 @@ function showDashboard() {
     document.getElementById('chat-view').style.display = 'none';
     // Update tab styles
     document.getElementById('tab-dashboard').style.background = 'rgba(255,255,255,0.1)';
-    document.getElementById('tab-dashboard').style.color = '#e2e8f0';
-    document.getElementById('tab-dashboard').style.borderBottom = '2px solid #4ade80';
+    document.getElementById('tab-dashboard').style.color = 'white';
     document.getElementById('tab-chat').style.background = 'transparent';
-    document.getElementById('tab-chat').style.color = '#64748b';
-    document.getElementById('tab-chat').style.borderBottom = '2px solid transparent';
+    document.getElementById('tab-chat').style.color = '#a1a1aa';
 }
 
 function showChat() {
     document.getElementById('dashboard-view').style.display = 'none';
     document.getElementById('chat-view').style.display = 'flex';
-    // Update tab styles on chat view
-    document.getElementById('tab-chat-2').style.background = 'rgba(255,255,255,0.1)';
-    document.getElementById('tab-chat-2').style.color = '#e2e8f0';
-    document.getElementById('tab-chat-2').style.borderBottom = '2px solid #4ade80';
-    document.getElementById('tab-dashboard-2').style.background = 'transparent';
-    document.getElementById('tab-dashboard-2').style.color = '#64748b';
-    document.getElementById('tab-dashboard-2').style.borderBottom = '2px solid transparent';
+    // Update tab styles
+    document.getElementById('tab-chat').style.background = 'rgba(255,255,255,0.1)';
+    document.getElementById('tab-chat').style.color = 'white';
+    document.getElementById('tab-dashboard').style.background = 'transparent';
+    document.getElementById('tab-dashboard').style.color = '#a1a1aa';
+}
+
+function toggleSettings() {
+    const sidebar = document.getElementById('settings-sidebar');
+    if (sidebar.style.right === '0px') {
+        sidebar.style.right = '-350px';
+    } else {
+        sidebar.style.right = '0px';
+    }
 }
 
 // --- Load Saved Settings ---
@@ -82,12 +103,20 @@ async function loadHistory() {
 
         list.innerHTML = data.history.map(item => {
             const date = new Date(item.scraped_at).toLocaleDateString();
-            return `<div onclick="showChat()" 
-                style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; margin: 4px 0; 
-                border-radius: 8px; background: rgba(255,255,255,0.04); cursor: pointer; transition: 0.2s; border: 1px solid rgba(255,255,255,0.06);"
-                onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.04)'">
-                <span style="color: #e2e8f0; font-size: 13px;">@${item.creator_name || 'unknown'}</span>
-                <span style="color: #64748b; font-size: 12px;">${item.video_count} videos · ${date}</span>
+            return `
+            <div onclick="showChat(); document.getElementById('history-sidebar').style.left='-300px';" 
+                style="display: flex; flex-direction: column; gap: 5px; padding: 12px; margin: 4px 0; 
+                border-radius: 12px; background: rgba(255,255,255,0.03); cursor: pointer; transition: 0.2s; border: 1px solid rgba(255,255,255,0.05);"
+                onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+                
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: #f4f4f5; font-weight: 600; font-size: 14px;">@${item.creator_name || 'unknown'}</span>
+                    <span style="font-size: 10px; background: rgba(94, 234, 212, 0.1); color: #5eead4; padding: 2px 6px; border-radius: 10px;">Ready</span>
+                </div>
+                <div style="color: #a1a1aa; font-size: 12px; display: flex; justify-content: space-between;">
+                    <span>${item.video_count} videos</span>
+                    <span>${date}</span>
+                </div>
             </div>`;
         }).join('');
     } catch (e) {

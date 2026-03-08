@@ -34,181 +34,222 @@
 
     <!-- MAIN APP WRAPPER (to offset for title bar) -->
     <div id="content-wrapper"
-        style="height: calc(100vh - 32px); margin-top: 32px; position: relative; width: 100vw; display: flex; justify-content: center; align-items: center;">
+        style="height: calc(100vh - 32px); margin-top: 32px; position: relative; width: 100vw; display: flex; flex-direction: row; overflow: hidden;">
 
-        <!-- LOGIN VIEW -->
-        <div id="login-view" class="glass-panel"
-            style="width: 85%; max-width: 650px; padding: 50px; text-align: center; display: flex; flex-direction: column; gap: 35px; box-sizing: border-box; position: absolute; z-index: 100;">
+        <!-- LOGIN VIEW (Opaque overlay) -->
+        <div id="login-view"
+            style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1000; background: radial-gradient(circle at top right, #18181b 0%, #000000 100%); display: flex; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box;">
+            <div class="glass-panel"
+                style="width: 100%; max-width: 650px; padding: 50px; text-align: center; display: flex; flex-direction: column; gap: 35px; box-sizing: border-box;">
+                <div>
+                    <h2
+                        style="margin: 0 0 10px 0; font-size: 28px; font-weight: 700; background: linear-gradient(90deg, #fff, #a1a1aa); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">
+                        Welcome to TikTok RAG</h2>
+                    <p style="color: #a1a1aa; font-size: 15px; margin: 0;">Authentication is required to scrape
+                        profiles. Choose a method below.</p>
+                </div>
 
-            <div>
-                <h2
-                    style="margin: 0 0 10px 0; font-size: 28px; font-weight: 700; background: linear-gradient(90deg, #fff, #a1a1aa); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-                    Welcome to TikTok RAG</h2>
-                <p style="color: #a1a1aa; font-size: 15px; margin: 0;">Authentication is required to scrape profiles.
-                    Choose
-                    a method below.</p>
-            </div>
+                <div style="display: flex; flex-direction: column; gap: 25px;">
+                    <!-- Method 1: App Login -->
+                    <div style="background: rgba(255,255,255,0.03); padding: 25px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); text-align: left; transition: 0.3s; cursor: default;"
+                        onmouseover="this.style.background='rgba(255,255,255,0.05)'"
+                        onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+                        <div
+                            style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
+                            <h3 style="margin: 0; font-size: 18px; color: #f4f4f5;">Method 1: Native App Login</h3>
+                            <span
+                                style="font-size: 12px; background: rgba(94, 234, 212, 0.1); color: #5eead4; padding: 4px 10px; border-radius: 20px; font-weight: 600;">Recommended</span>
+                        </div>
+                        <p style="color: #a1a1aa; font-size: 14px; margin: 0 0 20px 0; line-height: 1.5;">Securely log
+                            into your account using a built-in automated browser window.</p>
+                        <button id="auth-btn" onclick="startAuthFlow()"
+                            style="width: 100%; padding: 14px; background: #f43f5e; color: white; border: none; font-size: 15px;">Login
+                            to TikTok</button>
+                        <div id="auth-status"
+                            style="margin-top: 12px; font-size: 13px; color: #fbbf24; text-align: center;"></div>
+                    </div>
 
-            <div style="display: flex; flex-direction: column; gap: 25px;">
-                <!-- Method 1: App Login -->
-                <div style="background: rgba(255,255,255,0.03); padding: 25px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); text-align: left; transition: 0.3s; cursor: default;"
-                    onmouseover="this.style.background='rgba(255,255,255,0.05)'"
-                    onmouseout="this.style.background='rgba(255,255,255,0.03)'">
-                    <div
-                        style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
-                        <h3 style="margin: 0; font-size: 18px; color: #f4f4f5;">Method 1: Native App Login</h3>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div style="flex: 1; height: 1px; background: rgba(255,255,255,0.1);"></div>
                         <span
-                            style="font-size: 12px; background: rgba(94, 234, 212, 0.1); color: #5eead4; padding: 4px 10px; border-radius: 20px; font-weight: 600;">Recommended</span>
+                            style="color: #71717a; font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">or</span>
+                        <div style="flex: 1; height: 1px; background: rgba(255,255,255,0.1);"></div>
                     </div>
-                    <p style="color: #a1a1aa; font-size: 14px; margin: 0 0 20px 0; line-height: 1.5;">Securely log into
-                        your
-                        account using a built-in automated browser window.</p>
-                    <button id="auth-btn" onclick="startAuthFlow()"
-                        style="width: 100%; padding: 14px; background: #f43f5e; color: white; border: none; font-size: 15px;">Login
-                        to TikTok</button>
-                    <div id="auth-status"
-                        style="margin-top: 12px; font-size: 13px; color: #fbbf24; text-align: center;">
+
+                    <!-- Method 2: Cookie Upload -->
+                    <div style="background: rgba(255,255,255,0.03); padding: 25px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); text-align: left; transition: 0.3s; cursor: default;"
+                        onmouseover="this.style.background='rgba(255,255,255,0.05)'"
+                        onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+                        <h3 style="margin: 0 0 10px 0; font-size: 18px; color: #f4f4f5;">Method 2: Upload Cookies.txt
+                        </h3>
+                        <p style="color: #a1a1aa; font-size: 14px; margin: 0 0 20px 0; line-height: 1.5;">Use a Chrome
+                            extension (like <i>Get cookies.txt LOCALLY</i>) to export your session if you face IP rate
+                            limits.</p>
+
+                        <div id="drop-zone"
+                            style="background: rgba(0,0,0,0.2); border: 2px dashed rgba(255,255,255,0.15); border-radius: 12px; padding: 40px 20px; text-align: center; cursor: pointer; transition: all 0.2s;"
+                            onmouseover="this.style.borderColor='rgba(94, 234, 212, 0.5)'; this.style.background='rgba(94, 234, 212, 0.05)'"
+                            onmouseout="this.style.borderColor='rgba(255,255,255,0.15)'; this.style.background='rgba(0,0,0,0.2)'">
+                            <span style="font-size: 24px; display: block; margin-bottom: 10px;">📄</span>
+                            <span id="drop-text" style="color: #d4d4d8; font-size: 15px;">Drag & Drop
+                                <code>cookies.txt</code> or click to browse</span>
+                            <input type="file" id="cookie-file" accept=".txt" style="display: none;"
+                                onchange="handleFileUpload(this.files[0])">
+                        </div>
+                        <div id="upload-status"
+                            style="margin-top: 12px; font-size: 13px; color: #4ade80; text-align: center;"></div>
                     </div>
                 </div>
+            </div>
+        </div>
 
+        <!-- LEFT SIDEBAR: Static Scrape History -->
+        <aside id="history-sidebar" class="glass-panel"
+            style="width: 280px; min-width: 280px; height: 100%; border-radius: 0; border-right: 1px solid rgba(255,255,255,0.05); border-top: none; border-bottom: none; border-left: none; display: flex; flex-direction: column; z-index: 100;">
+            <div
+                style="display: flex; align-items: center; justify-content: space-between; padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                <div style="display: flex; align-items: center; gap: 10px; font-weight: 600; color: #f4f4f5;">
+                    <span style="font-size: 16px;">📜</span> Scrape History
+                </div>
+            </div>
+
+            <button onclick="showDashboard()"
+                style="margin: 15px; padding: 12px; background: rgba(94, 234, 212, 0.1); color: #5eead4; border: 1px solid rgba(94, 234, 212, 0.2); border-radius: 8px; cursor: pointer;">+
+                New Scrape</button>
+
+            <div id="history-list"
+                style="flex-grow: 1; overflow-y: auto; padding: 0 15px 15px 15px; display: flex; flex-direction: column; gap: 8px;">
+                <!-- Dynamically populated history cards go here -->
+            </div>
+        </aside>
+
+        <!-- CENTER AREA: Main Dashboard & Chat Content -->
+        <main style="flex-grow: 1; display: flex; flex-direction: column; position: relative;">
+
+            <!-- HEADER -->
+            <header
+                style="height: 60px; min-height: 60px; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; border-bottom: 1px solid rgba(255,255,255,0.05);">
                 <div style="display: flex; align-items: center; gap: 15px;">
-                    <div style="flex: 1; height: 1px; background: rgba(255,255,255,0.1);"></div>
-                    <span
-                        style="color: #71717a; font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">or</span>
-                    <div style="flex: 1; height: 1px; background: rgba(255,255,255,0.1);"></div>
-                </div>
-
-                <!-- Method 2: Cookie Upload -->
-                <div style="background: rgba(255,255,255,0.03); padding: 25px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); text-align: left; transition: 0.3s; cursor: default;"
-                    onmouseover="this.style.background='rgba(255,255,255,0.05)'"
-                    onmouseout="this.style.background='rgba(255,255,255,0.03)'">
-                    <h3 style="margin: 0 0 10px 0; font-size: 18px; color: #f4f4f5;">Method 2: Upload Cookies.txt</h3>
-                    <p style="color: #a1a1aa; font-size: 14px; margin: 0 0 20px 0; line-height: 1.5;">Use a Chrome
-                        extension
-                        (like <i>Get cookies.txt LOCALLY</i>) to export your session if you face IP rate limits.</p>
-
-                    <div id="drop-zone"
-                        style="background: rgba(0,0,0,0.2); border: 2px dashed rgba(255,255,255,0.15); border-radius: 12px; padding: 40px 20px; text-align: center; cursor: pointer; transition: all 0.2s;"
-                        onmouseover="this.style.borderColor='rgba(94, 234, 212, 0.5)'; this.style.background='rgba(94, 234, 212, 0.05)'"
-                        onmouseout="this.style.borderColor='rgba(255,255,255,0.15)'; this.style.background='rgba(0,0,0,0.2)'">
-                        <span style="font-size: 24px; display: block; margin-bottom: 10px;">📄</span>
-                        <span id="drop-text" style="color: #d4d4d8; font-size: 15px;">Drag & Drop
-                            <code>cookies.txt</code>
-                            or click to browse</span>
-                        <input type="file" id="cookie-file" accept=".txt" style="display: none;"
-                            onchange="handleFileUpload(this.files[0])">
-                    </div>
-                    <div id="upload-status"
-                        style="margin-top: 12px; font-size: 13px; color: #4ade80; text-align: center;">
+                    <!-- Small nav tabs for center content -->
+                    <div
+                        style="display: flex; gap: 10px; background: rgba(0,0,0,0.2); padding: 4px; border-radius: 8px;">
+                        <button onclick="showDashboard()" id="tab-dashboard"
+                            style="padding: 6px 12px; border-radius: 6px; border: none; background: rgba(255,255,255,0.1); color: white; font-weight: 500; font-size: 13px; cursor: pointer;">🔍
+                            Scraper</button>
+                        <button onclick="showChat()" id="tab-chat"
+                            style="padding: 6px 12px; border-radius: 6px; border: none; background: transparent; color: #a1a1aa; font-weight: 500; font-size: 13px; cursor: pointer;">💬
+                            Chat</button>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- DASHBOARD VIEW (Scraping + Settings) -->
-        <div id="dashboard-view" class="glass-panel chat-container" style="display: none;">
-            <!-- Navigation Tabs -->
-            <div style="display: flex; gap: 0; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1);">
-                <button onclick="showDashboard()" id="tab-dashboard"
-                    style="flex: 1; padding: 12px; border-radius: 8px 8px 0 0; border: none; border-bottom: 2px solid #5eead4; background: rgba(255,255,255,0.08); color: white;">
-                    🔍 Scraper
-                </button>
-                <button onclick="showChat()" id="tab-chat"
-                    style="flex: 1; padding: 12px; border-radius: 8px 8px 0 0; border: none; border-bottom: 2px solid transparent; background: transparent; color: #a1a1aa;">
-                    💬 AI Chat
-                </button>
-            </div>
-
-            <div style="margin-bottom: 20px; display: flex; gap: 10px; align-items: center;">
-                <input type="text" id="tiktok-url" placeholder="Enter TikTok Profile URL... (e.g. @mrbeast)"
-                    style="flex-grow: 1;">
-                <input type="number" id="video-count" value="10" min="1" max="100"
-                    style="width: 70px; text-align: center;" title="Number of videos to download">
-                <button id="scrape-btn" onclick="startProcessing()">Scrape & Process Data</button>
-            </div>
-
-            <!-- History Section -->
-            <details id="history-panel"
-                style="margin-bottom: 15px; background: rgba(0,0,0,0.25); border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); padding: 4px 12px;">
-                <summary style="cursor: pointer; padding: 10px 0; color: #94a3b8; font-size: 13px; user-select: none;">
-                    📜
-                    Scrape History</summary>
-                <div id="history-list" style="max-height: 200px; overflow-y: auto; padding: 5px 0;"></div>
-            </details>
-
-            <div id="process-status" style="margin-bottom: 15px; font-weight: bold; color: #e2e8f0;">Idle</div>
-
-            <!-- Settings Panel -->
-            <details id="settings-panel"
-                style="margin-bottom: 15px; background: rgba(0,0,0,0.25); border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); padding: 4px 12px;">
-                <summary style="cursor: pointer; padding: 10px 0; color: #94a3b8; font-size: 13px; user-select: none;">
+                <button onclick="toggleSettings()" title="API Settings"
+                    style="width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.05); color: #a1a1aa; border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; transition: 0.2s;"
+                    onmouseover="this.style.background='rgba(255,255,255,0.1)'"
+                    onmouseout="this.style.background='rgba(255,255,255,0.05)'">
                     ⚙️
-                    Settings</summary>
+                </button>
+            </header>
 
-                <!-- Transcription Method -->
-                <div style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.06);">
-                    <label style="color: #94a3b8; font-size: 12px; display: block; margin-bottom: 6px;">🎙️
-                        Transcription
-                        Method</label>
-                    <select id="transcription-method"
-                        style="width: 100%; padding: 8px 12px; border-radius: 8px; background: rgba(255,255,255,0.08); color: #e2e8f0; border: 1px solid rgba(255,255,255,0.15); font-size: 13px;">
-                        <option value="local">Local Whisper (Free, ~15s/video on CPU)</option>
-                        <option value="groq_whisper">Groq Whisper API (Fast, ~2s/video, uses your Groq key)</option>
-                    </select>
+            <!-- Dashboard View -->
+            <div id="dashboard-view"
+                style="flex-grow: 1; padding: 30px; display: none; flex-direction: column; overflow-y: auto;">
+                <h3 style="margin-top: 0; color: #f4f4f5;">TikTok Data Scraper</h3>
+                <p style="color: #a1a1aa; font-size: 14px; margin-bottom: 25px;">Enter a TikTok username to download and
+                    index their recent videos into the vector database.</p>
+
+                <div class="glass-panel" style="padding: 25px; border-radius: 16px;">
+                    <div style="display: flex; gap: 15px; align-items: center;">
+                        <input type="text" id="tiktok-url" placeholder="Enter TikTok Profile URL... (e.g. @mrbeast)"
+                            style="flex-grow: 1; padding: 14px; font-size: 15px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: white;">
+                        <input type="number" id="video-count" value="10" min="1" max="100"
+                            style="width: 80px; text-align: center; padding: 14px; font-size: 15px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: white;"
+                            title="Videos to download">
+                        <button id="scrape-btn" onclick="startProcessing()"
+                            style="padding: 14px 24px; font-size: 15px; border-radius: 10px; background: #5eead4; color: black; font-weight: 600; border: none; cursor: pointer;">Scrape
+                            Data</button>
+                    </div>
+                    <div id="process-status"
+                        style="margin-top: 20px; font-weight: 500; color: #a1a1aa; font-size: 14px;">Status: Idle
+                        waiting for input...</div>
                 </div>
+            </div>
 
-                <!-- LLM Chat Model -->
-                <div style="padding: 8px 0;">
-                    <label style="color: #94a3b8; font-size: 12px; display: block; margin-bottom: 6px;">🤖 Chat
-                        Model</label>
-                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                        <select id="model-select"
-                            style="padding: 8px 12px; border-radius: 8px; background: rgba(255,255,255,0.08); color: #e2e8f0; border: 1px solid rgba(255,255,255,0.15); font-size: 13px;">
-                            <option value="groq/llama-3.1-8b-instant">Groq - Llama 3.1 8B (Free)</option>
-                            <option value="groq/llama-3.3-70b-versatile">Groq - Llama 3.3 70B</option>
-                            <option value="groq/gemma2-9b-it">Groq - Gemma 2 9B</option>
-                            <option value="gpt-4o-mini">OpenAI - GPT-4o Mini</option>
-                            <option value="gpt-4o">OpenAI - GPT-4o</option>
-                            <option value="ollama/llama3">Ollama - Llama 3 (Local)</option>
-                        </select>
-                        <input type="password" id="api-key-input" placeholder="Paste your API key here..."
-                            style="flex-grow: 1; padding: 8px 12px; border-radius: 8px; background: rgba(255,255,255,0.08); color: #e2e8f0; border: 1px solid rgba(255,255,255,0.15); font-size: 13px;">
-                        <button onclick="saveSettings()"
-                            style="padding: 8px 16px; font-size: 13px; background: #4ade80;">Save</button>
+            <!-- Chat View -->
+            <div id="chat-view"
+                style="display: none; flex-grow: 1; padding: 20px 20px 0 20px; flex-direction: column; position: relative;">
+                <div id="chat-box" style="flex-grow: 1; overflow-y: auto; padding-bottom: 20px;">
+                    <div class="message ai"
+                        style="max-width: 80%; padding: 16px; border-radius: 16px; border-bottom-left-radius: 4px; line-height: 1.5; font-size: 14px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); color: #d4d4d8; margin-bottom: 20px;">
+                        System Initialized. I am hooked into the Vector Database. What do you want to know about the
+                        scraped videos?
                     </div>
                 </div>
-                <div id="settings-status" style="font-size: 12px; color: #4ade80; padding-bottom: 8px;"></div>
-            </details>
-        </div>
 
-        <!-- CHAT VIEW -->
-        <div id="chat-view" class="glass-panel chat-container" style="display: none;">
-            <!-- Navigation Tabs -->
-            <div style="display: flex; gap: 0; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1);">
-                <button onclick="showDashboard()" id="tab-dashboard-2"
-                    style="flex: 1; padding: 12px; border-radius: 8px 8px 0 0; border: none; border-bottom: 2px solid transparent; background: transparent; color: #a1a1aa;">
-                    🔍 Scraper
-                </button>
-                <button onclick="showChat()" id="tab-chat-2"
-                    style="flex: 1; padding: 12px; border-radius: 8px 8px 0 0; border: none; border-bottom: 2px solid #5eead4; background: rgba(255,255,255,0.08); color: white;">
-                    💬 AI Chat
-                </button>
-            </div>
-
-            <div id="chat-box">
-                <div class="message ai glass-panel">
-                    System Initialized. I am hooked into the Vector Database. What do you want to know about the scraped
-                    videos?
+                <div class="input-area"
+                    style="padding: 20px 0; border-top: 1px solid rgba(255,255,255,0.05); background: transparent; display: flex; gap: 10px;">
+                    <input type="text" id="chat-input" placeholder="Message TikTok RAG..."
+                        style="flex-grow: 1; padding: 16px 20px; font-size: 15px; border-radius: 20px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;">
+                    <button id="send-btn" onclick="sendMessage()"
+                        style="padding: 0 25px; border-radius: 20px; background: white; color: black; font-weight: 600; font-size: 14px; cursor: pointer; border: none;">Send</button>
                 </div>
             </div>
 
-            <div class="input-area">
-                <input type="text" id="chat-input" placeholder="Ask a question about the videos...">
-                <button id="send-btn" onclick="sendMessage()">Send</button>
-            </div> <!-- /#chat-view -->
-        </div> <!-- /#content-wrapper -->
+        </main>
 
-        <script src="/static/script.js"></script>
+        <!-- RIGHT SIDEBAR: Settings Panel (Slide-out) -->
+        <aside id="settings-sidebar" class="glass-panel"
+            style="position: absolute; right: -350px; top: 0; width: 320px; height: 100%; border-radius: 0; border-left: 1px solid rgba(255,255,255,0.05); border-right: none; border-top: none; border-bottom: none; z-index: 200; transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; padding: 20px; box-sizing: border-box;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px;">
+                <h3 style="margin: 0; color: #f4f4f5; display: flex; align-items: center; gap: 8px;">⚙️ Model Settings
+                </h3>
+                <button onclick="toggleSettings()"
+                    style="background: transparent; border: none; padding: 5px; color: #a1a1aa; cursor: pointer; font-size: 16px;">✕</button>
+            </div>
+
+            <!-- Transcription Method -->
+            <div style="margin-bottom: 25px;">
+                <label
+                    style="color: #94a3b8; font-size: 13px; font-weight: 600; display: block; margin-bottom: 10px;">🎙️
+                    Transcription Method</label>
+                <select id="transcription-method"
+                    style="width: 100%; padding: 12px; border-radius: 10px; background: rgba(255,255,255,0.05); color: #e2e8f0; border: 1px solid rgba(255,255,255,0.1); font-size: 14px;">
+                    <option value="local">Local Whisper (Free, ~15s/vid CPU)</option>
+                    <option value="groq_whisper">Groq Whisper API (Fast, ~2s/vid)</option>
+                </select>
+            </div>
+
+            <!-- LLM Chat Model -->
+            <div style="flex-grow: 1;">
+                <label
+                    style="color: #94a3b8; font-size: 13px; font-weight: 600; display: block; margin-bottom: 10px;">🤖
+                    Chat Model</label>
+                <select id="model-select"
+                    style="width: 100%; padding: 12px; border-radius: 10px; background: rgba(255,255,255,0.05); color: #e2e8f0; border: 1px solid rgba(255,255,255,0.1); font-size: 14px; margin-bottom: 15px;">
+                    <option value="groq/llama-3.1-8b-instant">Groq - Llama 3.1 8B</option>
+                    <option value="groq/llama-3.3-70b-versatile">Groq - Llama 3.3 70B</option>
+                    <option value="groq/gemma2-9b-it">Groq - Gemma 2 9B</option>
+                    <option value="gpt-4o-mini">OpenAI - GPT-4o Mini</option>
+                    <option value="gpt-4o">OpenAI - GPT-4o</option>
+                    <option value="ollama/llama3">Ollama - Llama 3 (Local)</option>
+                </select>
+
+                <label
+                    style="color: #94a3b8; font-size: 13px; font-weight: 600; display: block; margin-bottom: 10px;">🔑
+                    API Key</label>
+                <input type="password" id="api-key-input" placeholder="Paste Groq/OpenAI key..."
+                    style="width: 100%; box-sizing: border-box; padding: 12px; border-radius: 10px; background: rgba(255,255,255,0.05); color: #e2e8f0; border: 1px solid rgba(255,255,255,0.1); font-size: 14px; margin-bottom: 20px;">
+
+                <button onclick="saveSettings()"
+                    style="width: 100%; padding: 14px; border-radius: 10px; border: none; font-size: 14px; background: #5eead4; color: #0f172a; font-weight: 600; cursor: pointer;">Save
+                    Configuration</button>
+                <div id="settings-status"
+                    style="font-size: 13px; color: #5eead4; margin-top: 15px; text-align: center;"></div>
+            </div>
+        </aside>
+
+    </div> <!-- /#content-wrapper -->
+
+    <script src="/static/script.js"></script>
 </body>
 
 </html>
