@@ -124,38 +124,21 @@ async function loadHistory() {
     }
 }
 
-// --- Method 1: App Login Flow ---
-async function startAuthFlow() {
-    const authBtn = document.getElementById('auth-btn');
-    const statusText = document.getElementById('auth-status');
-
-    authBtn.innerText = "Waiting for Login...";
-    authBtn.disabled = true;
-    statusText.innerText = "Please log in using the popup window...";
-    statusText.style.color = "#fbbf24";
-
+// --- Auto-detect existing cookies on page load ---
+async function checkExistingCookies() {
     try {
-        const startResponse = await fetch('/api/auth', { method: 'POST' });
-
-        if (!startResponse.ok) {
-            const err = await startResponse.json();
-            throw new Error(err.detail || "Authentication failed.");
+        const res = await fetch('/api/check-cookies');
+        const data = await res.json();
+        if (data.exists) {
+            showMainApp();
         }
-
-        statusText.innerText = "✅ Authentication Complete!";
-        statusText.style.color = "#4ade80";
-        authBtn.innerText = "Logged In";
-
-        // Transition to main app
-        setTimeout(showMainApp, 1000);
-
-    } catch (error) {
-        statusText.innerText = `❌ Auth Error: ${error.message}`;
-        statusText.style.color = "#f87171";
-        authBtn.innerText = "Login to TikTok";
-        authBtn.disabled = false;
+    } catch (e) {
+        console.error('Could not check cookies:', e);
     }
 }
+
+// Run on page load
+document.addEventListener('DOMContentLoaded', checkExistingCookies);
 
 // --- Method 2: Drag & Drop Cookies ---
 const dropZone = document.getElementById('drop-zone');

@@ -154,3 +154,20 @@ a:hover {
 .window-controls {
     -webkit-app-region: no-drag;
 }
+
+/* Prevent the entire app content from being draggable */
+#content-wrapper,
+#content-wrapper * {
+    -webkit-app-region: no-drag;
+}
+
+input,
+button,
+select,
+textarea,
+a,
+label,
+div[onclick],
+span {
+    -webkit-app-region: no-drag;
+}

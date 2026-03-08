@@ -113,6 +113,12 @@ async def upload_cookies(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to save cookies: {str(e)}")
 
+@app.get("/api/check-cookies")
+async def check_cookies():
+    """Check if cookies.txt already exists on disk."""
+    exists = os.path.isfile("cookies.txt") and os.path.getsize("cookies.txt") > 0
+    return {"exists": exists}
+
 @app.post("/api/process")
 async def trigger_pipeline(req: ProcessRequest, background_tasks: BackgroundTasks):
     global task_state
@@ -218,7 +224,7 @@ def run_server():
 
 class WindowAPI:
     def __init__(self):
-        self.maximized = False
+        pass
 
     def close(self):
         import os
@@ -228,13 +234,7 @@ class WindowAPI:
         webview.windows[0].minimize()
 
     def toggle_maximize(self):
-        win = webview.windows[0]
-        if self.maximized:
-            win.restore()
-            self.maximized = False
-        else:
-            win.maximize()
-            self.maximized = True
+        webview.windows[0].toggle_fullscreen()
 
 import signal
 import sys

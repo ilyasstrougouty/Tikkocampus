@@ -31,6 +31,13 @@
                 onmouseout="this.style.background='transparent'; this.style.color='#a1a1aa'">✕</button>
         </div>
     </div>
+    <script>
+        // Prevent double-click on title bar from toggling maximize (Chromium default behavior)
+        document.querySelector('.title-bar').addEventListener('dblclick', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+    </script>
 
     <!-- MAIN APP WRAPPER (to offset for title bar) -->
     <div id="content-wrapper"
@@ -42,55 +49,32 @@
             <div class="glass-panel"
                 style="width: 100%; max-width: 650px; padding: 50px; text-align: center; display: flex; flex-direction: column; gap: 35px; box-sizing: border-box;">
                 <div>
+                    <img src="/static/logo.png" style="width: 48px; height: 48px; margin-bottom: 15px;">
                     <h2
                         style="margin: 0 0 10px 0; font-size: 28px; font-weight: 700; background: linear-gradient(90deg, #fff, #a1a1aa); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">
                         Welcome to TikTok RAG</h2>
-                    <p style="color: #a1a1aa; font-size: 15px; margin: 0;">Authentication is required to scrape
-                        profiles. Choose a method below.</p>
+                    <p style="color: #a1a1aa; font-size: 15px; margin: 0;">Upload your TikTok cookies to get started
+                        with scraping.</p>
                 </div>
 
                 <div style="display: flex; flex-direction: column; gap: 25px;">
-                    <!-- Method 1: App Login -->
-                    <div style="background: rgba(255,255,255,0.03); padding: 25px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); text-align: left; transition: 0.3s; cursor: default;"
-                        onmouseover="this.style.background='rgba(255,255,255,0.05)'"
-                        onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+                    <!-- Cookie Upload -->
+                    <div
+                        style="background: rgba(255,255,255,0.03); padding: 25px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); text-align: left;">
                         <div
                             style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
-                            <h3 style="margin: 0; font-size: 18px; color: #f4f4f5;">Method 1: Native App Login</h3>
+                            <h3 style="margin: 0; font-size: 18px; color: #f4f4f5;">Upload Cookies.txt</h3>
                             <span
-                                style="font-size: 12px; background: rgba(94, 234, 212, 0.1); color: #5eead4; padding: 4px 10px; border-radius: 20px; font-weight: 600;">Recommended</span>
+                                style="font-size: 12px; background: rgba(94, 234, 212, 0.1); color: #5eead4; padding: 4px 10px; border-radius: 20px; font-weight: 600;">Required</span>
                         </div>
-                        <p style="color: #a1a1aa; font-size: 14px; margin: 0 0 20px 0; line-height: 1.5;">Securely log
-                            into your account using a built-in automated browser window.</p>
-                        <button id="auth-btn" onclick="startAuthFlow()"
-                            style="width: 100%; padding: 14px; background: #f43f5e; color: white; border: none; font-size: 15px;">Login
-                            to TikTok</button>
-                        <div id="auth-status"
-                            style="margin-top: 12px; font-size: 13px; color: #fbbf24; text-align: center;"></div>
-                    </div>
-
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        <div style="flex: 1; height: 1px; background: rgba(255,255,255,0.1);"></div>
-                        <span
-                            style="color: #71717a; font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">or</span>
-                        <div style="flex: 1; height: 1px; background: rgba(255,255,255,0.1);"></div>
-                    </div>
-
-                    <!-- Method 2: Cookie Upload -->
-                    <div style="background: rgba(255,255,255,0.03); padding: 25px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); text-align: left; transition: 0.3s; cursor: default;"
-                        onmouseover="this.style.background='rgba(255,255,255,0.05)'"
-                        onmouseout="this.style.background='rgba(255,255,255,0.03)'">
-                        <h3 style="margin: 0 0 10px 0; font-size: 18px; color: #f4f4f5;">Method 2: Upload Cookies.txt
-                        </h3>
-                        <p style="color: #a1a1aa; font-size: 14px; margin: 0 0 20px 0; line-height: 1.5;">Use a Chrome
-                            extension (like <i>Get cookies.txt LOCALLY</i>) to export your session if you face IP rate
-                            limits.</p>
+                        <p style="color: #a1a1aa; font-size: 14px; margin: 0 0 20px 0; line-height: 1.5;">Use a browser
+                            extension like <i>Get cookies.txt LOCALLY</i> to export your TikTok session cookies.</p>
 
                         <div id="drop-zone"
                             style="background: rgba(0,0,0,0.2); border: 2px dashed rgba(255,255,255,0.15); border-radius: 12px; padding: 40px 20px; text-align: center; cursor: pointer; transition: all 0.2s;"
                             onmouseover="this.style.borderColor='rgba(94, 234, 212, 0.5)'; this.style.background='rgba(94, 234, 212, 0.05)'"
                             onmouseout="this.style.borderColor='rgba(255,255,255,0.15)'; this.style.background='rgba(0,0,0,0.2)'">
-                            <span style="font-size: 24px; display: block; margin-bottom: 10px;">📄</span>
+                            <span style="font-size: 36px; display: block; margin-bottom: 10px;">📄</span>
                             <span id="drop-text" style="color: #d4d4d8; font-size: 15px;">Drag & Drop
                                 <code>cookies.txt</code> or click to browse</span>
                             <input type="file" id="cookie-file" accept=".txt" style="display: none;"
