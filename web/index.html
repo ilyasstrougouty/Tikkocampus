@@ -58,6 +58,17 @@
                 </div>
 
                 <div style="display: flex; flex-direction: column; gap: 25px;">
+                    <!-- Existing Sessions List -->
+                    <div id="existing-sessions-container"
+                        style="display: none; background: rgba(255,255,255,0.03); padding: 25px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); text-align: left;">
+                        <h3 style="margin: 0 0 15px 0; font-size: 18px; color: #f4f4f5;">Existing Sessions</h3>
+                        <p style="color: #a1a1aa; font-size: 14px; margin: 0 0 15px 0; line-height: 1.5;">Select a
+                            previously uploaded cookie profile to continue.</p>
+                        <div id="cookie-list" style="display: flex; flex-direction: column; gap: 8px;">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+
                     <!-- Cookie Upload -->
                     <div
                         style="background: rgba(255,255,255,0.03); padding: 25px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); text-align: left;">
@@ -161,6 +172,16 @@
             <!-- Chat View -->
             <div id="chat-view"
                 style="display: none; flex-grow: 1; padding: 20px 20px 0 20px; flex-direction: column; position: relative;">
+
+                <div
+                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 15px;">
+                    <div>
+                        <h3 style="margin: 0; color: #f4f4f5; font-size: 18px;">Chat with Database</h3>
+                        <p style="margin: 5px 0 0 0; color: #a1a1aa; font-size: 13px;">Currently querying: <span
+                                id="active-creator-header" style="color: #5eead4; font-weight: 600;">All Data</span></p>
+                    </div>
+                </div>
+
                 <div id="chat-box" style="flex-grow: 1; overflow-y: auto; padding-bottom: 20px;">
                     <div class="message ai"
                         style="max-width: 80%; padding: 16px; border-radius: 16px; border-bottom-left-radius: 4px; line-height: 1.5; font-size: 14px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); color: #d4d4d8; margin-bottom: 20px;">

@@ -160,14 +160,3 @@ a:hover {
 #content-wrapper * {
     -webkit-app-region: no-drag;
 }
-
-input,
-button,
-select,
-textarea,
-a,
-label,
-div[onclick],
-span {
-    -webkit-app-region: no-drag;
-}

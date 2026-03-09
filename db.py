@@ -49,6 +49,15 @@ def save_scrape_history(profile_url, creator_name, video_count):
     conn.commit()
     conn.close()
 
+def delete_creator(creator_name):
+    """Hard-deletes a creator and all their video metadata from SQLite."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute('DELETE FROM scrape_history WHERE creator_name = ?', (creator_name,))
+    cursor.execute('DELETE FROM videos WHERE creator_name = ?', (creator_name,))
+    conn.commit()
+    conn.close()
+
 def get_scrape_history(limit=20):
     """Returns the most recent scrape history entries."""
     conn = get_connection()

@@ -31,8 +31,13 @@ def download_profile_videos(profile_url, max_downloads=MAX_VIDEOS_PER_PROFILE):
     """
     Downloads the latest videos from a TikTok profile and extracts metadata.
     """
-    profile_url = profile_url.rstrip('/')
-    if '@' not in profile_url and 'tiktok.com/' in profile_url:
+    profile_url = profile_url.strip().rstrip('/')
+    
+    # Handle bare usernames: "mrbeast" or "@mrbeast"
+    if 'tiktok.com' not in profile_url:
+        username = profile_url.lstrip('@')
+        profile_url = f"https://www.tiktok.com/@{username}"
+    elif '@' not in profile_url and 'tiktok.com/' in profile_url:
         username = profile_url.split('/')[-1]
         profile_url = f"https://www.tiktok.com/@{username}"
 

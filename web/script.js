@@ -1,6 +1,20 @@
 let pollInterval;
+let currentCreator = null;
 
 // --- UI Navigation ---
+function setCreator(creatorName) {
+    currentCreator = creatorName;
+    const chatInput = document.getElementById('chat-input');
+    const chatHeader = document.getElementById('active-creator-header');
+
+    if (chatInput) {
+        chatInput.placeholder = `Ask about @${creatorName}...`;
+    }
+    if (chatHeader) {
+        chatHeader.innerText = `@${creatorName}`;
+    }
+}
+
 function showMainApp() {
     document.getElementById('login-view').style.display = 'none';
     const appContainer = document.getElementById('dashboard-view');
@@ -103,15 +117,24 @@ async function loadHistory() {
 
         list.innerHTML = data.history.map(item => {
             const date = new Date(item.scraped_at).toLocaleDateString();
+            const creator = item.creator_name || 'unknown';
             return `
-            <div onclick="showChat(); document.getElementById('history-sidebar').style.left='-300px';" 
+            <div onclick="setCreator('${creator}'); showChat(); document.getElementById('history-sidebar').style.left='-300px';" 
                 style="display: flex; flex-direction: column; gap: 5px; padding: 12px; margin: 4px 0; 
                 border-radius: 12px; background: rgba(255,255,255,0.03); cursor: pointer; transition: 0.2s; border: 1px solid rgba(255,255,255,0.05);"
                 onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
                 
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="color: #f4f4f5; font-weight: 600; font-size: 14px;">@${item.creator_name || 'unknown'}</span>
-                    <span style="font-size: 10px; background: rgba(94, 234, 212, 0.1); color: #5eead4; padding: 2px 6px; border-radius: 10px;">Ready</span>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="color: #f4f4f5; font-weight: 600; font-size: 14px;">@${item.creator_name || 'unknown'}</span>
+                        <span style="font-size: 10px; background: rgba(94, 234, 212, 0.1); color: #5eead4; padding: 2px 6px; border-radius: 10px;">Ready</span>
+                    </div>
+                    <button onclick="event.stopPropagation(); deleteCreator('${creator}')" 
+                        style="background: transparent; border: none; font-size: 14px; cursor: pointer; color: #64748b; padding: 4px; border-radius: 4px; display: flex; align-items: center; justify-content: center; transition: 0.2s;"
+                        onmouseover="this.style.color='#f87171'; this.style.background='rgba(248, 113, 113, 0.1)'"
+                        onmouseout="this.style.color='#64748b'; this.style.background='transparent'" title="Delete Creator">
+                        🗑️
+                    </button>
                 </div>
                 <div style="color: #a1a1aa; font-size: 12px; display: flex; justify-content: space-between;">
                     <span>${item.video_count} videos</span>
@@ -124,21 +147,105 @@ async function loadHistory() {
     }
 }
 
-// --- Auto-detect existing cookies on page load ---
-async function checkExistingCookies() {
+async function deleteCreator(creatorName) {
+    if (!confirm(`Are you sure you want to permanently delete @${creatorName} and all associated videos?`)) {
+        return;
+    }
+
     try {
-        const res = await fetch('/api/check-cookies');
-        const data = await res.json();
-        if (data.exists) {
-            showMainApp();
+        const res = await fetch(`/api/history/${creatorName}`, {
+            method: 'DELETE'
+        });
+
+        if (res.ok) {
+            // Optional: If they just deleted the creator they are actively chatting with, clear the chat
+            if (currentCreator === creatorName) {
+                setCreator("All Data"); // Or however you want to handle default state
+                document.getElementById('chat-box').innerHTML = `
+                    <div class="message ai" style="max-width: 80%; padding: 16px; border-radius: 16px; border-bottom-left-radius: 4px; line-height: 1.5; font-size: 14px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); color: #d4d4d8; margin-bottom: 20px;">
+                        Creator deleted. Select a new creator from the sidebar to continue chatting.
+                    </div>`;
+            }
+            loadHistory(); // Refresh the sidebar
+        } else {
+            const data = await res.json();
+            alert(`Failed to delete: ${data.detail || 'Unknown error'}`);
         }
     } catch (e) {
-        console.error('Could not check cookies:', e);
+        console.error("Delete failed:", e);
+        alert("Delete failed. See console for details.");
+    }
+}
+
+// --- Session Management ---
+async function loadCookieSessions() {
+    try {
+        const res = await fetch('/api/list-cookies');
+        const data = await res.json();
+
+        const container = document.getElementById('existing-sessions-container');
+        const list = document.getElementById('cookie-list');
+
+        if (data.cookies && data.cookies.length > 0) {
+            container.style.display = 'block';
+            list.innerHTML = '';
+
+            data.cookies.forEach(cookie => {
+                const btn = document.createElement('div');
+                btn.style.cssText = `
+                    display: flex; justify-content: space-between; align-items: center; 
+                    padding: 12px 15px; background: rgba(0,0,0,0.2); 
+                    border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; 
+                    cursor: pointer; transition: all 0.2s;
+                `;
+                btn.onmouseover = () => {
+                    btn.style.background = 'rgba(94, 234, 212, 0.05)';
+                    btn.style.borderColor = 'rgba(94, 234, 212, 0.3)';
+                };
+                btn.onmouseout = () => {
+                    btn.style.background = 'rgba(0,0,0,0.2)';
+                    btn.style.borderColor = 'rgba(255,255,255,0.05)';
+                };
+                btn.onclick = () => selectCookie(cookie.filename);
+
+                btn.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 18px;">🍪</span>
+                        <div style="display: flex; flex-direction: column;">
+                            <span style="color: #f4f4f5; font-size: 14px; font-weight: 500;">Session</span>
+                            <span style="color: #a1a1aa; font-size: 12px;">${cookie.created_at}</span>
+                        </div>
+                    </div>
+                    <span style="color: #5eead4; font-size: 12px; font-weight: 600;">Select ➔</span>
+                `;
+                list.appendChild(btn);
+            });
+        }
+    } catch (e) {
+        console.error('Could not load cookie sessions:', e);
+    }
+}
+
+async function selectCookie(filename) {
+    try {
+        const res = await fetch('/api/select-cookie', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ filename: filename })
+        });
+
+        if (res.ok) {
+            showMainApp();
+        } else {
+            console.error('Failed to select cookie');
+        }
+    } catch (e) {
+        console.error('API error selecting cookie:', e);
     }
 }
 
 // Run on page load
-document.addEventListener('DOMContentLoaded', checkExistingCookies);
+document.addEventListener('DOMContentLoaded', loadCookieSessions);
 
 // --- Method 2: Drag & Drop Cookies ---
 const dropZone = document.getElementById('drop-zone');
@@ -194,8 +301,8 @@ async function handleFileUpload(file) {
         statusText.style.color = "#4ade80";
         document.getElementById('drop-text').innerText = file.name;
 
-        // Transition to main app
-        setTimeout(showMainApp, 1000);
+        // Refresh the list instead of skipping straight to the app
+        setTimeout(loadCookieSessions, 500);
     } catch (error) {
         statusText.innerText = `❌ Error: ${error.message}`;
         statusText.style.color = "#f87171";
@@ -250,6 +357,12 @@ async function startProcessing() {
                     clearInterval(pollInterval);
                     statusText.innerText = "✅ Processing Complete! Data ready.";
                     statusText.style.color = "#4ade80";
+
+                    // Extract creator name from input (basic split, assuming URL format changes)
+                    // If target is full url, we fallback to just setting the creator to whatever is entered
+                    let extracted = target.split('@').pop().split(/[\/\?]/)[0] || target;
+                    setCreator(extracted);
+
                     // Unlock the chat interface
                     document.getElementById('chat-input').disabled = false;
                     document.getElementById('send-btn').disabled = false;
@@ -302,7 +415,10 @@ async function sendMessage() {
         const fetchRes = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ query: text })
+            body: JSON.stringify({
+                query: text,
+                creator_name: currentCreator
+            })
         });
 
         if (!fetchRes.ok) throw new Error("Could not fetch response from AI.");

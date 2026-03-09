@@ -49,20 +49,30 @@ Rules:
     """
     return system_prompt
 
-def get_rag_response(user_query):
+def get_rag_response(user_query, creator_name=None):
     print("Loading Vector Database...")
     chroma_client = chromadb.PersistentClient(path=CHROMA_PATH)
-    collection = chroma_client.get_collection(name=COLLECTION_NAME)
     
+    try:
+        collection = chroma_client.get_collection(name=COLLECTION_NAME)
+    except Exception:
+        return "It looks like your database isn't initialized yet. Run the Scraper, Processor, and Embedder first!"
+        
     if not user_query.strip():
         return "Please ask a valid question."
 
     # 1. Retrieve the top 5 most relevant chunks from ChromaDB
     try:
-        results = collection.query(
-            query_texts=[user_query],
-            n_results=15 
-        )
+        query_params = {
+            "query_texts": [user_query],
+            "n_results": 15
+        }
+        
+        # Filter by creator if requested
+        if creator_name:
+            query_params["where"] = {"creator": creator_name}
+            
+        results = collection.query(**query_params)
     except Exception as e:
          return "It looks like your database isn't initialized yet. Run the Scraper, Processor, and Embedder first!"
     

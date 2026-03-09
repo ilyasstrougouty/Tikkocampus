@@ -16,6 +16,16 @@ def reset_chroma():
     except Exception:
         pass # Collection might not exist yet
 
+def delete_creator(creator_name):
+    """Deletes all chunks associated with a specific creator from ChromaDB."""
+    try:
+        chroma_client = chromadb.PersistentClient(path=CHROMA_PATH)
+        collection = chroma_client.get_collection(name=COLLECTION_NAME)
+        collection.delete(where={"creator": creator_name})
+        print(f"Purged {creator_name} from ChromaDB.")
+    except Exception:
+        pass # Collection or metadata doesn't exist
+
 def run_embedding_pipeline():
     # 1. Initialize Vector Database
     print("Initializing ChromaDB...")
@@ -42,7 +52,7 @@ def run_embedding_pipeline():
     except sqlite3.OperationalError:
         pass # Column already exists
         
-    cursor.execute("SELECT video_id, transcript, file_path FROM videos WHERE transcript IS NOT NULL AND is_vectorized = 0")
+    cursor.execute("SELECT video_id, transcript, file_path, creator_name FROM videos WHERE transcript IS NOT NULL AND is_vectorized = 0")
     queue = cursor.fetchall()
     
     if not queue:
@@ -53,7 +63,7 @@ def run_embedding_pipeline():
     print(f"Found {len(queue)} transcripts ready for the Vector DB.")
 
     # 4. Process and Embed
-    for video_id, transcript, file_path in queue:
+    for video_id, transcript, file_path, creator_name in queue:
         print(f"-> Chunking and embedding video {video_id}...")
         
         # Split the transcript into chunks
@@ -69,7 +79,8 @@ def run_embedding_pipeline():
             # Metadata is CRITICAL. This is how the LLM cites its sources later.
             metadatas.append({
                 "video_id": video_id,
-                "original_url": f"https://www.tiktok.com/@creator/video/{video_id}",
+                "creator": creator_name,
+                "original_url": f"https://www.tiktok.com/@{creator_name}/video/{video_id}",
                 "chunk_index": i
             })
             ids.append(f"{video_id}_chunk_{i}")

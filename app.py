@@ -41,15 +41,14 @@ class ProcessRequest(BaseModel):
 
 class ChatRequest(BaseModel):
     query: str
+    creator_name: str = None
 
 def run_heavy_pipeline(url: str, max_videos: int = 10):
     """Executes the 3 phases of the pipeline sequentially."""
     global task_state
     try:
-        task_state["status"] = "Phase 0: Wiping old vector database..."
         import db
-        db.reset_database()
-        embedder.reset_chroma()
+        db.init_db()  # Ensure tables exist
         
         task_state["status"] = f"Phase 1: Scraping {max_videos} videos from TikTok..."
         scraper.download_profile_videos(url, max_downloads=max_videos) 
@@ -75,7 +74,7 @@ def run_heavy_pipeline(url: str, max_videos: int = 10):
         count = row[1] if row else 0
         db.save_scrape_history(url, creator, count)
         
-        task_state["status"] = "Done"
+        task_state["status"] = "completed"
     except Exception as e:
         task_state["error"] = str(e)
         task_state["status"] = "Error"
@@ -107,18 +106,78 @@ async def trigger_auth():
     finally:
         task_state["is_running"] = False
 
+from config import COOKIES_DIR
+from datetime import datetime
+
+class CookieSelectRequest(BaseModel):
+    filename: str
+
+@app.delete("/api/history/{creator_name}")
+async def delete_history_creator(creator_name: str):
+    """Hard-deletes a creator and all their vectors from the system."""
+    try:
+        import db
+        import embedder
+        db.delete_creator(creator_name)
+        embedder.delete_creator(creator_name)
+        return {"message": f"Successfully deleted {creator_name} and all associated data."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/api/upload-cookies")
 async def upload_cookies(file: UploadFile = File(...)):
     if not file.filename.endswith('.txt'):
         raise HTTPException(status_code=400, detail="Invalid file type. Must be a .txt file")
     
     try:
-        # Save the uploaded file as cookies.txt
-        with open("cookies.txt", "wb") as buffer:
+        # Generate a unique filename based on the current timestamp
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        unique_filename = f"cookie_{timestamp}.txt"
+        save_path = os.path.join(COOKIES_DIR, unique_filename)
+        
+        # Save to the history folder
+        with open(save_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
-        return {"message": "Cookies uploaded successfully"}
+            
+        # Immediately set it as the active cookie
+        shutil.copyfile(save_path, "cookies.txt")
+        
+        return {"message": "Cookies uploaded successfully", "filename": unique_filename}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to save cookies: {str(e)}")
+
+@app.get("/api/list-cookies")
+async def list_cookies():
+    """Returns a list of all saved cookie profiles."""
+    cookies = []
+    if os.path.exists(COOKIES_DIR):
+        for filename in os.listdir(COOKIES_DIR):
+            if filename.endswith(".txt"):
+                file_path = os.path.join(COOKIES_DIR, filename)
+                # Get file creation/modification time for display
+                mtime = os.path.getmtime(file_path)
+                created_str = datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %H:%M:%S")
+                cookies.append({
+                    "filename": filename,
+                    "created_at": created_str,
+                    "timestamp": mtime
+                })
+        # Sort newest first
+        cookies.sort(key=lambda x: x["timestamp"], reverse=True)
+    return {"cookies": cookies}
+
+@app.post("/api/select-cookie")
+async def select_cookie(req: CookieSelectRequest):
+    """Sets a historical cookie file as the active cookies.txt."""
+    source_path = os.path.join(COOKIES_DIR, req.filename)
+    if not os.path.exists(source_path):
+        raise HTTPException(status_code=404, detail="Cookie file not found")
+    
+    try:
+        shutil.copyfile(source_path, "cookies.txt")
+        return {"message": f"Successfully loaded {req.filename}"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/check-cookies")
 async def check_cookies():
@@ -152,10 +211,11 @@ async def get_status():
 async def chat_endpoint(req: ChatRequest):
     """Endpoint for the JS frontend to ask questions."""
     try:
-        response = chat.get_rag_response(req.query)
+        response = chat.get_rag_response(req.query, req.creator_name)
         return {"response": response}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        # Return error as a chat message so the user sees what went wrong
+        return {"response": f"❌ Error: {str(e)}"}
 
 class SettingsRequest(BaseModel):
     model: str
@@ -271,6 +331,7 @@ if __name__ == "__main__":
         width=1000, 
         height=700, 
         frameless=True, 
+        easy_drag=False,
         text_select=True,
         js_api=api
     )
