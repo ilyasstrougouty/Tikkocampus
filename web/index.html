@@ -58,28 +58,38 @@
                 </div>
 
                 <div style="display: flex; flex-direction: column; gap: 25px;">
-                    <!-- Existing Sessions List -->
+                    <!-- Native TikTok Login (PRIMARY) -->
+                    <div style="background: rgba(255,255,255,0.03); padding: 25px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); text-align: left;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
+                            <h3 style="margin: 0; font-size: 18px; color: #f4f4f5;">Login via TikTok Window</h3>
+                            <span style="font-size: 12px; background: rgba(59, 130, 246, 0.1); color: #3b82f6; padding: 4px 10px; border-radius: 20px; font-weight: 600;">Recommended</span>
+                        </div>
+                        <p style="color: #a1a1aa; font-size: 14px; margin: 0 0 20px 0; line-height: 1.5;">Open a secure window to log directly into TikTok.</p>
+                        
+                        <button onclick="triggerLogin()" id="native-login-btn" style="width: 100%; padding: 14px; font-size: 15px; font-weight: 600; border-radius: 12px; background: #3b82f6; color: white; border: none; cursor: pointer; transition: 0.2s;">
+                            Log In with TikTok
+                        </button>
+                        <div id="login-status" style="margin-top: 12px; font-size: 13px; font-weight: 500; text-align: center; display: none;"></div>
+                    </div>
+
+                    <!-- Existing Sessions List (SECONDARY) -->
                     <div id="existing-sessions-container"
                         style="display: none; background: rgba(255,255,255,0.03); padding: 25px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); text-align: left;">
-                        <h3 style="margin: 0 0 15px 0; font-size: 18px; color: #f4f4f5;">Existing Sessions</h3>
-                        <p style="color: #a1a1aa; font-size: 14px; margin: 0 0 15px 0; line-height: 1.5;">Select a
-                            previously uploaded cookie profile to continue.</p>
+                        <h3 style="margin: 0 0 15px 0; font-size: 18px; color: #f4f4f5;">Stored Sessions</h3>
+                        <p style="color: #a1a1aa; font-size: 14px; margin: 0 0 15px 0; line-height: 1.5;">Select a previous profile to resume.</p>
                         <div id="cookie-list" style="display: flex; flex-direction: column; gap: 8px;">
                             <!-- Populated by JS -->
                         </div>
                     </div>
 
-                    <!-- Cookie Upload -->
+                    <!-- Cookie Upload (FALLBACK) -->
                     <div
                         style="background: rgba(255,255,255,0.03); padding: 25px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); text-align: left;">
                         <div
                             style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
-                            <h3 style="margin: 0; font-size: 18px; color: #f4f4f5;">Upload Cookies.txt</h3>
-                            <span
-                                style="font-size: 12px; background: rgba(94, 234, 212, 0.1); color: #5eead4; padding: 4px 10px; border-radius: 20px; font-weight: 600;">Required</span>
+                            <h3 style="margin: 0; font-size: 18px; color: #f4f4f5;">Manual Cookie Upload</h3>
                         </div>
-                        <p style="color: #a1a1aa; font-size: 14px; margin: 0 0 20px 0; line-height: 1.5;">Use a browser
-                            extension like <i>Get cookies.txt LOCALLY</i> to export your TikTok session cookies.</p>
+                        <p style="color: #a1a1aa; font-size: 14px; margin: 0 0 20px 0; line-height: 1.5;">Import <code>cookies.txt</code> from a browser extension.</p>
 
                         <div id="drop-zone"
                             style="background: rgba(0,0,0,0.2); border: 2px dashed rgba(255,255,255,0.15); border-radius: 12px; padding: 40px 20px; text-align: center; cursor: pointer; transition: all 0.2s;"
@@ -119,20 +129,26 @@
         </aside>
 
         <!-- CENTER AREA: Main Dashboard & Chat Content -->
-        <main style="flex-grow: 1; display: flex; flex-direction: column; position: relative;">
+        <main style="flex-grow: 1; display: flex; flex-direction: column; position: relative; min-height: 0;">
 
             <!-- HEADER -->
             <header
-                style="height: 60px; min-height: 60px; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; border-bottom: 1px solid rgba(255,255,255,0.05);">
-                <div style="display: flex; align-items: center; gap: 15px;">
+                style="height: 60px; min-height: 60px; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.2); backdrop-filter: blur(5px);">
+                <div style="display: flex; align-items: center; gap: 20px;">
+                    <!-- Brand Section -->
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <img src="/static/logo.png" style="width: 24px; height: 24px; object-fit: contain;">
+                        <span style="font-weight: 700; font-size: 16px; color: #f4f4f5; letter-spacing: -0.5px;">TikTok RAG</span>
+                    </div>
+
                     <!-- Small nav tabs for center content -->
                     <div
-                        style="display: flex; gap: 10px; background: rgba(0,0,0,0.2); padding: 4px; border-radius: 8px;">
+                        style="display: flex; gap: 10px; background: rgba(255,255,255,0.05); padding: 4px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
                         <button onclick="showDashboard()" id="tab-dashboard"
-                            style="padding: 6px 12px; border-radius: 6px; border: none; background: rgba(255,255,255,0.1); color: white; font-weight: 500; font-size: 13px; cursor: pointer;">🔍
+                            style="padding: 6px 14px; border-radius: 6px; border: none; background: rgba(255,255,255,0.1); color: white; font-weight: 600; font-size: 13px; cursor: pointer; transition: 0.2s;">🔍
                             Scraper</button>
                         <button onclick="showChat()" id="tab-chat"
-                            style="padding: 6px 12px; border-radius: 6px; border: none; background: transparent; color: #a1a1aa; font-weight: 500; font-size: 13px; cursor: pointer;">💬
+                            style="padding: 6px 14px; border-radius: 6px; border: none; background: transparent; color: #a1a1aa; font-weight: 600; font-size: 13px; cursor: pointer; transition: 0.2s;">💬
                             Chat</button>
                     </div>
                 </div>
@@ -171,7 +187,7 @@
 
             <!-- Chat View -->
             <div id="chat-view"
-                style="display: none; flex-grow: 1; padding: 20px 20px 0 20px; flex-direction: column; position: relative;">
+                style="display: none; flex-grow: 1; padding: 20px 20px 0 20px; flex-direction: column; position: relative; min-height: 0;">
 
                 <div
                     style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 15px;">

@@ -27,9 +27,54 @@ def cleanup_temp_folder(max_age_hours=24):
                     
     print(f"Garbage collection finished. Deleted {deleted_count} old files.")
 
+import json
+import requests
+from playwright.sync_api import sync_playwright
+from playwright_stealth import Stealth
+
+def parse_netscape_cookies(filename):
+    cookies = []
+    if not os.path.exists(filename):
+        return cookies
+    with open(filename, 'r') as f:
+        for line in f:
+            if line.startswith('#') or not line.strip():
+                continue
+            parts = line.strip().split('\t')
+            if len(parts) >= 7:
+                cookies.append({
+                    'name': parts[5],
+                    'value': parts[6],
+                    'domain': parts[0],
+                    'path': parts[2],
+                    'secure': parts[3] == 'TRUE',
+                    'expires': float(parts[4]) if parts[4] != '0' else -1
+                })
+    return cookies
+
+def download_video_file(url, video_id, page):
+    """Downloads the raw mp4 video to the temp folder via playwright api route to reuse signatures"""
+    file_path = os.path.join(TEMP_PROCESSING_DIR, f"{video_id}.mp4")
+    
+    # Use playwright context to ensure cookies, stealth configs, and headers map
+    try:
+        response = page.request.get(url, headers={
+            "Referer": "https://www.tiktok.com/"
+        })
+        if response.status == 200:
+            with open(file_path, 'wb') as f:
+                f.write(response.body())
+            return file_path
+        else:
+            print(f"Failed to download MP4. Status code: {response.status}", file=sys.stderr)
+            return None
+    except Exception as e:
+        print(f"Playwright download exception: {e}", file=sys.stderr)
+        return None
+
 def download_profile_videos(profile_url, max_downloads=MAX_VIDEOS_PER_PROFILE):
     """
-    Downloads the latest videos from a TikTok profile and extracts metadata.
+    Downloads the latest videos from a TikTok profile using Playwright.
     """
     profile_url = profile_url.strip().rstrip('/')
     
@@ -41,88 +86,141 @@ def download_profile_videos(profile_url, max_downloads=MAX_VIDEOS_PER_PROFILE):
         username = profile_url.split('/')[-1]
         profile_url = f"https://www.tiktok.com/@{username}"
 
-    target_username = profile_url.split('@')[-1].split('/')[0]
+    target_username = profile_url.split('@')[-1].split('/')[0].split('?')[0]
+    print(f"Starting Playwright download for {profile_url} (Max {max_downloads} videos)")
 
-    def profile_match_filter(info_dict, **kwargs):
-        if target_username:
-            uploader = info_dict.get('uploader')
-            if uploader and uploader.lower() != target_username.lower():
-                return f"Skipping {uploader} (target is {target_username})"
-        return None
+    # CLEANUP: Remove any existing PENDING videos for this specific creator 
+    # to ensure they don't get mixed in with the new requested batch.
+    import db
+    try:
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        
+        # We only delete the ones WITHOUT a transcript (ghosts of previous failed scrapes)
+        cursor.execute("SELECT file_path FROM videos WHERE creator_name = ? AND transcript IS NULL", (target_username,))
+        pending_files = cursor.fetchall()
+        for (fpath,) in pending_files:
+            if fpath and os.path.exists(fpath):
+                os.remove(fpath)
+        
+        cursor.execute("DELETE FROM videos WHERE creator_name = ? AND transcript IS NULL", (target_username,))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"Pre-scrape cleanup error (non-fatal): {e}")
 
     extracted_count = 0
-    def post_extraction_hook(d):
-        nonlocal extracted_count
-        if d['status'] == 'finished' or d['status'] == 'already_downloaded':
-            # Extract metadata from the completed download dict
-            info = d.get('info_dict', {})
-            video_id = info.get('id')
-            
-            if not video_id:
-                return
-
-            upload_date = info.get('upload_date')
-            title = info.get('title', '')
-            description = info.get('description', '')
-            caption = title if title else description
-            creator_name = info.get('uploader') or info.get('channel') or 'unknown'
-            file_path = d.get('filename') # Absolute path to the saved/cached file
-            
-            print(f"Saving database metadata for video {video_id}")
-            insert_video_metadata(
-                video_id=video_id,
-                upload_date=upload_date,
-                caption=caption,
-                creator_name=creator_name,
-                file_path=file_path
+    found_videos = []
+    
+    try:
+        with Stealth().use_sync(sync_playwright()) as p:
+            browser = p.chromium.launch(headless=False)
+            # Use a realistic user agent to avoid basic blocks
+            context = browser.new_context(
+                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
             )
-            extracted_count += 1
             
-            # Enforce our own download limit AFTER successful extraction
-            if extracted_count >= max_downloads:
-                raise yt_dlp.utils.MaxDownloadsReached()
+            # Load the authenticated cookies from the native login window
+            cookies = parse_netscape_cookies('cookies.txt')
+            if not cookies:
+                print("Warning: No cookies found or could not parse cookies.txt. Trying anonymously.")
+            else:
+                context.add_cookies(cookies)
 
-    ydl_opts = {
-        'outtmpl': f'{TEMP_PROCESSING_DIR}/%(id)s.%(ext)s',
-        # We do NOT set max_downloads here — yt-dlp's counter is unreliable.
-        # Instead we enforce the limit manually in the progress_hooks above.
-        'quiet': False,
-        'cookiefile': 'cookies.txt',        # Use a dedicated cookies file
-        'sleep_interval': 1,                # rate limiting: pause randomly 
-        'max_sleep_interval': 3,            # for 1 to 3 seconds
-        'match_filter': profile_match_filter,
-        'socket_timeout': 60,              # Increase timeout from 20s default to 60s
-        'retries': 5,                       # Retry failed downloads up to 5 times
-        'extractor_retries': 3,             # Retry failed extractions up to 3 times
-        'progress_hooks': [post_extraction_hook], # Runs after every single video
-    }
+            page = context.new_page()
 
-    print(f"Starting download for {profile_url} (Max {max_downloads} videos)")
+            def handle_response(response):
+                if "item_list" in response.url or "post/item_list" in response.url:
+                    try:
+                        data = response.json()
+                        itemList = data.get('itemList', [])
+                        for item in itemList:
+                            found_videos.append(item)
+                    except Exception as e:
+                        pass # Silently fail chunk parses to avoid unhandled exception crashes in bg thread
 
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        try:
-            # We just trigger the download and let the `progress_hooks` handle the DB insertion instantly
-            ydl.download([profile_url])
+            page.on("response", handle_response)
             
+            print("Navigating to profile to intercept API...")
+            try:
+                page.goto(profile_url, timeout=60000)
+                page.wait_for_timeout(3000)
+                
+                # Scroll to trigger pagination if needed
+                attempts = 0
+                while len(found_videos) < max_downloads and attempts < 10:
+                    page.keyboard.press("PageDown")
+                    page.keyboard.press("PageDown")
+                    page.wait_for_timeout(2000)
+                    attempts += 1
+                    
+            except Exception as e:
+                print(f"Error navigating the profile: {e}", file=sys.stderr)
+                
+            print(f"Intercepted {len(found_videos)} video metadata chunks from API.")
+
+            # Deduplicate videos by ID
+            unique_videos = {}
+            for v in found_videos:
+                vid = v.get('id')
+                if vid and vid not in unique_videos:
+                    unique_videos[vid] = v
+
+            video_list = list(unique_videos.values())
+            
+            # Process up to max_downloads
+            for count, item in enumerate(video_list[:max_downloads]):
+                video_id = item.get('id')
+                if not video_id:
+                    continue
+                    
+                # Get best quality mp4 url
+                video_url = item.get('video', {}).get('playAddr') or item.get('video', {}).get('downloadAddr')
+                if not video_url:
+                    print(f"Skipping {video_id}: No mp4 URL found.")
+                    continue
+                    
+                upload_date = item.get('createTime', 0)
+                # Convert timestamp to YYYYMMDD string for db matching old yt-dlp format
+                from datetime import datetime
+                if upload_date:
+                    upload_date = datetime.fromtimestamp(upload_date).strftime('%Y%m%d')
+                else:
+                    upload_date = ""
+                    
+                description = item.get('desc', '')
+                creator_name = item.get('author', {}).get('uniqueId') or target_username
+                
+                print(f"[{count+1}/{max_downloads}] Downloading mp4 for {video_id}...")
+                file_path = download_video_file(video_url, video_id, page)
+                
+                if file_path:
+                    print(f"Saving database metadata for video {video_id}")
+                    insert_video_metadata(
+                        video_id=video_id,
+                        upload_date=upload_date,
+                        caption=description,
+                        creator_name=creator_name,
+                        file_path=file_path
+                    )
+                    extracted_count += 1
+                    
             print(f"Successfully processed profile: {profile_url} (Extracted {extracted_count} videos)")
-            
             if extracted_count < max_downloads:
                 print(f"\nWarning: Scrape ended early. Only extracted {extracted_count} of {max_downloads} videos.", file=sys.stderr)
-            
-        except yt_dlp.utils.MaxDownloadsReached:
-             print(f"Reached max downloads limit ({max_downloads}).")
-        except yt_dlp.utils.DownloadError as e:
-            print(f"Error scraping {profile_url}: {e}", file=sys.stderr)
-            raise e 
-        except Exception as e:
-            print(f"Error scraping {profile_url}: {e}", file=sys.stderr)
-            raise e
+                
+            browser.close()
+            return target_username
+    except Exception as e:
+        print(f"Playwright initialization error: {e}", file=sys.stderr)
+        return target_username
+
+    # The parsing logic has been moved up into the browser context block
 
 if __name__ == "__main__":
     import db
     db.init_db() # Ensure DB exists
     cleanup_temp_folder() # Garbage collection
-    
     
     try:
         with open('targets.txt', 'r') as f:

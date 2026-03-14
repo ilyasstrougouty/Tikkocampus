@@ -50,30 +50,54 @@ def run_heavy_pipeline(url: str, max_videos: int = 10):
         import db
         db.init_db()  # Ensure tables exist
         
+        # Determine creator name from URL for filtering
+        # URLs are usually like https://www.tiktok.com/@creatorname
+        creator_filter = None
+        if '@' in url:
+            creator_filter = url.split('@')[-1].split('/')[0].split('?')[0]
+        
         task_state["status"] = f"Phase 1: Scraping {max_videos} videos from TikTok..."
-        scraper.download_profile_videos(url, max_downloads=max_videos) 
+        # Capture the actual creator name used by the scraper
+        actual_creator = scraper.download_profile_videos(url, max_downloads=max_videos) 
+        
+        # If scraper failed to determine a name, fallback to url-based one
+        final_creator = actual_creator or creator_filter or "unknown"
         
         # Pass a callback to processor to update ETA on the frontend
         def status_update_callback(msg):
             task_state["status"] = f"Phase 2: {msg}"
         
-        transcription_method = os.environ.get("TRANSCRIPTION_METHOD", "local")
-        processor.run_processing_pipeline(status_callback=status_update_callback, method=transcription_method)
+        # Default to Groq cloud if they have a API key config, otherwise fallback to local
+        transcription_method = os.environ.get("TRANSCRIPTION_METHOD")
+        if not transcription_method or transcription_method == "local":
+            if os.environ.get("GROQ_API_KEY"):
+                transcription_method = "groq_whisper"
+            else:
+                transcription_method = "local"
+                
+        processor.run_processing_pipeline(
+            status_callback=status_update_callback, 
+            method=transcription_method,
+            creator_filter=final_creator
+        )
         
         task_state["status"] = "Phase 3: Chunking text and building Vector DB..."
-        embedder.run_embedding_pipeline()
+        embedder.run_embedding_pipeline(creator_filter=final_creator)
         
         # Save to history
         import sqlite3
         conn = sqlite3.connect(db.DB_PATH if hasattr(db, 'DB_PATH') else 'tiktok_data.db')
         c = conn.cursor()
-        c.execute('SELECT creator_name, COUNT(*) FROM videos GROUP BY creator_name LIMIT 1')
-        row = c.fetchone()
-        conn.close()
-        creator = row[0] if row else 'unknown'
-        count = row[1] if row else 0
-        db.save_scrape_history(url, creator, count)
         
+        # Use the finalized creator name to get accurate counts
+        c.execute('SELECT COUNT(*) FROM videos WHERE creator_name = ?', (final_creator,))
+        row = c.fetchone()
+        final_count = row[0] if row else 0
+        conn.close()
+        
+        db.save_scrape_history(url, final_creator, final_count)
+        
+        task_state["creator_name"] = final_creator
         task_state["status"] = "completed"
     except Exception as e:
         task_state["error"] = str(e)
@@ -98,6 +122,18 @@ async def trigger_auth():
         # Run the Playwright auth flow in an isolated subprocess to prevent asyncio loop clashes
         subprocess.run([sys.executable, "auth.py"], check=True)
         task_state["status"] = "Authentication Successful!"
+        
+        # Save a copy to the cookies history directory
+        if os.path.exists("cookies.txt"):
+            from config import COOKIES_DIR
+            from datetime import datetime
+            import shutil
+            os.makedirs(COOKIES_DIR, exist_ok=True)
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            unique_filename = f"cookie_{timestamp}.txt"
+            shutil.copyfile("cookies.txt", os.path.join(COOKIES_DIR, unique_filename))
+            enforce_cookie_limit()
+            
         return {"message": "Cookies extracted."}
     except Exception as e:
         task_state["error"] = str(e)
@@ -141,6 +177,7 @@ async def upload_cookies(file: UploadFile = File(...)):
             
         # Immediately set it as the active cookie
         shutil.copyfile(save_path, "cookies.txt")
+        enforce_cookie_limit()
         
         return {"message": "Cookies uploaded successfully", "filename": unique_filename}
     except Exception as e:
@@ -149,6 +186,7 @@ async def upload_cookies(file: UploadFile = File(...)):
 @app.get("/api/list-cookies")
 async def list_cookies():
     """Returns a list of all saved cookie profiles."""
+    enforce_cookie_limit()
     cookies = []
     if os.path.exists(COOKIES_DIR):
         for filename in os.listdir(COOKIES_DIR):
@@ -179,11 +217,85 @@ async def select_cookie(req: CookieSelectRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.delete("/api/cookies/{filename}")
+async def delete_cookie_file(filename: str):
+    """Deletes a historical cookie file from the disk."""
+    file_path = os.path.join(COOKIES_DIR, filename)
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Cookie file not found")
+    
+    try:
+        os.remove(file_path)
+        return {"message": f"Deleted {filename} successfully."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/api/check-cookies")
 async def check_cookies():
     """Check if cookies.txt already exists on disk."""
     exists = os.path.isfile("cookies.txt") and os.path.getsize("cookies.txt") > 0
     return {"exists": exists}
+
+@app.get("/api/validate-session")
+async def validate_session():
+    """Checks if the current cookies are actually valid for TikTok."""
+    if not os.path.exists("cookies.txt"):
+        return {"valid": False, "error": "No cookies found"}
+    
+    import httpx
+    try:
+        from scraper import parse_netscape_cookies
+        raw_cookies = parse_netscape_cookies("cookies.txt")
+        # Extract name=value pairs for httpx
+        cookies = {c['name']: c['value'] for c in raw_cookies}
+        
+        async with httpx.AsyncClient(cookies=cookies, follow_redirects=True, timeout=10.0) as client:
+            # Check TikTok home page with more realistic headers
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+                "Accept-Language": "en-US,en;q=0.9",
+                "Referer": "https://www.tiktok.com/"
+            }
+            resp = await client.get("https://www.tiktok.com/", headers=headers)
+            
+            # Check for redirect to login or presence of login markers
+            final_url = str(resp.url)
+            page_text = resp.text.lower()
+            
+            if "/login" in final_url.lower() or "passport.tiktok.com" in final_url or "verify-login" in page_text:
+                print(f"Session invalidated: Redirected to {final_url}")
+                return {"valid": False}
+                
+            return {"valid": True}
+    except Exception as e:
+        print(f"Session validation error: {str(e)}")
+        return {"valid": False, "error": str(e)}
+
+def enforce_cookie_limit():
+    """Ensures there are never more than 4 cookie files in the directory."""
+    try:
+        if not os.path.exists(COOKIES_DIR):
+            return
+            
+        files = [f for f in os.listdir(COOKIES_DIR) if f.endswith(".txt")]
+        if len(files) <= 4:
+            return
+            
+        # Sort by modification time (descending)
+        file_paths = [os.path.join(COOKIES_DIR, f) for f in files]
+        file_paths.sort(key=os.path.getmtime, reverse=True)
+        
+        # Keep the top 4, delete the rest
+        to_delete = file_paths[4:]
+        for path in to_delete:
+            try:
+                os.remove(path)
+                print(f"Enforced limit: Deleted old cookie file {os.path.basename(path)}")
+            except Exception as e:
+                print(f"Failed to delete {path}: {e}")
+    except Exception as e:
+        print(f"Error enforcing cookie limit: {e}")
 
 @app.post("/api/process")
 async def trigger_pipeline(req: ProcessRequest, background_tasks: BackgroundTasks):
@@ -264,9 +376,12 @@ async def get_settings():
     """Returns the currently active settings so the UI can display them."""
     import chat
     model = getattr(chat, 'LLM_MODEL', os.environ.get('LLM_MODEL', 'groq/llama-3.1-8b-instant'))
-    transcription = os.environ.get("TRANSCRIPTION_METHOD", "local")
     has_groq_key = bool(os.environ.get("GROQ_API_KEY"))
     has_openai_key = bool(os.environ.get("OPENAI_API_KEY"))
+    
+    transcription = os.environ.get("TRANSCRIPTION_METHOD")
+    if not transcription or transcription == "local":
+        transcription = "groq_whisper" if has_groq_key else "local"
     return {
         "model": model,
         "transcription_method": transcription,

@@ -39,17 +39,20 @@ body {
 #chat-box {
     flex-grow: 1;
     overflow-y: auto;
+    min-height: 0;   /* Fix for flexbox overflow issues */
     margin-bottom: 20px;
     display: flex;
     flex-direction: column;
     gap: 15px;
     padding-right: 10px;
     /* Space for scrollbar */
+    scrollbar-width: thin; /* Firefox support */
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
 }
 
 /* Custom Scrollbar for dark theme */
 ::-webkit-scrollbar {
-    width: 6px;
+    width: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -57,12 +60,16 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.25);
     border-radius: 10px;
+    border: 2px solid transparent;
+    background-clip: content-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.4);
+    border: 2px solid transparent;
+    background-clip: content-box;
 }
 
 /* Message Bubbles */

@@ -1,5 +1,9 @@
 let pollInterval;
 let currentCreator = null;
+let apiState = {
+    has_groq_key: false,
+    has_openai_key: false
+};
 
 // --- UI Navigation ---
 function setCreator(creatorName) {
@@ -15,13 +19,43 @@ function setCreator(creatorName) {
     }
 }
 
-function showMainApp() {
+async function showMainApp() {
+    // Validate session before showing the app
+    const isValid = await validateSession();
+    if (!isValid) return;
+
     document.getElementById('login-view').style.display = 'none';
     const appContainer = document.getElementById('dashboard-view');
     appContainer.style.display = 'flex';
     appContainer.style.animation = "fadeIn 0.5s ease";
     loadHistory();
     loadSettings();
+}
+
+async function validateSession() {
+    try {
+        const res = await fetch('/api/validate-session');
+        const data = await res.json();
+        if (!data.valid) {
+            console.warn("Session invalid:", data.error || "Redirected to login");
+            // Switch back to login view
+            document.getElementById('login-view').style.display = 'flex';
+            document.getElementById('dashboard-view').style.display = 'none';
+            document.getElementById('chat-view').style.display = 'none';
+            
+            const status = document.getElementById('login-status');
+            if (status) {
+                status.style.display = "block";
+                status.style.color = "#f87171";
+                status.innerText = "⚠️ Session expired or invalid. Please log in again.";
+            }
+            return false;
+        }
+        return true;
+    } catch (e) {
+        console.error("Validation failed:", e);
+        return false;
+    }
 }
 
 function toggleSidebar() {
@@ -39,7 +73,8 @@ function startNewScrape() {
     showDashboard();
 }
 
-function showDashboard() {
+async function showDashboard() {
+    if (!(await validateSession())) return;
     document.getElementById('dashboard-view').style.display = 'flex';
     document.getElementById('chat-view').style.display = 'none';
     // Update tab styles
@@ -49,7 +84,8 @@ function showDashboard() {
     document.getElementById('tab-chat').style.color = '#a1a1aa';
 }
 
-function showChat() {
+async function showChat() {
+    if (!(await validateSession())) return;
     document.getElementById('dashboard-view').style.display = 'none';
     document.getElementById('chat-view').style.display = 'flex';
     // Update tab styles
@@ -65,6 +101,7 @@ function toggleSettings() {
         sidebar.style.right = '-350px';
     } else {
         sidebar.style.right = '0px';
+        updateKeyPlaceholder();
     }
 }
 
@@ -90,6 +127,10 @@ async function loadSettings() {
             }
         }
 
+        // Store saved state
+        apiState.has_groq_key = data.has_groq_key;
+        apiState.has_openai_key = data.has_openai_key;
+
         // Show active config status
         const statusEl = document.getElementById('settings-status');
         const modelLabel = modelSelect.options[modelSelect.selectedIndex].text;
@@ -98,6 +139,7 @@ async function loadSettings() {
             data.has_openai_key ? '🔑 OpenAI key saved' : '⚠️ No API key set';
 
         statusEl.innerHTML = `<span style="color: #94a3b8;">Active: <b style="color:#e2e8f0">${modelLabel}</b> · <b style="color:#e2e8f0">${transLabel}</b> · ${keyStatus}</span>`;
+        updateKeyPlaceholder();
     } catch (e) {
         console.error('Failed to load settings:', e);
     }
@@ -190,7 +232,10 @@ async function loadCookieSessions() {
             container.style.display = 'block';
             list.innerHTML = '';
 
-            data.cookies.forEach(cookie => {
+            // LIMIT TO 4 MOST RECENT
+            const recentCookies = data.cookies.slice(0, 4);
+
+            recentCookies.forEach(cookie => {
                 const btn = document.createElement('div');
                 btn.style.cssText = `
                     display: flex; justify-content: space-between; align-items: center; 
@@ -206,6 +251,8 @@ async function loadCookieSessions() {
                     btn.style.background = 'rgba(0,0,0,0.2)';
                     btn.style.borderColor = 'rgba(255,255,255,0.05)';
                 };
+                
+                // Clicking the main body selects the cookie
                 btn.onclick = () => selectCookie(cookie.filename);
 
                 btn.innerHTML = `
@@ -216,13 +263,39 @@ async function loadCookieSessions() {
                             <span style="color: #a1a1aa; font-size: 12px;">${cookie.created_at}</span>
                         </div>
                     </div>
-                    <span style="color: #5eead4; font-size: 12px; font-weight: 600;">Select ➔</span>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <span style="color: #5eead4; font-size: 12px; font-weight: 600;">Select ➔</span>
+                        <button onclick="event.stopPropagation(); deleteCookie('${cookie.filename}')" 
+                                style="background: transparent; border: none; font-size: 14px; cursor: pointer; color: #64748b; padding: 4px; border-radius: 4px; display: flex; align-items: center; justify-content: center; transition: 0.2s;"
+                                onmouseover="this.style.color='#f87171'; this.style.background='rgba(248, 113, 113, 0.1)'"
+                                onmouseout="this.style.color='#64748b'; this.style.background='transparent'" title="Delete Session">
+                            🗑️
+                        </button>
+                    </div>
                 `;
                 list.appendChild(btn);
             });
+        } else {
+            container.style.display = 'none';
         }
     } catch (e) {
         console.error('Could not load cookie sessions:', e);
+    }
+}
+
+async function deleteCookie(filename) {
+    if (!confirm(`Permanently delete this session file (${filename})?`)) return;
+    
+    try {
+        const res = await fetch(`/api/cookies/${filename}`, { method: 'DELETE' });
+        if (res.ok) {
+            loadCookieSessions();
+        } else {
+            const data = await res.json();
+            alert(`Delete failed: ${data.detail || 'Unknown error'}`);
+        }
+    } catch (e) {
+        console.error('Delete error:', e);
     }
 }
 
@@ -244,8 +317,67 @@ async function selectCookie(filename) {
     }
 }
 
+// --- Native TikTok Login Flow ---
+async function triggerLogin() {
+    const btn = document.getElementById('native-login-btn');
+    const status = document.getElementById('login-status');
+    btn.disabled = true;
+    btn.innerText = "Waiting for Login Window...";
+    status.style.display = "block";
+    status.style.color = "#fbbf24";
+    status.innerText = "Please complete the login in the pop-up window...";
+
+    try {
+        const res = await fetch('/api/auth', { method: 'POST' });
+        
+        if (res.ok) {
+            status.innerText = "✅ Successfully logged in!";
+            status.style.color = "#4ade80";
+            
+            // Wait for 1 second, then reload sessions
+            setTimeout(loadCookieSessions, 1000);
+            
+            // Auto redirect to main app immediately as per request
+            setTimeout(showMainApp, 1500);
+        } else {
+            const data = await res.json();
+            throw new Error(data.detail || "Login failed");
+        }
+    } catch (e) {
+        status.innerText = `❌ Error: ${e.message}`;
+        status.style.color = "#f87171";
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "Log In with TikTok";
+    }
+}
+
 // Run on page load
-document.addEventListener('DOMContentLoaded', loadCookieSessions);
+async function initApp() {
+    // 1. Initial Load of sessions
+    loadCookieSessions();
+    
+    // 2. Settings Listeners
+    document.getElementById('model-select').addEventListener('change', updateKeyPlaceholder);
+    document.getElementById('transcription-method').addEventListener('change', updateKeyPlaceholder);
+
+    // 3. Check if we already have an active cookies.txt session AND if it's valid
+    try {
+        const res = await fetch('/api/check-cookies');
+        const data = await res.json();
+        if (data.exists) {
+            console.log("Active session found. Validating...");
+            const isValid = await validateSession();
+            if (isValid) {
+                showMainApp();
+            }
+        }
+    } catch (e) {
+        console.error("Check cookies failed:", e);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', initApp);
 
 // --- Method 2: Drag & Drop Cookies ---
 const dropZone = document.getElementById('drop-zone');
@@ -358,10 +490,14 @@ async function startProcessing() {
                     statusText.innerText = "✅ Processing Complete! Data ready.";
                     statusText.style.color = "#4ade80";
 
-                    // Extract creator name from input (basic split, assuming URL format changes)
-                    // If target is full url, we fallback to just setting the creator to whatever is entered
-                    let extracted = target.split('@').pop().split(/[\/\?]/)[0] || target;
-                    setCreator(extracted);
+                    // Use the creator name reported by the server
+                    if (state.creator_name) {
+                        setCreator(state.creator_name);
+                    } else {
+                        // Fallback only if server didn't report it
+                        let extracted = target.split('@').pop().split(/[\/\?]/)[0] || target;
+                        setCreator(extracted);
+                    }
 
                     // Unlock the chat interface
                     document.getElementById('chat-input').disabled = false;
@@ -442,6 +578,25 @@ document.getElementById("chat-input").addEventListener("keypress", function (eve
 });
 
 // --- LLM Settings ---
+function updateKeyPlaceholder() {
+    const model = document.getElementById('model-select').value;
+    const trans = document.getElementById('transcription-method').value;
+    const input = document.getElementById('api-key-input');
+    const statusEl = document.getElementById('settings-status');
+
+    let needsGroq = model.startsWith('groq/') || trans === 'groq_whisper';
+    let needsOpenAI = model.startsWith('gpt') || model.startsWith('openai');
+
+    if ((needsGroq && apiState.has_groq_key) || (needsOpenAI && apiState.has_openai_key)) {
+        input.placeholder = "🔑 API Key Saved (Enter new to overwrite)";
+    } else if (needsGroq || needsOpenAI) {
+        input.placeholder = "Paste Groq/OpenAI key...";
+    } else {
+        input.placeholder = "No key required for local models";
+        statusEl.innerText = ""; // Clear warning if we switch to local
+    }
+}
+
 async function saveSettings() {
     const modelSelection = document.getElementById('model-select').value;
     const apiKey = document.getElementById('api-key-input').value;
@@ -454,8 +609,17 @@ async function saveSettings() {
         const modelLabel = modelSelect.options[modelSelect.selectedIndex].text;
         const transLabel = transcriptionSelect.options[transcriptionSelect.selectedIndex].text;
 
-        if ((transMethod === 'groq_whisper' || modelSelection.startsWith('groq/') || modelSelection.startsWith('gpt')) && !apiKey) {
-            statusEl.innerText = "⚠️ Please enter an API key.";
+        let needsGroq = modelSelection.startsWith('groq/') || transMethod === 'groq_whisper';
+        let needsOpenAI = modelSelection.startsWith('gpt') || modelSelection.startsWith('openai');
+
+        // Smarter validation: only block if NO key exists (neither in input nor on server)
+        if (needsGroq && !apiKey && !apiState.has_groq_key) {
+            statusEl.innerText = "⚠️ Please enter a Groq API key.";
+            statusEl.style.color = "#fbbf24";
+            return;
+        }
+        if (needsOpenAI && !apiKey && !apiState.has_openai_key) {
+            statusEl.innerText = "⚠️ Please enter an OpenAI API key.";
             statusEl.style.color = "#fbbf24";
             return;
         }
@@ -477,8 +641,16 @@ async function saveSettings() {
 
         if (!res.ok) throw new Error("Failed to save settings");
 
+        // Update local state if a new key was provided
+        if (apiKey) {
+            if (needsGroq) apiState.has_groq_key = true;
+            if (needsOpenAI) apiState.has_openai_key = true;
+            document.getElementById('api-key-input').value = ""; // Clear input after successful save
+        }
+
         statusEl.innerHTML = `✅ <b>Saved!</b> Chat: <b>${modelLabel}</b> · Transcription: <b>${transLabel}</b> · 🔑 Key stored`;
         statusEl.style.color = "#4ade80";
+        updateKeyPlaceholder();
 
     } catch (e) {
         statusEl.innerText = `❌ Error: ${e.message}`;

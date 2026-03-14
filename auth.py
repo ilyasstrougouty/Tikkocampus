@@ -66,7 +66,31 @@ def monitor_login(window):
                 print(f"\nLogin redirect detected! Current URL: {current_url}")
                 has_session = True
                 
-            if has_session:
+            try:
+                page_text = window.evaluate_js("document.body.innerText")
+                if page_text:
+                    p_lower = page_text.lower()
+                    if "maximum number of attempts reached" in p_lower or "nombre maximal de tentatives atteint" in p_lower or "too many attempts" in p_lower:
+                        print(f"\nMax attempts error detected! Proceeding to extract cookies and redirect.")
+                        has_session = True
+                        logged_in = True
+                        
+                        # Wait just a little bit for any last-minute cookies
+                        time.sleep(2)
+                        
+                        final_cookies = window.get_cookies()
+                        if final_cookies:
+                            count = convert_pywebview_cookies_to_netscape(final_cookies, COOKIE_OUTPUT)
+                            print(f"Saved {count} TikTok cookies to {COOKIE_OUTPUT} (Max Attempts Fallback)!")
+                        else:
+                            print(f"Warning: No cookies could be extracted after max attempts error.")
+                        print("Closing window...")
+                        window.destroy()
+                        os._exit(0)
+            except Exception:
+                pass
+                
+            if has_session and not logged_in:
                 print("\nLogin success detected! Waiting for cookies to settle...")
                 logged_in = True
                 
@@ -81,7 +105,9 @@ def monitor_login(window):
                 else:
                     print(f"Warning: No cookies could be extracted after login.")
                 
-                break
+                print("Closing window...")
+                window.destroy()
+                os._exit(0)
         except Exception as e:
             # get_cookies/get_current_url might throw if window is closed by user early
             if "destroyed" not in str(e).lower() and "closed" not in str(e).lower():
@@ -92,6 +118,7 @@ def monitor_login(window):
         print("\nWARNING: Login not completed within 5 minutes or window closed.")
         
     window.destroy()
+    os._exit(0)
 
 def on_loaded(window):
     """
@@ -147,8 +174,8 @@ def run_login_flow():
     t.start()
     
     # Start the webview loop (blocks until window is destroyed)
-    # Note: private_mode=False is default, meaning it acts as a normal persistant browser
-    webview.start(private_mode=False)
+    # Using private_mode=True gives us a fresh browser context every time, bypassing device IP/fingerprint blocks
+    webview.start(private_mode=True)
 
 if __name__ == "__main__":
     run_login_flow()

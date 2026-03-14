@@ -27,9 +27,9 @@ def test_extract_audio_failure(monkeypatch):
 
 def test_pipeline_empty_queue(monkeypatch, capsys):
     mock_whisper = MagicMock()
-    monkeypatch.setattr('processor.WhisperModel', mock_whisper)
-    
-    mock_connect = MagicMock()
+    import sys
+    monkeypatch.setitem(sys.modules, 'whisper', mock_whisper)
+    monkeypatch.setattr(processor, 'whisper', mock_whisper)
     mock_cursor = MagicMock()
     mock_cursor.fetchall.return_value = []
     mock_connect.return_value.cursor.return_value = mock_cursor
@@ -42,9 +42,9 @@ def test_pipeline_empty_queue(monkeypatch, capsys):
 
 def test_pipeline_missing_file(monkeypatch, capsys):
     mock_whisper = MagicMock()
-    monkeypatch.setattr('processor.WhisperModel', mock_whisper)
-    
-    mock_connect = MagicMock()
+    import sys
+    monkeypatch.setitem(sys.modules, 'whisper', mock_whisper)
+    monkeypatch.setattr(processor, 'whisper', mock_whisper)
     mock_cursor = MagicMock()
     mock_cursor.fetchall.return_value = [("vid_miss", "vid_miss.mp4")]
     mock_connect.return_value.cursor.return_value = mock_cursor
@@ -59,15 +59,13 @@ def test_pipeline_missing_file(monkeypatch, capsys):
     assert "File missing for vid_miss" in captured.out
 
 def test_pipeline_success(monkeypatch):
-    mock_whisper_class = MagicMock()
+    mock_whisper = MagicMock()
     mock_model = MagicMock()
-    mock_segment = MagicMock()
-    mock_segment.text = "Mocked transcription."
-    mock_model.transcribe.return_value = ([mock_segment], {"language": "en"})
-    mock_whisper_class.return_value = mock_model
-    monkeypatch.setattr('processor.WhisperModel', mock_whisper_class)
-    
-    mock_connect = MagicMock()
+    mock_model.transcribe.return_value = {"text": "Mocked transcription."}
+    mock_whisper.load_model.return_value = mock_model
+    import sys
+    monkeypatch.setitem(sys.modules, 'whisper', mock_whisper)
+    monkeypatch.setattr(processor, 'whisper', mock_whisper)
     mock_cursor = MagicMock()
     mock_cursor.fetchall.return_value = [("vid1", "vid1.mp4")]
     mock_connect.return_value.cursor.return_value = mock_cursor
@@ -88,7 +86,7 @@ def test_pipeline_success(monkeypatch):
     mock_extract.assert_called_once_with("vid1.mp4", "vid1.wav")
     
     # Assert model ran on wav
-    mock_model.transcribe.assert_called_once_with("vid1.wav", beam_size=5)
+    mock_model.transcribe.assert_called_once_with("vid1.wav", fp16=False)
     
     # Assert SQL update happened
     mock_cursor.execute.assert_any_call(

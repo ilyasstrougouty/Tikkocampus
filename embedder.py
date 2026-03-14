@@ -26,9 +26,9 @@ def delete_creator(creator_name):
     except Exception:
         pass # Collection or metadata doesn't exist
 
-def run_embedding_pipeline():
+def run_embedding_pipeline(creator_filter=None):
     # 1. Initialize Vector Database
-    print("Initializing ChromaDB...")
+    print(f"Initializing ChromaDB pipeline{' (Filter: @' + creator_filter + ')' if creator_filter else ''}...")
     chroma_client = chromadb.PersistentClient(path=CHROMA_PATH)
     
     # This automatically uses the 'all-MiniLM-L6-v2' embedding model behind the scenes
@@ -41,7 +41,7 @@ def run_embedding_pipeline():
         length_function=len,
         separators=["\n\n", "\n", ".", " ", ""]
     )
-
+ 
     # 3. Fetch Un-vectorized Transcripts
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
@@ -51,8 +51,15 @@ def run_embedding_pipeline():
         cursor.execute("ALTER TABLE videos ADD COLUMN is_vectorized BOOLEAN DEFAULT 0")
     except sqlite3.OperationalError:
         pass # Column already exists
-        
-    cursor.execute("SELECT video_id, transcript, file_path, creator_name FROM videos WHERE transcript IS NOT NULL AND is_vectorized = 0")
+    
+    if creator_filter:
+        cursor.execute("""
+            SELECT video_id, transcript, file_path, creator_name 
+            FROM videos 
+            WHERE transcript IS NOT NULL AND is_vectorized = 0 AND creator_name = ?
+        """, (creator_filter,))
+    else:
+        cursor.execute("SELECT video_id, transcript, file_path, creator_name FROM videos WHERE transcript IS NOT NULL AND is_vectorized = 0")
     queue = cursor.fetchall()
     
     if not queue:

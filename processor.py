@@ -5,8 +5,13 @@ import time
 
 from config import DB_PATH, TEMP_PROCESSING_DIR
 
+try:
+    import whisper
+except ImportError:
+    whisper = None
+
 # --- Configuration ---
-WHISPER_MODEL_SIZE = 'base' 
+WHISPER_MODEL_SIZE = 'tiny'  # Switched from base to tiny for 10x local CPU speed 
 
 def extract_audio(video_path, audio_path):
     """
@@ -31,16 +36,18 @@ def extract_audio(video_path, audio_path):
         return False
 
 def transcribe_local(wav_path):
-    """Transcribe using local faster-whisper (CPU). Free but slow."""
-    from faster_whisper import WhisperModel
+    """Transcribe using local whisper (CPU). Free but slow."""
+    global whisper
     
     # We lazily load the model and cache it as a function attribute
     if not hasattr(transcribe_local, '_model'):
         print(f"Loading local Whisper '{WHISPER_MODEL_SIZE}' model...")
-        transcribe_local._model = WhisperModel(WHISPER_MODEL_SIZE, device="cpu", compute_type="int8")
+        import torch
+        # Standard whisper model, forcing CPU to ensure compatibility
+        transcribe_local._model = whisper.load_model(WHISPER_MODEL_SIZE, device="cpu")
     
-    segments, info = transcribe_local._model.transcribe(wav_path, beam_size=5)
-    return " ".join([segment.text for segment in segments]).strip()
+    result = transcribe_local._model.transcribe(wav_path, fp16=False, verbose=True)
+    return result["text"].strip()
 
 def transcribe_groq(wav_path):
     """Transcribe using Groq's Whisper API. Fast but requires API key."""
@@ -64,13 +71,15 @@ def transcribe_groq(wav_path):
     
     return response.text.strip()
 
-def run_processing_pipeline(status_callback=None, method="local"):
+def run_processing_pipeline(status_callback=None, method="local", creator_filter=None):
     """
-    Processes all un-transcribed videos.
-    method: 'local' for faster-whisper on CPU, 'groq_whisper' for Groq cloud API
+    Processes un-transcribed videos.
+    creator_filter: If provided, only process videos for this specific @username.
     """
     method_label = "Local Whisper (CPU)" if method == "local" else "Groq Whisper API (Cloud)"
     msg = f"Using transcription: {method_label}"
+    if creator_filter:
+        msg += f" (Filtering for @{creator_filter})"
     print(msg)
     if status_callback: status_callback(msg)
     
@@ -78,7 +87,10 @@ def run_processing_pipeline(status_callback=None, method="local"):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     
-    cursor.execute("SELECT video_id, file_path FROM videos WHERE transcript IS NULL")
+    if creator_filter:
+        cursor.execute("SELECT video_id, file_path FROM videos WHERE transcript IS NULL AND creator_name = ?", (creator_filter,))
+    else:
+        cursor.execute("SELECT video_id, file_path FROM videos WHERE transcript IS NULL")
     queue = cursor.fetchall()
     
     if not queue:
