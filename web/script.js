@@ -762,3 +762,5 @@ function quickAction(type) {
         sendMessage();
     }
 }
+   
+ 
