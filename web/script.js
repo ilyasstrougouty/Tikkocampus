@@ -6,16 +6,38 @@ let apiState = {
 };
 
 // --- UI Navigation ---
-function setCreator(creatorName) {
+function setCreator(creatorName, creatorNickname = null) {
     currentCreator = creatorName;
     const chatInput = document.getElementById('chat-input');
-    const chatHeader = document.getElementById('active-creator-header');
+    const chatTitle = document.getElementById('chat-title');
+    const chatSubtitle = document.getElementById('chat-subtitle');
+    const headerName = document.getElementById('active-creator-header');
+    const chatBox = document.getElementById('chat-box');
+    
+    const displayName = creatorNickname || creatorName;
+
+    // Reset chat box for a fresh experience
+    if (chatBox) {
+        chatBox.innerHTML = `
+            <div id="chat-placeholder" class="font-typewriter text-lg opacity-30 select-none">
+                Hey, ask about ${displayName}
+            </div>
+        `;
+    }
 
     if (chatInput) {
-        chatInput.placeholder = `Ask about @${creatorName}...`;
+        chatInput.classList.remove('shrunk');
+        chatInput.placeholder = `Ask @${creatorName}...`;
     }
-    if (chatHeader) {
-        chatHeader.innerText = `@${creatorName}`;
+    document.body.classList.remove('chat-active');
+    
+    if (chatTitle) {
+        chatTitle.innerText = displayName;
+    }
+
+    if (headerName) {
+        headerName.innerText = `@${creatorName}`;
+        if (chatSubtitle) chatSubtitle.classList.remove('hidden');
     }
 }
 
@@ -169,10 +191,11 @@ async function loadHistory() {
         list.innerHTML = data.history.map(item => {
             const date = new Date(item.scraped_at).toLocaleDateString();
             const creator = item.creator_name || 'unknown';
+            const nickname = item.creator_nickname || creator;
             return `
-            <div class="history-item border border-borderDark rounded-lg p-3 bg-white/5 hover:bg-white/10 transition-colors cursor-pointer group" onclick="setCreator('${creator}'); showChat();">
+            <div class="history-item border border-borderDark rounded-lg p-3 bg-white/5 hover:bg-white/10 transition-colors cursor-pointer group" onclick="setCreator('${creator}', '${nickname.replace(/'/g, "\\'")}'); showChat();">
                 <div class="flex justify-between items-center mb-1">
-                    <span class="text-sm font-medium text-white">@${creator}</span>
+                    <span class="text-sm font-medium text-white">${nickname}</span>
                     <button onclick="event.stopPropagation(); deleteCreator('${creator}')" 
                         class="text-textMuted opacity-0 group-hover:opacity-100 transition-opacity hover:text-brand">
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -180,7 +203,7 @@ async function loadHistory() {
                         </svg>
                     </button>
                 </div>
-                <div class="text-xs text-textMuted mb-2">${item.video_count} VIDEOS</div>
+                <div class="text-[10px] text-textMuted mb-2">@${creator} · ${item.video_count} VIDEOS</div>
                 <div class="flex justify-between items-center text-xs text-textMuted">
                     <span class="opacity-60">${date}</span>
                     <span class="bg-badgeBg text-badgeText px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide">Ready</span>
@@ -492,7 +515,7 @@ async function startProcessing() {
 
                     // Use the creator name reported by the server
                     if (state.creator_name) {
-                        setCreator(state.creator_name);
+                        setCreator(state.creator_name, state.creator_nickname);
                     } else {
                         // Fallback only if server didn't report it
                         let extracted = target.split('@').pop().split(/[\/\?]/)[0] || target;
@@ -528,6 +551,16 @@ async function sendMessage() {
     if (text.trim() === "") return;
 
     const chatBox = document.getElementById("chat-box");
+    
+    // Hide placeholder once a message is sent
+    const placeholder = document.getElementById('chat-placeholder');
+    if (placeholder) {
+        placeholder.remove();
+    }
+
+    // Shrink the input box and hide suggestions once a message is sent
+    inputElement.classList.add('shrunk');
+    document.body.classList.add('chat-active');
 
     // 1. Create and append the User's message bubble
     const userMsg = document.createElement("div");
@@ -541,17 +574,8 @@ async function sendMessage() {
 
     // 2. Create a temporary "loading" bubble for the AI
     const loadingMsg = document.createElement("div");
-    loadingMsg.className = "message ai flex gap-4 max-w-[85%]";
-    loadingMsg.innerHTML = `
-        <div class="w-8 h-8 rounded-lg bg-brand/10 flex items-center justify-center flex-shrink-0 border border-brand/20">
-            <svg class="w-5 h-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-            </svg>
-        </div>
-        <div class="bg-card p-5 rounded-2xl rounded-tl-none border border-borderDark text-sm leading-relaxed shadow-sm italic text-textMuted font-typewriter">
-            Analyzing Creator Data...
-        </div>
-    `;
+    loadingMsg.className = "message ai italic text-textMuted font-typewriter";
+    loadingMsg.innerText = "Analyzing Creator Data...";
     chatBox.appendChild(loadingMsg);
     chatBox.scrollTop = chatBox.scrollHeight;
 
@@ -572,9 +596,8 @@ async function sendMessage() {
         const response = data.response;
 
         // 4. Update the loading bubble with the actual LLM response
-        const textContainer = loadingMsg.querySelector('.bg-card');
-        textContainer.innerText = response;
-        textContainer.classList.remove('italic', 'text-textMuted', 'font-typewriter');
+        loadingMsg.innerText = response;
+        loadingMsg.classList.remove('italic', 'text-textMuted', 'font-typewriter');
     } catch (e) {
         loadingMsg.innerText = `❌ Error: ${e.message}`;
     }

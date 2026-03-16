@@ -18,6 +18,7 @@ else:
 
 WEB_DIR = os.path.join(BASE_DIR, "web")
 
+import config
 import scraper
 import processor
 import embedder
@@ -57,23 +58,22 @@ def run_heavy_pipeline(url: str, max_videos: int = 10):
             creator_filter = url.split('@')[-1].split('/')[0].split('?')[0]
         
         task_state["status"] = f"Phase 1: Scraping {max_videos} videos from TikTok..."
-        # Capture the actual creator name used by the scraper
-        actual_creator = scraper.download_profile_videos(url, max_downloads=max_videos) 
+        # Capture the actual creator name and nickname used by the scraper
+        actual_creator, actual_nickname = scraper.download_profile_videos(url, max_downloads=max_videos) 
         
         # If scraper failed to determine a name, fallback to url-based one
         final_creator = actual_creator or creator_filter or "unknown"
+        final_nickname = actual_nickname or final_creator
         
         # Pass a callback to processor to update ETA on the frontend
         def status_update_callback(msg):
             task_state["status"] = f"Phase 2: {msg}"
         
         # Default to Groq cloud if they have a API key config, otherwise fallback to local
-        transcription_method = os.environ.get("TRANSCRIPTION_METHOD")
-        if not transcription_method or transcription_method == "local":
+        transcription_method = os.environ.get("TRANSCRIPTION_METHOD", config.TRANSCRIPTION_METHOD)
+        if transcription_method == "local":
             if os.environ.get("GROQ_API_KEY"):
                 transcription_method = "groq_whisper"
-            else:
-                transcription_method = "local"
                 
         processor.run_processing_pipeline(
             status_callback=status_update_callback, 
@@ -85,19 +85,17 @@ def run_heavy_pipeline(url: str, max_videos: int = 10):
         embedder.run_embedding_pipeline(creator_filter=final_creator)
         
         # Save to history
-        import sqlite3
-        conn = sqlite3.connect(db.DB_PATH if hasattr(db, 'DB_PATH') else 'tiktok_data.db')
-        c = conn.cursor()
-        
-        # Use the finalized creator name to get accurate counts
-        c.execute('SELECT COUNT(*) FROM videos WHERE creator_name = ?', (final_creator,))
-        row = c.fetchone()
-        final_count = row[0] if row else 0
-        conn.close()
-        
-        db.save_scrape_history(url, final_creator, final_count)
+        with db.db_session() as conn:
+            c = conn.cursor()
+            # Use the finalized creator name to get accurate counts
+            c.execute('SELECT COUNT(*) FROM videos WHERE creator_name = ?', (final_creator,))
+            row = c.fetchone()
+            final_count = row[0] if row else 0
+            
+            db.save_scrape_history(url, final_creator, final_nickname, final_count)
         
         task_state["creator_name"] = final_creator
+        task_state["creator_nickname"] = final_nickname
         task_state["status"] = "completed"
     except Exception as e:
         task_state["error"] = str(e)
@@ -141,6 +139,32 @@ async def trigger_auth():
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         task_state["is_running"] = False
+
+def install_playwright_if_needed():
+    """Checks for Playwright Chromium and installs it if missing."""
+    print("Checking Playwright Chromium...")
+    try:
+        from playwright.sync_api import sync_playwright
+        with sync_playwright() as p:
+            try:
+                # Try to launch headless to verify existence
+                browser = p.chromium.launch(headless=True)
+                browser.close()
+                print("Playwright Chromium is correctly installed.")
+            except Exception as e:
+                if "Executable doesn't exist" in str(e) or "not found" in str(e):
+                    print("Playwright Chromium missing. Starting automatic installation...")
+                    # In a frozen bundle, sys.executable is the .exe
+                    # We use it to run the playwright module installer
+                    import subprocess
+                    subprocess.run([sys.executable, "-m", "playwright", "install", "chromium"], check=True)
+                    print("Playwright Chromium installed successfully!")
+                else:
+                    print(f"Playwright check info: {e}")
+                    # If it's another error, we don't necessarily want to block startup
+                    # but we also don't want to try to install if it's a driver error
+    except Exception as e:
+        print(f"Failed to check/install Playwright: {e}")
 
 from config import COOKIES_DIR
 from datetime import datetime
@@ -352,24 +376,40 @@ async def save_settings(req: SettingsRequest):
     # Update the active model in the chat module
     chat.LLM_MODEL = req.model
     
-    # Persist to .env file
-    env_path = ".env"
-    env_lines = {}
-    if os.path.exists(env_path):
-        with open(env_path, "r") as f:
-            for line in f:
-                line = line.strip()
-                if "=" in line and not line.startswith("#"):
-                    key, val = line.split("=", 1)
-                    env_lines[key.strip()] = val.strip()
-    
-    env_lines.update(env_updates)
-    
-    with open(env_path, "w") as f:
-        for key, val in env_lines.items():
-            f.write(f"{key}={val}\n")
+    # Persist to .env file safely
+    try:
+        update_env_file(env_updates)
+    except Exception as e:
+        print(f"Failed to update .env: {e}")
     
     return {"message": f"Settings saved. Model set to {req.model}"}
+
+def update_env_file(updates: dict):
+    """Safely updates the .env file with new key-value pairs."""
+    env_path = ".env"
+    lines = []
+    if os.path.exists(env_path):
+        with open(env_path, "r") as f:
+            lines = f.readlines()
+    
+    new_lines = []
+    keys_updated = set()
+    
+    for line in lines:
+        if "=" in line and not line.strip().startswith("#"):
+            key = line.split("=", 1)[0].strip()
+            if key in updates:
+                new_lines.append(f"{key}={updates[key]}\n")
+                keys_updated.add(key)
+                continue
+        new_lines.append(line)
+    
+    for key, value in updates.items():
+        if key not in keys_updated:
+            new_lines.append(f"{key}={value}\n")
+            
+    with open(env_path, "w") as f:
+        f.writelines(new_lines)
 
 @app.get("/api/settings")
 async def get_settings():
@@ -379,7 +419,7 @@ async def get_settings():
     has_groq_key = bool(os.environ.get("GROQ_API_KEY"))
     has_openai_key = bool(os.environ.get("OPENAI_API_KEY"))
     
-    transcription = os.environ.get("TRANSCRIPTION_METHOD")
+    transcription = os.environ.get("TRANSCRIPTION_METHOD", config.TRANSCRIPTION_METHOD)
     if not transcription or transcription == "local":
         transcription = "groq_whisper" if has_groq_key else "local"
     return {
@@ -428,6 +468,10 @@ def sigint_handler(signum, frame):
 
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, sigint_handler)
+    
+    # Ensure Playwright is ready before starting anything else
+    install_playwright_if_needed()
+    
     print("Starting Desktop Interface...")
     
     # Run the FastAPI server in a background thread

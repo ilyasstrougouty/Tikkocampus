@@ -4,6 +4,7 @@ import subprocess
 import time
 
 from config import DB_PATH, TEMP_PROCESSING_DIR
+from db import db_session
 
 try:
     import whisper
@@ -31,7 +32,10 @@ def extract_audio(video_path, audio_path):
     
     try:
         subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
-        return True
+        # Verify file exists and is not empty
+        if os.path.exists(audio_path) and os.path.getsize(audio_path) > 0:
+            return True
+        return False
     except subprocess.CalledProcessError:
         return False
 
@@ -84,21 +88,20 @@ def run_processing_pipeline(status_callback=None, method="local", creator_filter
     if status_callback: status_callback(msg)
     
     # 1. FETCH THE QUEUE
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    
-    if creator_filter:
-        cursor.execute("SELECT video_id, file_path FROM videos WHERE transcript IS NULL AND creator_name = ?", (creator_filter,))
-    else:
-        cursor.execute("SELECT video_id, file_path FROM videos WHERE transcript IS NULL")
-    queue = cursor.fetchall()
-    
-    if not queue:
-        msg = "Queue is empty. No new videos to process."
-        print(msg)
-        if status_callback: status_callback(msg)
-        conn.close()
-        return
+    with db_session() as conn:
+        cursor = conn.cursor()
+        
+        if creator_filter:
+            cursor.execute("SELECT video_id, file_path FROM videos WHERE transcript IS NULL AND creator_name = ?", (creator_filter,))
+        else:
+            cursor.execute("SELECT video_id, file_path FROM videos WHERE transcript IS NULL")
+        queue = cursor.fetchall()
+        
+        if not queue:
+            msg = "Queue is empty. No new videos to process."
+            print(msg)
+            if status_callback: status_callback(msg)
+            return
 
     total_videos = len(queue)
     # Local is ~15s/video, Groq API is ~3s/video
@@ -146,11 +149,14 @@ def run_processing_pipeline(status_callback=None, method="local", creator_filter
             continue
         
         # Step C: Database Injection
-        cursor.execute("UPDATE videos SET transcript = ? WHERE video_id = ?", (transcript_text, video_id))
-        conn.commit()
+        with db_session() as conn:
+            cursor = conn.cursor()
+            cursor.execute("UPDATE videos SET transcript = ? WHERE video_id = ?", (transcript_text, video_id))
+            conn.commit()
         
         # Cleanup WAV
-        os.remove(wav_path)
+        if os.path.exists(wav_path):
+            os.remove(wav_path)
         print(f"[SUCCESS] {video_id} transcribed and saved. Temp files deleted.")
 
     conn.close()

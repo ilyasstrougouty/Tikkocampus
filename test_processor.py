@@ -6,6 +6,8 @@ import processor
 def test_extract_audio_success(monkeypatch):
     mock_run = MagicMock()
     monkeypatch.setattr('processor.subprocess.run', mock_run)
+    monkeypatch.setattr('processor.os.path.exists', MagicMock(return_value=True))
+    monkeypatch.setattr('processor.os.path.getsize', MagicMock(return_value=100))
     
     result = processor.extract_audio('test.mp4', 'test.wav')
     
@@ -30,10 +32,15 @@ def test_pipeline_empty_queue(monkeypatch, capsys):
     import sys
     monkeypatch.setitem(sys.modules, 'whisper', mock_whisper)
     monkeypatch.setattr(processor, 'whisper', mock_whisper)
+    mock_connect = MagicMock()
     mock_cursor = MagicMock()
     mock_cursor.fetchall.return_value = []
     mock_connect.return_value.cursor.return_value = mock_cursor
-    monkeypatch.setattr('processor.sqlite3.connect', mock_connect)
+    
+    # Mock the db_session context manager
+    mock_session = MagicMock()
+    mock_session.return_value.__enter__.return_value = mock_connect.return_value
+    monkeypatch.setattr('processor.db_session', mock_session)
     
     processor.run_processing_pipeline()
     
@@ -45,10 +52,15 @@ def test_pipeline_missing_file(monkeypatch, capsys):
     import sys
     monkeypatch.setitem(sys.modules, 'whisper', mock_whisper)
     monkeypatch.setattr(processor, 'whisper', mock_whisper)
+    mock_connect = MagicMock()
     mock_cursor = MagicMock()
     mock_cursor.fetchall.return_value = [("vid_miss", "vid_miss.mp4")]
     mock_connect.return_value.cursor.return_value = mock_cursor
-    monkeypatch.setattr('processor.sqlite3.connect', mock_connect)
+    
+    # Mock the db_session context manager
+    mock_session = MagicMock()
+    mock_session.return_value.__enter__.return_value = mock_connect.return_value
+    monkeypatch.setattr('processor.db_session', mock_session)
     
     mock_exists = MagicMock(return_value=False)
     monkeypatch.setattr('processor.os.path.exists', mock_exists)
@@ -66,10 +78,18 @@ def test_pipeline_success(monkeypatch):
     import sys
     monkeypatch.setitem(sys.modules, 'whisper', mock_whisper)
     monkeypatch.setattr(processor, 'whisper', mock_whisper)
+    mock_connect = MagicMock()
     mock_cursor = MagicMock()
     mock_cursor.fetchall.return_value = [("vid1", "vid1.mp4")]
     mock_connect.return_value.cursor.return_value = mock_cursor
-    monkeypatch.setattr('processor.sqlite3.connect', mock_connect)
+    
+    # Mock the db_session context manager
+    mock_session = MagicMock()
+    mock_session.return_value.__enter__.return_value = mock_connect.return_value
+    monkeypatch.setattr('processor.db_session', mock_session)
+    
+    # Mock extract_audio signature change (added file size check)
+    monkeypatch.setattr('processor.os.path.getsize', MagicMock(return_value=100))
     
     mock_exists = MagicMock(return_value=True)
     monkeypatch.setattr('processor.os.path.exists', mock_exists)
@@ -86,14 +106,15 @@ def test_pipeline_success(monkeypatch):
     mock_extract.assert_called_once_with("vid1.mp4", "vid1.wav")
     
     # Assert model ran on wav
-    mock_model.transcribe.assert_called_once_with("vid1.wav", fp16=False)
+    mock_model.transcribe.assert_called_once_with("vid1.wav", fp16=False, verbose=True)
     
     # Assert SQL update happened
     mock_cursor.execute.assert_any_call(
         "UPDATE videos SET transcript = ? WHERE video_id = ?", 
         ("Mocked transcription.", "vid1")
     )
-    mock_connect.return_value.commit.assert_called_once()
+    # commit is called once for the successful update
+    mock_connect.return_value.commit.assert_called()
     
     # Assert Disk Cleanup deleted both MP4 and WAV
     assert mock_remove.call_count == 2

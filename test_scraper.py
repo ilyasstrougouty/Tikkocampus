@@ -11,6 +11,11 @@ def test_download_profile_videos_success(monkeypatch, capsys):
     mock_download = MagicMock(return_value=f'{config.TEMP_PROCESSING_DIR}/video_1.mp4')
     monkeypatch.setattr('scraper.download_video_file', mock_download)
 
+    # Mock db_session
+    mock_session = MagicMock()
+    mock_session.return_value.__enter__.return_value = MagicMock()
+    monkeypatch.setattr('scraper.db_session', mock_session)
+
     # Mock the playwright context manager
     mock_page = MagicMock()
     mock_context = MagicMock()
@@ -74,6 +79,11 @@ def test_download_profile_videos_failure(monkeypatch, capsys):
     mock_sync_pw = MagicMock()
     mock_sync_pw.__enter__.side_effect = Exception("Mocked playwright error")
     monkeypatch.setattr('scraper.sync_playwright', mock_sync_pw)
+    
+    # Mock db_session
+    mock_session = MagicMock()
+    mock_session.return_value.__enter__.return_value = MagicMock()
+    monkeypatch.setattr('scraper.db_session', mock_session)
 
     scraper.download_profile_videos("https://www.tiktok.com/@baduser")
 

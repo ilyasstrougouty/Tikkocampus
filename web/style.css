@@ -115,9 +115,11 @@ body {
 
 .message.user {
     align-self: flex-end;
-    background: var(--brand);
-    color: white;
-    border-top-right-radius: 0;
+    background: rgba(239, 51, 89, 0.1) !important;
+    border: 1px solid rgba(239, 51, 89, 0.2);
+    color: var(--brand);
+    padding: 0.75rem 1.25rem;
+    font-weight: 600;
 }
 
 .message.ai {
@@ -230,4 +232,36 @@ select {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
     appearance: none;
+}
+
+/* Chat Input Refinements */
+.chat-input-area {
+    min-height: 120px;
+}
+
+.chat-input-area.shrunk {
+    min-height: 36px !important;
+    height: 36px !important;
+    padding: 0.2rem 0.5rem !important;
+    font-size: 1rem !important;
+}
+
+.chat-active #quick-actions-row {
+    opacity: 0;
+    pointer-events: none;
+    height: 0;
+    margin-top: 0;
+    overflow: hidden;
+}
+
+#chat-placeholder {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: var(--app-text-muted);
+    opacity: 0.5;
+    pointer-events: none;
+    width: 80%;
 }

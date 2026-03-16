@@ -3,7 +3,7 @@ import os
 import time
 import yt_dlp
 from config import TEMP_PROCESSING_DIR, MAX_VIDEOS_PER_PROFILE
-from db import insert_video_metadata
+from db import insert_video_metadata, db_session
 
 def cleanup_temp_folder(max_age_hours=24):
     """
@@ -91,21 +91,22 @@ def download_profile_videos(profile_url, max_downloads=MAX_VIDEOS_PER_PROFILE):
 
     # CLEANUP: Remove any existing PENDING videos for this specific creator 
     # to ensure they don't get mixed in with the new requested batch.
-    import db
     try:
-        conn = db.get_connection()
-        cursor = conn.cursor()
-        
-        # We only delete the ones WITHOUT a transcript (ghosts of previous failed scrapes)
-        cursor.execute("SELECT file_path FROM videos WHERE creator_name = ? AND transcript IS NULL", (target_username,))
-        pending_files = cursor.fetchall()
-        for (fpath,) in pending_files:
-            if fpath and os.path.exists(fpath):
-                os.remove(fpath)
-        
-        cursor.execute("DELETE FROM videos WHERE creator_name = ? AND transcript IS NULL", (target_username,))
-        conn.commit()
-        conn.close()
+        with db_session() as conn:
+            cursor = conn.cursor()
+            
+            # We only delete the ones WITHOUT a transcript (ghosts of previous failed scrapes)
+            cursor.execute("SELECT file_path FROM videos WHERE creator_name = ? AND transcript IS NULL", (target_username,))
+            pending_files = cursor.fetchall()
+            for (fpath,) in pending_files:
+                if fpath and os.path.exists(fpath):
+                    try:
+                        os.remove(fpath)
+                    except Exception:
+                        pass
+            
+            cursor.execute("DELETE FROM videos WHERE creator_name = ? AND transcript IS NULL", (target_username,))
+            conn.commit()
     except Exception as e:
         print(f"Pre-scrape cleanup error (non-fatal): {e}")
 
@@ -129,13 +130,19 @@ def download_profile_videos(profile_url, max_downloads=MAX_VIDEOS_PER_PROFILE):
 
             page = context.new_page()
 
+            creator_nickname = None
+
             def handle_response(response):
+                nonlocal creator_nickname
                 if "item_list" in response.url or "post/item_list" in response.url:
                     try:
                         data = response.json()
                         itemList = data.get('itemList', [])
                         for item in itemList:
                             found_videos.append(item)
+                            if not creator_nickname:
+                                author = item.get('author', {})
+                                creator_nickname = author.get('nickname')
                     except Exception as e:
                         pass # Silently fail chunk parses to avoid unhandled exception crashes in bg thread
 
@@ -146,14 +153,25 @@ def download_profile_videos(profile_url, max_downloads=MAX_VIDEOS_PER_PROFILE):
                 page.goto(profile_url, timeout=60000)
                 page.wait_for_timeout(3000)
                 
+                # Check for "Too many attempts" or basic blocks
+                if "verify-login" in page.url or "captcha" in page.url:
+                    print("TikTok CAPTCHA or Login wall detected. Falling back to cookies-only scraping.")
+
                 # Scroll to trigger pagination if needed
-                attempts = 0
-                while len(found_videos) < max_downloads and attempts < 10:
+                last_count = 0
+                stale_scrolls = 0
+                while len(found_videos) < max_downloads and stale_scrolls < 5:
                     page.keyboard.press("PageDown")
-                    page.keyboard.press("PageDown")
-                    page.wait_for_timeout(2000)
-                    attempts += 1
+                    page.wait_for_timeout(1500)
                     
+                    if len(found_videos) == last_count:
+                        stale_scrolls += 1
+                        print(f"No new videos found ({last_count} total). Scrolling again... ({stale_scrolls}/5)")
+                    else:
+                        stale_scrolls = 0
+                        last_count = len(found_videos)
+                        print(f"Intercepted {last_count} videos so far...")
+                        
             except Exception as e:
                 print(f"Error navigating the profile: {e}", file=sys.stderr)
                 
@@ -210,10 +228,10 @@ def download_profile_videos(profile_url, max_downloads=MAX_VIDEOS_PER_PROFILE):
                 print(f"\nWarning: Scrape ended early. Only extracted {extracted_count} of {max_downloads} videos.", file=sys.stderr)
                 
             browser.close()
-            return target_username
+            return target_username, creator_nickname
     except Exception as e:
         print(f"Playwright initialization error: {e}", file=sys.stderr)
-        return target_username
+        return target_username, None
 
     # The parsing logic has been moved up into the browser context block
 

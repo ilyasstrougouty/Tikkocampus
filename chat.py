@@ -1,17 +1,12 @@
 import os
 from dotenv import load_dotenv
+from litellm import completion
 
 # Load variables from .env file into os.environ
 load_dotenv()
 
-import chromadb
-import sqlite3
-from litellm import completion
-from config import DB_PATH
-
-# --- Configuration ---
-CHROMA_PATH = './chroma_db'
-COLLECTION_NAME = 'tiktok_creator_collection'
+from embedder import get_chroma_client, COLLECTION_NAME
+from db import DB_PATH, db_session
 
 # For testing, let's default to a free/fast Groq model, or OpenAI if you prefer.
 # Users will need to set their API key in their terminal, e.g.:
@@ -26,11 +21,10 @@ def build_prompt(user_query, retrieved_docs):
     
     # Get total video count from DB for context
     try:
-        conn = sqlite3.connect(DB_PATH)
-        c = conn.cursor()
-        c.execute('SELECT COUNT(*) FROM videos WHERE transcript IS NOT NULL')
-        total_videos = c.fetchone()[0]
-        conn.close()
+        with db_session() as conn:
+            c = conn.cursor()
+            c.execute('SELECT COUNT(*) FROM videos WHERE transcript IS NOT NULL')
+            total_videos = c.fetchone()[0]
     except:
         total_videos = len(retrieved_docs)
     
@@ -51,10 +45,10 @@ Rules:
 
 def get_rag_response(user_query, creator_name=None):
     print("Loading Vector Database...")
-    chroma_client = chromadb.PersistentClient(path=CHROMA_PATH)
+    client = get_chroma_client()
     
     try:
-        collection = chroma_client.get_collection(name=COLLECTION_NAME)
+        collection = client.get_collection(name=COLLECTION_NAME)
     except Exception:
         return "It looks like your database isn't initialized yet. Run the Scraper, Processor, and Embedder first!"
         
