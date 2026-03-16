@@ -1,7 +1,6 @@
 playwright
-pytest
-pytest-mock
-faster-whisper
+playwright-stealth
+openai-whisper
 chromadb
 langchain-text-splitters
 litellm
@@ -11,3 +10,6 @@ pywebview
 python-multipart
 httpx
 python-dotenv
+pytest
+pytest-mock
+torch

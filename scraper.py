@@ -1,7 +1,4 @@
-import sys
 import os
-import time
-import yt_dlp
 from config import TEMP_PROCESSING_DIR, MAX_VIDEOS_PER_PROFILE
 from db import insert_video_metadata, db_session
 
@@ -28,7 +25,6 @@ def cleanup_temp_folder(max_age_hours=24):
     print(f"Garbage collection finished. Deleted {deleted_count} old files.")
 
 import json
-import requests
 from playwright.sync_api import sync_playwright
 from playwright_stealth import Stealth
 
