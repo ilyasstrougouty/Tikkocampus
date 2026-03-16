@@ -1,7 +1,5 @@
 <div align="center">
-  <img src="web/logo.png" alt="Tikkocampus Logo" width="120">
-  
-  <h1>Tikkocampus 🚀</h1>
+  <img src="assets/banner.png" alt="Tikkocampus Banner">
   
   <p><strong>Transform TikTok into your personal knowledge base.</strong></p>
   
@@ -13,6 +11,12 @@
     <img src="https://img.shields.io/badge/UI-PyWebView-6D28D9" alt="UI">
   </div>
 </div>
+
+---
+
+## 🎬 Video Tutorial
+> [!TIP]
+> **New to Tikkocampus?** Watch our [Zero-to-Hero Quickstart Guide](https://link-to-your-video.com) to see how to set up your first local knowledge base in under 5 minutes.
 
 ---
 
