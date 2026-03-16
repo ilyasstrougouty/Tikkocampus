@@ -12,11 +12,6 @@
   </div>
 </div>
 
----
-
-## 🎬 Video Tutorial
-> [!TIP]
-> **New to Tikkocampus?** Watch our [Zero-to-Hero Quickstart Guide](https://link-to-your-video.com) to see how to set up your first local knowledge base in under 5 minutes.
 
 ---
 
