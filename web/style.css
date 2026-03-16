@@ -265,3 +265,77 @@ select {
     pointer-events: none;
     width: 80%;
 }
+
+/* Creators Grid & Bubble Styles */
+.creator-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(8px);
+}
+
+.creator-card:hover {
+    background: rgba(252, 42, 92, 0.05);
+    border-color: rgba(252, 42, 92, 0.3);
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3), 0 0 20px rgba(252, 42, 92, 0.1);
+}
+
+.creator-avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 24px;
+    background: linear-gradient(135deg, var(--brand) 0%, #ff6b6b 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+    color: white;
+    font-size: 28px;
+    font-weight: 700;
+    box-shadow: 0 4px 15px rgba(239, 51, 89, 0.3);
+    transition: transform 0.3s ease;
+}
+
+.creator-card:hover .creator-avatar {
+    transform: scale(1.1) rotate(5deg);
+}
+
+.creator-handle {
+    font-size: 0.75rem;
+    color: var(--brand);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+}
+
+.creator-nickname {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 8px;
+}
+
+.creator-stats {
+    display: flex;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.stat-pill {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 4px 10px;
+    border-radius: 100px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--app-text-muted);
+}

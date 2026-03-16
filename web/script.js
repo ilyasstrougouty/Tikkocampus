@@ -111,6 +111,7 @@ function showDashboard() {
     // Optimistic UI update
     document.getElementById('dashboard-view').classList.remove('hidden');
     document.getElementById('chat-view').classList.add('hidden');
+    document.getElementById('creators-view').classList.add('hidden');
     updateNavStates('nav-home');
     
     // Background tasks
@@ -118,9 +119,57 @@ function showDashboard() {
     loadHistory();
 }
 
+async function showCreators() {
+    // Optimistic UI update
+    document.getElementById('dashboard-view').classList.add('hidden');
+    document.getElementById('chat-view').classList.add('hidden');
+    document.getElementById('creators-view').classList.remove('hidden');
+    updateNavStates('nav-chat');
+    
+    // Background tasks
+    validateSession();
+    renderCreatorsGrid();
+}
+
+async function renderCreatorsGrid() {
+    const grid = document.getElementById('creators-grid');
+    grid.innerHTML = '<div class="col-span-full text-center py-20 opacity-50 font-typewriter">Loading creators...</div>';
+    
+    try {
+        const res = await fetch('/api/history');
+        const data = await res.json();
+        
+        if (!data.history || data.history.length === 0) {
+            grid.innerHTML = '<div class="col-span-full text-center py-20 opacity-50 font-typewriter">No creators indexed yet. Start by scraping a profile!</div>';
+            return;
+        }
+
+        grid.innerHTML = data.history.map(item => {
+            const creator = item.creator_name || 'unknown';
+            const nickname = item.creator_nickname || creator;
+            const initial = nickname.charAt(0).toUpperCase();
+            
+            return `
+            <div class="creator-card" onclick="setCreator('${creator}', '${nickname.replace(/'/g, "\\'")}'); showChat();">
+                <div class="creator-avatar">${initial}</div>
+                <div class="creator-handle">@${creator}</div>
+                <div class="creator-nickname">${nickname}</div>
+                <div class="creator-stats">
+                    <span class="stat-pill">${item.video_count} Videos</span>
+                    <span class="stat-pill">Ready</span>
+                </div>
+            </div>`;
+        }).join('');
+    } catch (e) {
+        console.error('Failed to load creators grid:', e);
+        grid.innerHTML = '<div class="col-span-full text-center py-20 text-brand">Error loading creators.</div>';
+    }
+}
+
 function showChat() {
     // Optimistic UI update
     document.getElementById('dashboard-view').classList.add('hidden');
+    document.getElementById('creators-view').classList.add('hidden');
     document.getElementById('chat-view').classList.remove('hidden');
     updateNavStates('nav-chat');
     
