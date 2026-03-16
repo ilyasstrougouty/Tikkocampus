@@ -31,7 +31,7 @@ app.mount("/static", StaticFiles(directory=WEB_DIR), name="static")
 # --- Global State Tracker ---
 task_state = {
     "is_running": False,
-    "status": "Idle",
+    "status": "waiting for input...",
     "error": None
 }
 
@@ -423,7 +423,7 @@ import sys
 import os
 
 def sigint_handler(signum, frame):
-    print("\nCtrl+C detected! Shutting down TikTok RAG Engine...")
+    print("\nCtrl+C detected! Shutting down Tikkocampus...")
     os._exit(0)
 
 if __name__ == "__main__":
@@ -441,10 +441,10 @@ if __name__ == "__main__":
     # Create the frameless PyWebView desktop window
     api = WindowAPI()
     window = webview.create_window(
-        "TikTok RAG Engine", 
+        "", 
         "http://127.0.0.1:8000/", 
-        width=1000, 
-        height=700, 
+        width=850, 
+        height=650, 
         frameless=True, 
         easy_drag=False,
         text_select=True,

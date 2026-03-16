@@ -25,23 +25,29 @@ async function showMainApp() {
     if (!isValid) return;
 
     document.getElementById('login-view').style.display = 'none';
-    const appContainer = document.getElementById('dashboard-view');
-    appContainer.style.display = 'flex';
-    appContainer.style.animation = "fadeIn 0.5s ease";
-    loadHistory();
+    showDashboard(); // Default view
     loadSettings();
 }
 
-async function validateSession() {
+let lastValidationTime = 0;
+const VALIDATION_CACHE_MS = 30000; // 30 seconds cache
+
+async function validateSession(force = false) {
+    const now = Date.now();
+    if (!force && (now - lastValidationTime < VALIDATION_CACHE_MS)) {
+        return true; 
+    }
+
     try {
         const res = await fetch('/api/validate-session');
         const data = await res.json();
         if (!data.valid) {
             console.warn("Session invalid:", data.error || "Redirected to login");
-            // Switch back to login view
+            
+            // Revert UI to login
             document.getElementById('login-view').style.display = 'flex';
-            document.getElementById('dashboard-view').style.display = 'none';
-            document.getElementById('chat-view').style.display = 'none';
+            document.getElementById('dashboard-view').classList.add('hidden');
+            document.getElementById('chat-view').classList.add('hidden');
             
             const status = document.getElementById('login-status');
             if (status) {
@@ -51,6 +57,7 @@ async function validateSession() {
             }
             return false;
         }
+        lastValidationTime = now;
         return true;
     } catch (e) {
         console.error("Validation failed:", e);
@@ -58,49 +65,51 @@ async function validateSession() {
     }
 }
 
-function toggleSidebar() {
-    const sidebar = document.getElementById('history-sidebar');
-    if (sidebar.style.left === '0px') {
-        sidebar.style.left = '-300px';
-    } else {
-        sidebar.style.left = '0px';
-        loadHistory(); // refresh on open
-    }
+function updateNavStates(activeId) {
+    const navItems = {
+        'nav-home': 'nav-home',
+        'nav-chat': 'nav-chat'
+    };
+
+    Object.entries(navItems).forEach(([key, navId]) => {
+        const navEl = document.getElementById(navId);
+        if (!navEl) return;
+        
+        if (navId === activeId) {
+            navEl.classList.add('nav-active');
+            navEl.classList.remove('nav-inactive');
+        } else {
+            navEl.classList.add('nav-inactive');
+            navEl.classList.remove('nav-active');
+        }
+    });
 }
 
-function startNewScrape() {
-    toggleSidebar();
-    showDashboard();
+function showDashboard() {
+    // Optimistic UI update
+    document.getElementById('dashboard-view').classList.remove('hidden');
+    document.getElementById('chat-view').classList.add('hidden');
+    updateNavStates('nav-home');
+    
+    // Background tasks
+    validateSession(); 
+    loadHistory();
 }
 
-async function showDashboard() {
-    if (!(await validateSession())) return;
-    document.getElementById('dashboard-view').style.display = 'flex';
-    document.getElementById('chat-view').style.display = 'none';
-    // Update tab styles
-    document.getElementById('tab-dashboard').style.background = 'rgba(255,255,255,0.1)';
-    document.getElementById('tab-dashboard').style.color = 'white';
-    document.getElementById('tab-chat').style.background = 'transparent';
-    document.getElementById('tab-chat').style.color = '#a1a1aa';
-}
-
-async function showChat() {
-    if (!(await validateSession())) return;
-    document.getElementById('dashboard-view').style.display = 'none';
-    document.getElementById('chat-view').style.display = 'flex';
-    // Update tab styles
-    document.getElementById('tab-chat').style.background = 'rgba(255,255,255,0.1)';
-    document.getElementById('tab-chat').style.color = 'white';
-    document.getElementById('tab-dashboard').style.background = 'transparent';
-    document.getElementById('tab-dashboard').style.color = '#a1a1aa';
+function showChat() {
+    // Optimistic UI update
+    document.getElementById('dashboard-view').classList.add('hidden');
+    document.getElementById('chat-view').classList.remove('hidden');
+    updateNavStates('nav-chat');
+    
+    // Background tasks
+    validateSession();
 }
 
 function toggleSettings() {
     const sidebar = document.getElementById('settings-sidebar');
-    if (sidebar.style.right === '0px') {
-        sidebar.style.right = '-350px';
-    } else {
-        sidebar.style.right = '0px';
+    sidebar.classList.toggle('show');
+    if (sidebar.classList.contains('show')) {
         updateKeyPlaceholder();
     }
 }
@@ -138,7 +147,7 @@ async function loadSettings() {
         const keyStatus = data.has_groq_key ? '🔑 Groq key saved' :
             data.has_openai_key ? '🔑 OpenAI key saved' : '⚠️ No API key set';
 
-        statusEl.innerHTML = `<span style="color: #94a3b8;">Active: <b style="color:#e2e8f0">${modelLabel}</b> · <b style="color:#e2e8f0">${transLabel}</b> · ${keyStatus}</span>`;
+        statusEl.innerHTML = `Active: <b>${modelLabel}</b> · <b>${transLabel}</b> · ${keyStatus}`;
         updateKeyPlaceholder();
     } catch (e) {
         console.error('Failed to load settings:', e);
@@ -161,26 +170,20 @@ async function loadHistory() {
             const date = new Date(item.scraped_at).toLocaleDateString();
             const creator = item.creator_name || 'unknown';
             return `
-            <div onclick="setCreator('${creator}'); showChat(); document.getElementById('history-sidebar').style.left='-300px';" 
-                style="display: flex; flex-direction: column; gap: 5px; padding: 12px; margin: 4px 0; 
-                border-radius: 12px; background: rgba(255,255,255,0.03); cursor: pointer; transition: 0.2s; border: 1px solid rgba(255,255,255,0.05);"
-                onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
-                
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <span style="color: #f4f4f5; font-weight: 600; font-size: 14px;">@${item.creator_name || 'unknown'}</span>
-                        <span style="font-size: 10px; background: rgba(94, 234, 212, 0.1); color: #5eead4; padding: 2px 6px; border-radius: 10px;">Ready</span>
-                    </div>
+            <div class="history-item border border-borderDark rounded-lg p-3 bg-white/5 hover:bg-white/10 transition-colors cursor-pointer group" onclick="setCreator('${creator}'); showChat();">
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-sm font-medium text-white">@${creator}</span>
                     <button onclick="event.stopPropagation(); deleteCreator('${creator}')" 
-                        style="background: transparent; border: none; font-size: 14px; cursor: pointer; color: #64748b; padding: 4px; border-radius: 4px; display: flex; align-items: center; justify-content: center; transition: 0.2s;"
-                        onmouseover="this.style.color='#f87171'; this.style.background='rgba(248, 113, 113, 0.1)'"
-                        onmouseout="this.style.color='#64748b'; this.style.background='transparent'" title="Delete Creator">
-                        🗑️
+                        class="text-textMuted opacity-0 group-hover:opacity-100 transition-opacity hover:text-brand">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                        </svg>
                     </button>
                 </div>
-                <div style="color: #a1a1aa; font-size: 12px; display: flex; justify-content: space-between;">
-                    <span>${item.video_count} videos</span>
-                    <span>${date}</span>
+                <div class="text-xs text-textMuted mb-2">${item.video_count} VIDEOS</div>
+                <div class="flex justify-between items-center text-xs text-textMuted">
+                    <span class="opacity-60">${date}</span>
+                    <span class="bg-badgeBg text-badgeText px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide">Ready</span>
                 </div>
             </div>`;
         }).join('');
@@ -204,8 +207,15 @@ async function deleteCreator(creatorName) {
             if (currentCreator === creatorName) {
                 setCreator("All Data"); // Or however you want to handle default state
                 document.getElementById('chat-box').innerHTML = `
-                    <div class="message ai" style="max-width: 80%; padding: 16px; border-radius: 16px; border-bottom-left-radius: 4px; line-height: 1.5; font-size: 14px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); color: #d4d4d8; margin-bottom: 20px;">
-                        Creator deleted. Select a new creator from the sidebar to continue chatting.
+                    <div class="message ai flex gap-4 max-w-[85%] font-typewriter">
+                        <div class="w-8 h-8 rounded-lg bg-brand/10 flex items-center justify-center flex-shrink-0 border border-brand/20 text-brand">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </div>
+                        <div class="bg-card p-5 rounded-2xl rounded-tl-none border border-borderDark text-sm leading-relaxed shadow-sm">
+                            Creator data purged. Select another creator from the history to continue analysis.
+                        </div>
                     </div>`;
             }
             loadHistory(); // Refresh the sidebar
@@ -237,39 +247,29 @@ async function loadCookieSessions() {
 
             recentCookies.forEach(cookie => {
                 const btn = document.createElement('div');
-                btn.style.cssText = `
-                    display: flex; justify-content: space-between; align-items: center; 
-                    padding: 12px 15px; background: rgba(0,0,0,0.2); 
-                    border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; 
-                    cursor: pointer; transition: all 0.2s;
-                `;
-                btn.onmouseover = () => {
-                    btn.style.background = 'rgba(94, 234, 212, 0.05)';
-                    btn.style.borderColor = 'rgba(94, 234, 212, 0.3)';
-                };
-                btn.onmouseout = () => {
-                    btn.style.background = 'rgba(0,0,0,0.2)';
-                    btn.style.borderColor = 'rgba(255,255,255,0.05)';
-                };
+                btn.className = "flex justify-between items-center p-4 bg-sidebar/50 border border-borderDark rounded-xl cursor-pointer transition-all hover:border-brand/50 hover:bg-brand/5 group";
                 
-                // Clicking the main body selects the cookie
                 btn.onclick = () => selectCookie(cookie.filename);
 
                 btn.innerHTML = `
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <span style="font-size: 18px;">🍪</span>
-                        <div style="display: flex; flex-direction: column;">
-                            <span style="color: #f4f4f5; font-size: 14px; font-weight: 500;">Session</span>
-                            <span style="color: #a1a1aa; font-size: 12px;">${cookie.created_at}</span>
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-lg bg-brand/10 flex items-center justify-center border border-brand/20 group-hover:bg-brand/20 transition-colors">
+                            <svg class="h-6 w-6 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+                            </svg>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-white font-bold text-sm">Session</span>
+                            <span class="text-[10px] text-textMuted uppercase tracking-wider font-typewriter">${cookie.created_at}</span>
                         </div>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        <span style="color: #5eead4; font-size: 12px; font-weight: 600;">Select ➔</span>
+                    <div class="flex items-center gap-4">
+                        <span class="text-[10px] font-bold text-brand opacity-0 group-hover:opacity-100 transition-opacity uppercase tracking-widest">CONTINUE ➔</span>
                         <button onclick="event.stopPropagation(); deleteCookie('${cookie.filename}')" 
-                                style="background: transparent; border: none; font-size: 14px; cursor: pointer; color: #64748b; padding: 4px; border-radius: 4px; display: flex; align-items: center; justify-content: center; transition: 0.2s;"
-                                onmouseover="this.style.color='#f87171'; this.style.background='rgba(248, 113, 113, 0.1)'"
-                                onmouseout="this.style.color='#64748b'; this.style.background='transparent'" title="Delete Session">
-                            🗑️
+                                class="w-8 h-8 rounded-lg flex items-center justify-center text-textMuted hover:text-white hover:bg-white/10 transition-colors" title="Delete Session">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
                         </button>
                     </div>
                 `;
@@ -541,8 +541,17 @@ async function sendMessage() {
 
     // 2. Create a temporary "loading" bubble for the AI
     const loadingMsg = document.createElement("div");
-    loadingMsg.className = "message ai glass-panel";
-    loadingMsg.innerText = "Searching database...";
+    loadingMsg.className = "message ai flex gap-4 max-w-[85%]";
+    loadingMsg.innerHTML = `
+        <div class="w-8 h-8 rounded-lg bg-brand/10 flex items-center justify-center flex-shrink-0 border border-brand/20">
+            <svg class="w-5 h-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+            </svg>
+        </div>
+        <div class="bg-card p-5 rounded-2xl rounded-tl-none border border-borderDark text-sm leading-relaxed shadow-sm italic text-textMuted font-typewriter">
+            Analyzing Creator Data...
+        </div>
+    `;
     chatBox.appendChild(loadingMsg);
     chatBox.scrollTop = chatBox.scrollHeight;
 
@@ -563,7 +572,9 @@ async function sendMessage() {
         const response = data.response;
 
         // 4. Update the loading bubble with the actual LLM response
-        loadingMsg.innerText = response;
+        const textContainer = loadingMsg.querySelector('.bg-card');
+        textContainer.innerText = response;
+        textContainer.classList.remove('italic', 'text-textMuted', 'font-typewriter');
     } catch (e) {
         loadingMsg.innerText = `❌ Error: ${e.message}`;
     }
@@ -577,7 +588,8 @@ document.getElementById("chat-input").addEventListener("keypress", function (eve
     }
 });
 
-// --- LLM Settings ---
+// Toggle nav on start
+showDashboard();
 function updateKeyPlaceholder() {
     const model = document.getElementById('model-select').value;
     const trans = document.getElementById('transcription-method').value;
@@ -655,5 +667,20 @@ async function saveSettings() {
     } catch (e) {
         statusEl.innerText = `❌ Error: ${e.message}`;
         statusEl.style.color = "#f87171";
+    }
+}
+
+function quickAction(type) {
+    const input = document.getElementById('chat-input');
+    const prompts = {
+        'Summarize': 'Please summarize the main themes and topics covered by this creator.',
+        'Notes': 'Can you provide detailed notes on the key points mentioned in these videos?',
+        'Advice': 'Based on this content, what advice would you give for someone looking to succeed in this niche?',
+        'Recommendations': 'What top 3 videos would you recommend me to watch first, and why?'
+    };
+    
+    if (prompts[type]) {
+        input.value = prompts[type];
+        sendMessage();
     }
 }

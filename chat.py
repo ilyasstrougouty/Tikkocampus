@@ -113,6 +113,10 @@ def get_rag_response(user_query, creator_name=None):
         return final_answer
             
     except Exception as e:
-        return f"LLM API Error: {str(e)}\n\nDid you forget to set your GROQ_API_KEY environment variable in your terminal?"
+        error_msg = str(e)
+        if "Ollama" in error_msg or "actively refused it" in error_msg:
+            return f"❌ Ollama Connection Error: {error_msg}\n\nIs Ollama running? Make sure you have started the Ollama application on your machine before using local models."
+        
+        return f"❌ LLM API Error: {error_msg}\n\nCheck your API key in Settings and ensure you have an active internet connection."
 
 

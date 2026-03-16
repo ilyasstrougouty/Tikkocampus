@@ -1,16 +1,29 @@
-/* Dark Black / Glassmorphism Theme Base */
+/* Modern Dark Theme Base */
+:root {
+    --app-accent: #ef3359;
+    --app-dark: #22252a;
+    --app-sidebar: #191a1f;
+    --app-surface: #191a1f;
+    --app-text: #E5E7EB;
+    --app-text-muted: #9CA3AF;
+    --brand: #ef3359;
+    --brand-hover: #d92c50;
+    --border-dark: #333333;
+}
+
 body {
     margin: 0;
     height: 100vh;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    /* Deep dark near-black radial gradient to enhance the frosted glass contrast */
-    background: radial-gradient(circle at center, #18181b, #09090b);
-    color: #f4f4f5;
+    font-family: 'Inter', sans-serif;
+    background-color: var(--app-dark);
+    color: var(--app-text);
     display: flex;
-    justify-content: center;
-    align-items: center;
+    flex-direction: column; /* Match HTML structure */
     overflow: hidden;
-    /* Prevent body scroll */
+}
+
+.font-typewriter {
+    font-family: 'Courier Prime', monospace;
 }
 
 /* The Frosted Glass Container */
@@ -50,9 +63,9 @@ body {
     scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
 }
 
-/* Custom Scrollbar for dark theme */
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
-    width: 8px;
+    width: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -60,33 +73,51 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.25);
+    background: #333;
     border-radius: 10px;
-    border: 2px solid transparent;
-    background-clip: content-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.4);
-    border: 2px solid transparent;
-    background-clip: content-box;
+    background: #444;
+}
+
+/* Hide scrollbar for specific elements */
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* Sidebar Active State Helpers */
+.nav-active {
+    color: var(--app-accent) !important;
+    background-color: rgba(252, 42, 92, 0.1) !important;
+    border-left: 2px solid var(--app-accent) !important;
+}
+
+.nav-inactive {
+    color: var(--app-text-muted) !important;
+    background-color: transparent !important;
+    border-left: 2px solid transparent !important;
 }
 
 /* Message Bubbles */
 .message {
-    padding: 14px 20px;
-    border-radius: 12px;
     max-width: 85%;
-    line-height: 1.6;
-    font-size: 14px;
+    padding: 1.25rem;
+    border-radius: 1rem;
+    font-size: 0.875rem;
+    line-height: 1.625;
 }
 
 .message.user {
     align-self: flex-end;
-    /* Soft semi-transparent white for user messages to contrast black background */
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    color: #ffffff;
+    background: var(--brand);
+    color: white;
+    border-top-right-radius: 0;
 }
 
 .message.ai {
@@ -143,27 +174,60 @@ button:disabled {
     cursor: not-allowed;
 }
 
-/* Link overrides */
-a {
-    color: #5eead4;
-    text-decoration: none;
+/* Animation for Sidebar/Settings */
+#settings-sidebar {
+    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
 }
 
-a:hover {
-    text-decoration: underline;
+#settings-sidebar.show {
+    transform: translateX(0) !important;
 }
 
-/* Specific purely to allow PyWebView dragging */
+/* Fluid Transitions */
+#history-sidebar, #dashboard-view, #chat-view {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* History Item Styles (New Design Integration) */
+.history-item {
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.history-item:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Badges */
+.bg-badgeBg { background-color: #BBE6C9; }
+.text-badgeText { color: #2D6B42; }
+.history-item {
+    padding: 12px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.history-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(252, 42, 92, 0.3);
+}
+
+/* Drag Regions */
 .pywebview-drag-region {
     -webkit-app-region: drag;
 }
 
-.window-controls {
-    -webkit-app-region: no-drag;
-}
-
-/* Prevent the entire app content from being draggable */
-#content-wrapper,
-#content-wrapper * {
-    -webkit-app-region: no-drag;
+/* Form Overrides */
+select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23888888' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 1rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 2.5rem;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    appearance: none;
 }
