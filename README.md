@@ -16,88 +16,74 @@
 
 ---
 
-## 🎬 Video Tutorial
-> [!TIP]
-> **New to Tikkocampus?** Watch our [Zero-to-Hero Quickstart Guide](https://link-to-your-video.com) to see how to set up your first local knowledge base in under 5 minutes.
-
----
-
 ## ⚙️ What is Tikkocampus?
 
-Tikkocampus is a professional-grade **Retrieval-Augmented Generation (RAG)** pipeline designed for content researchers, data scientists, and power users. It allows you to ingest TikTok profiles and turn them into a searchable, interactive database.
+Tikkocampus is a professional-grade **Retrieval-Augmented Generation (RAG)** pipeline designed for content researchers and fans. It allows you to ingest TikTok profiles and turn them into a searchable, interactive database.
 
-- **Phase 1: Ingestion** – Automated high-speed downloading with smart IP rotation.
-- **Phase 2: Intelligence** – Audio extraction and high-fidelity transcription (Local or Cloud).
-- **Phase 3: Synthesis** – Semantic embedding into ChromaDB for instant contextual retrieval.
-- **Phase 4: Interaction** – Conversational AI interface for deep content analysis.
+- **Ingestion**: High-speed video and metadata scraping.
+- **Intelligence**: High-fidelity transcription (Local or Cloud).
+- **Search**: Semantic indexing into ChromaDB for instant contextual retrieval.
+- **Chat**: A sleek conversational interface to "talk" to your favorite creators.
 
 ---
 
-## 🚀 One-Minute Setup
+## 🚀 Easy Launch (Get started in 3 steps)
 
-### 1. Prerequisites
-- **Python 3.10+** (Add to PATH)
-- **FFmpeg** (Required for audio processing. [Download here](https://www.gyan.dev/ffmpeg/builds/))
+### 1. Requirements
+- **Python 3.10+**
+- **FFmpeg** (For audio parsing. [Download](https://www.gyan.dev/ffmpeg/builds/))
 
-### 2. Fast Installation
+### 2. Setup
 ```bash
-# Clone and enter directory
-git clone https://github.com/yourusername/tikkocampus.git
-cd tikkocampus
-
-# Create environment (Windows)
-python -m venv venv
-.\venv\Scripts\activate
-
-# Install all components
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-### 3. Launch
+### 3. Start
 ```bash
 python app.py
 ```
 
 ---
 
-## 🦙 Going Local: Ollama & Llama 3
-Tikkocampus is optimized for **100% local privacy**. Here is how to use it without any API keys:
+## 🆓 Option 1: 100% Free (Using Groq API)
+Groq offers an incredibly fast and **completely free** tier for developers.
 
-1. **Install Ollama**: Download from [ollama.com](https://ollama.com/).
-2. **Pull a Model**: Open your terminal and run:
-   ```bash
-   ollama run llama3
-   ```
-3. **Configure Tikkocampus**: 
-   - Open the **⚙️ Gear Icon** in the app.
-   - Select `Ollama - Llama 3 (Local)` from the dropdown.
-   - Click **Save**. *No API key required!*
+1.  **Get a Key**: Register at [console.groq.com](https://console.groq.com/) and create a free API Key.
+2.  **Configure**: 
+    - Open Tikkocampus and click the **⚙️ Settings** icon.
+    - Select `Groq - Llama 3.1 8B` (or 70B) as the model.
+    - Set Transcription to `Groq Whisper API` (Fastest).
+    - Paste your key and click **Save**.
 
 ---
 
-## 🛠️ Configuration Options
+## 💎 Option 2: High Performance (Paid Models)
+For the highest accuracy and reasoning capabilities, use OpenAI's flagship models.
 
-| Feature | Local (Free & Private) | Cloud (Fast & Scalable) |
-|---|---|---|
-| **Transcription** | `Local Whisper` | `Groq Whisper API` |
-| **Chat Engine** | `Ollama / Llama 3` | `Groq / OpenAI` |
-| **Vector DB** | `ChromaDB` (Local) | - |
-
----
-
-## 📁 Repository Map
-- `app.py`: Desktop interface & server orchestration.
-- `scraper.py`: Secure TikTok ingestion engine.
-- `processor.py`: Audio analysis & transcription.
-- `embedder.py`: Semantic vectorization.
-- `chat.py`: RAG logic and LLM integration.
+1.  **Get a Key**: Obtain an API key from your [OpenAI Dashboard](https://platform.openai.com/).
+2.  **Configure**:
+    - Select `GPT-4o` or `GPT-4o Mini` in Settings.
+    - Paste your OpenAI key and click **Save**.
+    - *Note: This requires a paid OpenAI account with available credits.*
 
 ---
 
-## ❓ FAQ & Troubleshooting
-- **Refused Connection?** Ensure the Ollama app is running in your taskbar.
-- **Scraping Limits?** Use the built-in "Login" button to refresh your TikTok session.
-- **FFmpeg Error?** Ensure `ffmpeg` is in your system PATH and try running `ffmpeg -version` in CMD.
+## 🏠 Option 3: Fully Private & Local (Ollama)
+No internet? No problem. Use Ollama to run everything on your own hardware.
+
+1.  **Install**: Download [ollama.com](https://ollama.com/).
+2.  **Run**: `ollama run llama3` in your terminal.
+3.  **Configure**: Select `Ollama - Llama 3 (Local)` in the app settings.
+
+---
+
+## 📁 Project Structure
+- `app.py`: Main application launcher.
+- `scraper.py`: TikTok data acquisition.
+- `processor.py`: Audio & transcription logic.
+- `embedder.py`: Semantic search engine.
+- `chat.py`: AI communication layer.
 
 ---
 

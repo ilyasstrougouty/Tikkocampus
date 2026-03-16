@@ -151,6 +151,11 @@ async function renderCreatorsGrid() {
             
             return `
             <div class="creator-card" onclick="setCreator('${creator}', '${nickname.replace(/'/g, "\\'")}'); showChat();">
+                <button onclick="event.stopPropagation(); deleteCreator('${creator}')" class="creator-delete-btn" title="Delete Data">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                </button>
                 <div class="creator-avatar">${initial}</div>
                 <div class="creator-handle">@${creator}</div>
                 <div class="creator-nickname">${nickname}</div>
@@ -291,6 +296,7 @@ async function deleteCreator(creatorName) {
                     </div>`;
             }
             loadHistory(); // Refresh the sidebar
+            renderCreatorsGrid(); // Refresh the grid
         } else {
             const data = await res.json();
             alert(`Failed to delete: ${data.detail || 'Unknown error'}`);

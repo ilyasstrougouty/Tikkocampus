@@ -339,3 +339,33 @@ select {
     font-weight: 600;
     color: var(--app-text-muted);
 }
+
+.creator-delete-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    color: var(--app-text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    opacity: 0;
+    transform: translateY(-5px);
+    z-index: 10;
+}
+
+.creator-card:hover .creator-delete-btn {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.creator-delete-btn:hover {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.2);
+    color: #ef4444 !important;
+}
