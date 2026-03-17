@@ -1,0 +1,15 @@
+{
+  "name": "tikkocampus-electron",
+  "version": "1.0.0",
+  "description": "Premium Electron interface for Tikkocampus",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^34.3.0"
+  }
+}

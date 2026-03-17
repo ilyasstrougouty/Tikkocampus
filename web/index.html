@@ -40,7 +40,7 @@
         }
     </script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="/static/style.css?v=1.1">
+    <link rel="stylesheet" href="style.css?v=1.1">
 </head>
 
 <body class="bg-main text-textMain h-screen flex flex-col overflow-x-hidden overflow-y-hidden antialiased selection:bg-brand selection:text-white">
@@ -49,10 +49,13 @@
     <div class="title-bar pywebview-drag-region w-full h-8 bg-sidebar flex justify-between items-center z-[9999] border-b border-borderDark/30">
         <div class="window-title flex items-center gap-2 text-textMuted text-[10px] font-bold ml-4 tracking-[0.2em] uppercase">
         </div>
-        <div class="window-controls flex h-full -webkit-app-region: no-drag;">
-            <button class="win-btn minimize w-11 h-full flex justify-center items-center cursor-pointer transition-colors bg-transparent border-none text-textMuted hover:bg-white/10" onclick="pywebview.api.minimize()" title="Minimize">─</button>
-            <button class="win-btn maximize w-11 h-full flex justify-center items-center cursor-pointer transition-colors bg-transparent border-none text-textMuted hover:bg-white/10" onclick="pywebview.api.toggle_maximize()" title="Maximize">□</button>
-            <button class="win-btn close w-11 h-full flex justify-center items-center cursor-pointer transition-colors bg-transparent border-none text-textMuted hover:bg-[#ef4444] hover:text-white" onclick="pywebview.api.close()" title="Close">✕</button>
+        <div class="window-controls flex h-full no-drag">
+            <button class="win-btn minimize w-11 h-full flex justify-center items-center cursor-pointer transition-colors bg-transparent border-none text-textMuted hover:bg-white/10 no-drag" 
+                onclick="window.electronAPI ? window.electronAPI.minimize() : (window.pywebview ? pywebview.api.minimize() : null)" title="Minimize">─</button>
+            <button class="win-btn maximize w-11 h-full flex justify-center items-center cursor-pointer transition-colors bg-transparent border-none text-textMuted hover:bg-white/10 no-drag" 
+                onclick="window.electronAPI ? window.electronAPI.toggleMaximize() : (window.pywebview ? pywebview.api.toggle_maximize() : null)" title="Maximize">□</button>
+            <button class="win-btn close w-11 h-full flex justify-center items-center cursor-pointer transition-colors bg-transparent border-none text-textMuted hover:bg-[#ef4444] hover:text-white no-drag" 
+                onclick="window.electronAPI ? window.electronAPI.close() : (window.pywebview ? pywebview.api.close() : null)" title="Close">✕</button>
         </div>
     </div>
 
@@ -61,10 +64,29 @@
 
         <!-- LOGIN VIEW (Overlay) -->
         <div id="login-view" class="absolute inset-0 z-[1000] bg-main flex justify-center items-center p-4">
-            <div class="bg-card w-full max-w-[650px] p-8 md:p-12 text-center flex flex-col gap-8 rounded-2xl border border-borderDark shadow-2xl relative overflow-y-auto max-h-full">
+            <!-- STARTUP LOADING OVERLAY -->
+            <div id="startup-loader" class="absolute inset-0 z-[1001] bg-main flex flex-col justify-center items-center transition-opacity duration-700">
+                <div class="flex flex-col items-center gap-6">
+                    <div class="relative">
+                        <div class="absolute inset-0 bg-brand/20 blur-2xl rounded-full animate-pulse-slow"></div>
+                        <img src="logo.png" class="w-16 h-16 object-contain mix-blend-screen relative animate-float" alt="Logo">
+                    </div>
+                    <div class="flex flex-col items-center gap-2">
+                        <span class="text-2xl font-bold tracking-tighter font-typewriter text-white">tikkocampus</span>
+                        <div class="flex items-center gap-2">
+                            <div class="w-1.5 h-1.5 bg-brand rounded-full animate-bounce" style="animation-delay: 0s"></div>
+                            <div class="w-1.5 h-1.5 bg-brand rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                            <div class="w-1.5 h-1.5 bg-brand rounded-full animate-bounce" style="animation-delay: 0.4s"></div>
+                            <span class="text-[10px] text-textMuted font-bold uppercase tracking-[0.3em] ml-2">Connecting...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="login-card" class="bg-card w-full max-w-[650px] p-8 md:p-12 text-center flex flex-col gap-8 rounded-2xl border border-borderDark shadow-2xl relative overflow-y-auto max-h-full transition-all duration-700 opacity-0 translate-y-4">
                 <div>
                     <div class="flex items-center justify-center space-x-3 mb-4">
-                        <img src="/static/logo.png" class="w-10 h-10 object-contain mix-blend-screen" alt="Logo">
+                        <img src="logo.png" class="w-10 h-10 object-contain mix-blend-screen" alt="Logo">
                         <span class="text-3xl font-bold tracking-tight font-typewriter">tikkocampus</span>
                     </div>
                     <p class="text-textMuted text-sm">Upload your TikTok cookies to get started with scraping.</p>
@@ -108,7 +130,7 @@
             <div class="flex flex-col flex-1 overflow-hidden">
                 <!-- Logo -->
                 <div class="p-6 hidden lg:flex items-center space-x-3">
-                    <img src="/static/logo.png" class="w-8 h-8 object-contain mix-blend-screen" alt="Logo">
+                    <img src="logo.png" class="w-8 h-8 object-contain mix-blend-screen" alt="Logo">
                     <span class="text-xl font-bold tracking-tight text-white font-typewriter">tikkocampus</span>
                 </div>
 
@@ -315,7 +337,7 @@
         <div id="settings-status" class="mt-4 text-center text-xs text-brand font-bold font-typewriter"></div>
     </aside>
 
-    <script src="/static/script.js?v=1.1"></script>
+    <script src="script.js?v=1.1"></script>
     <script>
         // Prevent double-click header drag maximize
         document.querySelector('.title-bar').addEventListener('dblclick', (e) => {

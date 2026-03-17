@@ -5,6 +5,8 @@ let apiState = {
     has_openai_key: false
 };
 
+const API_BASE = window.location.protocol === 'file:' ? 'http://127.0.0.1:8000' : '';
+
 // --- UI Navigation ---
 function setCreator(creatorName, creatorNickname = null) {
     currentCreator = creatorName;
@@ -61,7 +63,7 @@ async function validateSession(force = false) {
     }
 
     try {
-        const res = await fetch('/api/validate-session');
+        const res = await fetch(`${API_BASE}/api/validate-session`);
         const data = await res.json();
         if (!data.valid) {
             console.warn("Session invalid:", data.error || "Redirected to login");
@@ -193,7 +195,7 @@ function toggleSettings() {
 // --- Load Saved Settings ---
 async function loadSettings() {
     try {
-        const res = await fetch('/api/settings');
+        const res = await fetch(`${API_BASE}/api/settings`);
         const data = await res.json();
 
         // Pre-select the saved model
@@ -233,7 +235,7 @@ async function loadSettings() {
 // --- History ---
 async function loadHistory() {
     try {
-        const res = await fetch('/api/history');
+        const res = await fetch(`${API_BASE}/api/history`);
         const data = await res.json();
         const list = document.getElementById('history-list');
 
@@ -275,7 +277,7 @@ async function deleteCreator(creatorName) {
     }
 
     try {
-        const res = await fetch(`/api/history/${creatorName}`, {
+        const res = await fetch(`${API_BASE}/api/history/${creatorName}`, {
             method: 'DELETE'
         });
 
@@ -310,7 +312,7 @@ async function deleteCreator(creatorName) {
 // --- Session Management ---
 async function loadCookieSessions() {
     try {
-        const res = await fetch('/api/list-cookies');
+        const res = await fetch(`${API_BASE}/api/list-cookies`);
         const data = await res.json();
 
         const container = document.getElementById('existing-sessions-container');
@@ -379,7 +381,7 @@ async function deleteCookie(filename) {
 
 async function selectCookie(filename) {
     try {
-        const res = await fetch('/api/select-cookie', {
+        const res = await fetch(`${API_BASE}/api/select-cookie`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ filename: filename })
@@ -406,7 +408,7 @@ async function triggerLogin() {
     status.innerText = "Please complete the login in the pop-up window...";
 
     try {
-        const res = await fetch('/api/auth', { method: 'POST' });
+        const res = await fetch(`${API_BASE}/api/auth`, { method: 'POST' });
         
         if (res.ok) {
             status.innerText = "✅ Successfully logged in!";
@@ -430,19 +432,39 @@ async function triggerLogin() {
     }
 }
 
-// Run on page load
-async function initApp() {
-    // 1. Initial Load of sessions
-    loadCookieSessions();
-    
-    // 2. Settings Listeners
-    document.getElementById('model-select').addEventListener('change', updateKeyPlaceholder);
-    document.getElementById('transcription-method').addEventListener('change', updateKeyPlaceholder);
-
-    // 3. Check if we already have an active cookies.txt session AND if it's valid
+// Run on page load with retries for backend boot-up
+async function initApp(retries = 10) {
+    console.log(`Connecting to backend... (${retries} attempts left)`);
     try {
-        const res = await fetch('/api/check-cookies');
-        const data = await res.json();
+        // 1. Check if backend is alive
+        const resCheck = await fetch(`${API_BASE}/api/status`);
+        if (!resCheck.ok && resCheck.status !== 404) throw new Error("Backend not ready");
+        
+        console.log("Connected to backend! Initializing UI...");
+        
+        // Hide loader and show login card with animation
+        const loader = document.getElementById('startup-loader');
+        const loginCard = document.getElementById('login-card');
+        if (loader) {
+            loader.style.opacity = '0';
+            setTimeout(() => loader.remove(), 700);
+        }
+        if (loginCard) {
+            loginCard.classList.add('show');
+        }
+
+        // 2. Initial Load of sessions
+        loadCookieSessions();
+        
+        // 3. Settings Listeners
+        const modelSelect = document.getElementById('model-select');
+        const transSelect = document.getElementById('transcription-method');
+        if (modelSelect) modelSelect.addEventListener('change', updateKeyPlaceholder);
+        if (transSelect) transSelect.addEventListener('change', updateKeyPlaceholder);
+
+        // 4. Check if we already have an active cookies.txt session AND if it's valid
+        const resCookies = await fetch(`${API_BASE}/api/check-cookies`);
+        const data = await resCookies.json();
         if (data.exists) {
             console.log("Active session found. Validating...");
             const isValid = await validateSession();
@@ -451,11 +473,16 @@ async function initApp() {
             }
         }
     } catch (e) {
-        console.error("Check cookies failed:", e);
+        if (retries > 0) {
+            console.warn("Backend connection failed, retrying in 1s...");
+            setTimeout(() => initApp(retries - 1), 1000);
+        } else {
+            console.error("Failed to connect to backend after several attempts:", e);
+        }
     }
 }
 
-document.addEventListener('DOMContentLoaded', initApp);
+document.addEventListener('DOMContentLoaded', () => initApp());
 
 // --- Method 2: Drag & Drop Cookies ---
 const dropZone = document.getElementById('drop-zone');
@@ -500,7 +527,7 @@ async function handleFileUpload(file) {
     formData.append('file', file);
 
     try {
-        const response = await fetch('/api/upload-cookies', {
+        const response = await fetch(`${API_BASE}/api/upload-cookies`, {
             method: 'POST',
             body: formData
         });
@@ -534,7 +561,7 @@ async function startProcessing() {
 
     try {
         // 1. Tell the server to start the job
-        const startResponse = await fetch('/api/process', {
+        const startResponse = await fetch(`${API_BASE}/api/process`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ target_url: target, max_videos: videoCount })
@@ -547,7 +574,7 @@ async function startProcessing() {
 
         // 2. Start Polling the Status every 2 seconds
         pollInterval = setInterval(async () => {
-            const statusRes = await fetch('/api/status');
+            const statusRes = await fetch(`${API_BASE}/api/status`);
             const state = await statusRes.json();
 
             // Update the UI with real-time logs from the server
@@ -636,7 +663,7 @@ async function sendMessage() {
 
     // 3. Call the Python backend logic via standard REST!
     try {
-        const fetchRes = await fetch('/api/chat', {
+        const fetchRes = await fetch(`${API_BASE}/api/chat`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -723,7 +750,7 @@ async function saveSettings() {
             api_key: apiKey
         };
 
-        const res = await fetch('/api/settings', {
+        const res = await fetch(`${API_BASE}/api/settings`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)

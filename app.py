@@ -3,6 +3,7 @@ import sys
 import time
 import threading
 from fastapi import FastAPI, HTTPException, BackgroundTasks, UploadFile, File
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
@@ -26,8 +27,15 @@ import chat
 
 app = FastAPI()
 
-# Mount the web directory for static files (HTML, CSS, JS)
-app.mount("/static", StaticFiles(directory=WEB_DIR), name="static")
+# Add CORS middleware to allow the Electron frontend to talk to the FastAPI backend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], # In production, you'd restrict this to your electron origin
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 # --- Global State Tracker ---
 task_state = {
@@ -56,6 +64,9 @@ def run_heavy_pipeline(url: str, max_videos: int = 10):
         creator_filter = None
         if '@' in url:
             creator_filter = url.split('@')[-1].split('/')[0].split('?')[0]
+        
+        task_state["status"] = "Phase 1: Verifying dependencies..."
+        install_playwright_if_needed()
         
         task_state["status"] = f"Phase 1: Scraping {max_videos} videos from TikTok..."
         # Capture the actual creator name and nickname used by the scraper
@@ -436,9 +447,7 @@ async def get_history():
     history = db.get_scrape_history()
     return {"history": history}
 
-@app.get("/")
-async def serve_index():
-    return FileResponse(os.path.join(WEB_DIR, "index.html"))
+# The root is already handled by the "/" StaticFiles mount above
 
 def run_server():
     uvicorn.run(app, host="127.0.0.1", port=8000)
@@ -457,18 +466,28 @@ class WindowAPI:
     def toggle_maximize(self):
         webview.windows[0].toggle_fullscreen()
 
-import signal
-
 def sigint_handler(signum, frame):
     print("\nCtrl+C detected! Shutting down Tikkocampus...")
     os._exit(0)
 
+
+# Mount the web directory at root as a fallback for static files
+# This is placed at the end so it doesn't shadow /api/* routes
+app.mount("/", StaticFiles(directory=WEB_DIR, html=True), name="web")
+
+import signal
+
 if __name__ == "__main__":
-    signal.signal(signal.SIGINT, sigint_handler)
+    # signal.signal(signal.SIGINT, sigint_handler)
     
-    # Ensure Playwright is ready before starting anything else
-    install_playwright_if_needed()
+    # Check for server-only mode (for Electron integration)
+    server_only = "--server-only" in sys.argv
     
+    if server_only:
+        print("Starting Tikkocampus Server in Headless Mode...")
+        run_server()
+        sys.exit(0)
+
     print("Starting Desktop Interface...")
     
     # Run the FastAPI server in a background thread
