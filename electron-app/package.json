@@ -4,12 +4,31 @@
   "description": "Premium Electron interface for Tikkocampus",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "build": "npm run dist"
+  },
+  "build": {
+    "appId": "com.tikkocampus.app",
+    "productName": "Tikkocampus",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "../web/logo.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.education"
+    }
   },
   "keywords": [],
-  "author": "",
+  "author": "Tikkocampus Team",
   "license": "ISC",
   "devDependencies": {
-    "electron": "^34.3.0"
+    "electron": "^34.3.0",
+    "electron-builder": "^24.13.3"
   }
 }

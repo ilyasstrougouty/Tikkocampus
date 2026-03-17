@@ -8,7 +8,6 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 import uvicorn
-import webview
 import shutil
 
 # Resolve base directory (works both from source and PyInstaller bundle)
@@ -447,24 +446,8 @@ async def get_history():
     history = db.get_scrape_history()
     return {"history": history}
 
-# The root is already handled by the "/" StaticFiles mount above
-
 def run_server():
     uvicorn.run(app, host="127.0.0.1", port=8000)
-
-class WindowAPI:
-    def __init__(self):
-        pass
-
-    def close(self):
-        import os
-        os._exit(0)
-
-    def minimize(self):
-        webview.windows[0].minimize()
-
-    def toggle_maximize(self):
-        webview.windows[0].toggle_fullscreen()
 
 def sigint_handler(signum, frame):
     print("\nCtrl+C detected! Shutting down Tikkocampus...")
@@ -479,35 +462,5 @@ import signal
 
 if __name__ == "__main__":
     # signal.signal(signal.SIGINT, sigint_handler)
-    
-    # Check for server-only mode (for Electron integration)
-    server_only = "--server-only" in sys.argv
-    
-    if server_only:
-        print("Starting Tikkocampus Server in Headless Mode...")
-        run_server()
-        sys.exit(0)
-
-    print("Starting Desktop Interface...")
-    
-    # Run the FastAPI server in a background thread
-    t = threading.Thread(target=run_server)
-    t.daemon = True
-    t.start()
-    
-    # Wait a tiny bit for the server to start
-    time.sleep(1)
-    
-    # Create the frameless PyWebView desktop window
-    api = WindowAPI()
-    window = webview.create_window(
-        "", 
-        "http://127.0.0.1:8000/", 
-        width=850, 
-        height=650, 
-        frameless=True, 
-        easy_drag=False,
-        text_select=True,
-        js_api=api
-    )
-    webview.start(icon=os.path.join(WEB_DIR, 'logo.ico'))
+    print("Starting Tikkocampus Backend Server...")
+    run_server()

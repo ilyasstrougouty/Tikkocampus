@@ -8,7 +8,7 @@
   <div align="center">
     <img src="https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white" alt="Python">
     <img src="https://img.shields.io/badge/RAG-Powered-FF6F61" alt="RAG">
-    <img src="https://img.shields.io/badge/UI-PyWebView-6D28D9" alt="UI">
+    <img src="https://img.shields.io/badge/UI-Electron-4786D1?logo=electron&logoColor=white" alt="UI">
   </div>
 </div>
 
@@ -25,22 +25,39 @@ Tikkocampus is a professional-grade **Retrieval-Augmented Generation (RAG)** pip
 
 ---
 
-## 🚀 Easy Launch (Get started in 3 steps)
+## 🚀 Quick Start (Electron Desktop App)
+
+Tikkocampus is now a standalone desktop application. Follow these steps to get started:
 
 ### 1. Requirements
+- **Node.js 18+**
 - **Python 3.10+**
 - **FFmpeg** (For audio parsing. [Download](https://www.gyan.dev/ffmpeg/builds/))
 
 ### 2. Setup
 ```bash
-# Install dependencies
+# Install Python dependencies
 pip install -r requirements.txt
+
+# Install Electron dependencies
+cd electron-app
+npm install
 ```
 
-### 3. Start
+### 3. Launch
 ```bash
-python app.py
+# In the electron-app directory:
+npm start
 ```
+
+---
+
+## 📦 Downloads (Executables)
+
+Download the latest pre-compiled versions for your operating system:
+
+- **Windows**: [Tikkocampus-Win-Setup.exe](#) (Coming Soon)
+- **macOS**: [Tikkocampus-Mac.dmg](#) (Coming Soon)
 
 ---
 
@@ -77,7 +94,8 @@ No internet? No problem. Use Ollama to run everything on your own hardware.
 ---
 
 ## 📁 Project Structure
-- `app.py`: Main application launcher.
+- `electron-app/`: Native desktop interface.
+- `app.py`: Backend FastAPI server.
 - `scraper.py`: TikTok data acquisition.
 - `processor.py`: Audio & transcription logic.
 - `embedder.py`: Semantic search engine.
