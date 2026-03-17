@@ -138,7 +138,7 @@ async function renderCreatorsGrid() {
     grid.innerHTML = '<div class="col-span-full text-center py-20 opacity-50 font-typewriter">Loading creators...</div>';
     
     try {
-        const res = await fetch('/api/history');
+        const res = await fetch(`${API_BASE}/api/history`);
         const data = await res.json();
         
         if (!data.history || data.history.length === 0) {
@@ -367,7 +367,7 @@ async function deleteCookie(filename) {
     if (!confirm(`Permanently delete this session file (${filename})?`)) return;
     
     try {
-        const res = await fetch(`/api/cookies/${filename}`, { method: 'DELETE' });
+        const res = await fetch(`${API_BASE}/api/cookies/${filename}`, { method: 'DELETE' });
         if (res.ok) {
             loadCookieSessions();
         } else {
@@ -447,6 +447,7 @@ async function initApp(retries = 10) {
         const loginCard = document.getElementById('login-card');
         if (loader) {
             loader.style.opacity = '0';
+            loader.style.pointerEvents = 'none';
             setTimeout(() => loader.remove(), 700);
         }
         if (loginCard) {
