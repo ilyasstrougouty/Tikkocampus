@@ -1,4 +1,6 @@
 import os
+import sys
+import time
 from config import TEMP_PROCESSING_DIR, MAX_VIDEOS_PER_PROFILE
 from db import insert_video_metadata, db_session
 
@@ -228,8 +230,6 @@ def download_profile_videos(profile_url, max_downloads=MAX_VIDEOS_PER_PROFILE):
     except Exception as e:
         print(f"Playwright initialization error: {e}", file=sys.stderr)
         return target_username, None
-
-    # The parsing logic has been moved up into the browser context block
 
 if __name__ == "__main__":
     import db

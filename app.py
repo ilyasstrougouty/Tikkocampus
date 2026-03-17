@@ -103,7 +103,6 @@ def run_heavy_pipeline(url: str, max_videos: int = 10):
     finally:
         task_state["is_running"] = False
 
-import sys
 import subprocess
 
 @app.post("/api/auth")
@@ -459,8 +458,6 @@ class WindowAPI:
         webview.windows[0].toggle_fullscreen()
 
 import signal
-import sys
-import os
 
 def sigint_handler(signum, frame):
     print("\nCtrl+C detected! Shutting down Tikkocampus...")
