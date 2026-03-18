@@ -437,8 +437,8 @@ async function startLogoAnimation() {
     const canvas = document.getElementById('logo-canvas');
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    const dotSize = 2; // smaller dots
-    const gap = 1;     // smaller gap
+    const dotSize = 1.5; // High resolution
+    const gap = 1;      
     const gridSize = dotSize + gap;
     
     // Load and sample the logo
@@ -454,13 +454,14 @@ async function startLogoAnimation() {
     offCanvas.height = rows;
     const offCtx = offCanvas.getContext('2d');
     
-    // Draw centered on off-canvas to keep aspect ratio
-    const ratio = Math.min(cols / img.width, rows / img.height) * 0.9;
+    // Draw centered on off-canvas
+    const ratio = Math.min(cols / img.width, rows / img.height) * 0.85;
     const w = img.width * ratio;
     const h = img.height * ratio;
     offCtx.drawImage(img, (cols - w) / 2, (rows - h) / 2, w, h);
     
     const imgData = offCtx.getImageData(0, 0, cols, rows).data;
+    const brandColor = '#ef3359'; // Pink Red
     
     const dots = [];
     for (let y = 0; y < rows; y++) {
@@ -469,13 +470,14 @@ async function startLogoAnimation() {
             const r = imgData[idx];
             const g = imgData[idx + 1];
             const b = imgData[idx + 2];
-            const alpha = imgData[idx + 3];
-            // Significant pixel: Trust alpha channel for silhouettes
-            if (alpha > 20) { 
+            
+            // Threshold: Target the glitchy colors (cyan/red/white) 
+            // Since the background is black [0,0,0], any significant color indicates the logo
+            if (r + g + b > 40) { 
                 dots.push({ 
                     x: x * gridSize, 
                     y: y * gridSize, 
-                    baseAlpha: 0.5 + Math.random() * 0.5,
+                    baseAlpha: 0.4 + Math.random() * 0.6,
                     phase: Math.random() * Math.PI * 2
                 });
             }
@@ -491,9 +493,11 @@ async function startLogoAnimation() {
         dots.forEach(dot => {
             const pulse = Math.sin(time * 3 + dot.phase) * 0.3 + 0.7;
             const alpha = dot.baseAlpha * pulse;
-            ctx.fillStyle = `rgba(239, 51, 89, ${alpha})`;
+            ctx.fillStyle = brandColor;
+            ctx.globalAlpha = alpha;
             ctx.fillRect(dot.x, dot.y, dotSize, dotSize);
         });
+        ctx.globalAlpha = 1.0;
         
         const scanY = (time * 150) % canvas.height;
         ctx.fillStyle = 'rgba(239, 51, 89, 0.1)';

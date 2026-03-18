@@ -405,10 +405,11 @@ select {
 
 /* Terminal Loading Refinements */
 #startup-loader {
-    background-color: #000000 !important;
+    background-color: #1a1c21 !important; /* App dark grey */
 }
 
 #loader-progress {
+    background-color: #ef3359 !important; /* Brand pink red */
     transition: width 0.4s cubic-bezier(0.1, 0.7, 1.0, 0.1);
 }
 
