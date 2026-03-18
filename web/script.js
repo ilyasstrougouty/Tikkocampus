@@ -557,16 +557,26 @@ async function startLogoAnimation() {
         const time = (Date.now() - startTime) / 1000;
         
         dots.forEach(dot => {
-            const wave = Math.sin(time * 2.5 + dot.phase);
-            const pulse = wave * 0.15 + 0.85; 
+            const timePhase = time * 3.0 + dot.phase;
+            const sweepPhase = time * -4.0 + (dot.x * 0.05) + (dot.y * 0.05); // Diagonal sweeping wave
+            const wave = Math.sin(timePhase) * 0.5 + Math.sin(sweepPhase) * 0.5;
+            
+            const blend = (wave + 1) / 2; // Map -1..1 to 0..1
+            
+            const pulse = blend * 0.3 + 0.7; // Brightness pulses between 0.7 and 1.0
             const shimmer = Math.sin(time * 10 + dot.phase) * dot.shimmer;
             const alpha = Math.max(0.6, (dot.baseAlpha * pulse) + shimmer); 
             
+            // Hue from 345 (Neon Pink) to 360/0 (Pure Red)
+            const hue = 345 + (blend * 15);
+            const dotColor = `hsl(${hue}, 100%, 65%)`;
+            const glowColor = `hsl(${hue}, 100%, 55%)`;
+            
             // Layer 1: Core Glow (Bloom)
             ctx.shadowBlur = 12; 
-            ctx.shadowColor = brandColor;
+            ctx.shadowColor = glowColor;
             ctx.globalAlpha = alpha * 0.8; 
-            ctx.fillStyle = brandColor;
+            ctx.fillStyle = glowColor;
             
             ctx.beginPath();
             // Optional fallback to arc if roundRect unsupported, but modern Chromium handles it perfectly
@@ -580,7 +590,7 @@ async function startLogoAnimation() {
             // Layer 2: Main Dot
             ctx.shadowBlur = 0;
             ctx.globalAlpha = alpha;
-            ctx.fillStyle = brandColor;
+            ctx.fillStyle = dotColor;
             
             ctx.beginPath();
             if (ctx.roundRect) {
