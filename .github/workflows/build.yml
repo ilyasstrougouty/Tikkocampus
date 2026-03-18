@@ -17,16 +17,18 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
       - name: Install Python Dependencies
         run: |
           python -m pip install --upgrade pip
+          # Fix: Use CPU-only PyTorch to avoid massive CUDA binaries exceeding 2GB limit
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
           pip install -r requirements.txt
           pip install pyinstaller
 
@@ -34,7 +36,7 @@ jobs:
         run: python build_backend.py
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 20
 
