@@ -250,6 +250,30 @@ function toggleSettings() {
     }
 }
 
+// --- Reset Scraper UI ---
+function resetScraper() {
+    const formArea = document.getElementById('scraper-form-area');
+    const successArea = document.getElementById('scraper-success-area');
+    if (formArea) formArea.classList.remove('hidden');
+    if (successArea) successArea.classList.add('hidden');
+    
+    // Clear URL but DO NOT reset video count so user's preference is saved
+    const targetUrl = document.getElementById('tiktok-url');
+    if (targetUrl) targetUrl.value = '';
+    
+    const scrapeBtn = document.getElementById('scrape-btn');
+    if (scrapeBtn) {
+        scrapeBtn.disabled = false;
+        scrapeBtn.innerHTML = '<i class="fa-solid fa-bolt mr-2"></i> 1. Scrape & Process Data';
+    }
+    
+    const term = document.getElementById('process-status');
+    if (term) {
+        term.innerText = "Status: waiting for input...";
+        term.style.color = "inherit";
+    }
+}
+
 // --- Load Saved Settings ---
 async function loadSettings() {
     try {

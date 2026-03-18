@@ -1,0 +1,50 @@
+[
+  {
+    "id": 11,
+    "profile_url": "sina.growthtech",
+    "creator_name": "sina.growthtech",
+    "video_count": 10,
+    "scraped_at": "2026-03-14 16:56:25",
+    "creator_nickname": null
+  },
+  {
+    "id": 12,
+    "profile_url": "dupamicaffeine966",
+    "creator_name": "dupamicaffeine966",
+    "video_count": 10,
+    "scraped_at": "2026-03-14 21:16:57",
+    "creator_nickname": null
+  },
+  {
+    "id": 13,
+    "profile_url": "faizanas1f",
+    "creator_name": "faizanas1f",
+    "video_count": 10,
+    "scraped_at": "2026-03-16 11:59:28",
+    "creator_nickname": null
+  },
+  {
+    "id": 15,
+    "profile_url": "anass0x0",
+    "creator_name": "anass0x0",
+    "video_count": 10,
+    "scraped_at": "2026-03-16 12:28:29",
+    "creator_nickname": "\u0623\u064e\u0646\u064e\u0633\u0652"
+  },
+  {
+    "id": 19,
+    "profile_url": "rpn",
+    "creator_name": "rpn",
+    "video_count": 10,
+    "scraped_at": "2026-03-17 23:40:35",
+    "creator_nickname": "Roberto Nickson"
+  },
+  {
+    "id": 20,
+    "profile_url": "majedalive",
+    "creator_name": "majedalive",
+    "video_count": 10,
+    "scraped_at": "2026-03-18 14:43:26",
+    "creator_nickname": "\u0623\u0634\u062a\u063a\u0644"
+  }
+]
