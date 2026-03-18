@@ -557,27 +557,19 @@ async function startLogoAnimation() {
         const time = (Date.now() - startTime) / 1000;
         
         dots.forEach(dot => {
-            // Calculate a dramatic sweeping wave originating from the center
-            const cx = canvas.width / 2;
-            const cy = canvas.height / 2;
-            const dist = Math.sqrt(Math.pow(dot.x - cx, 2) + Math.pow(dot.y - cy, 2));
+            const wave = Math.sin(time * 2.5 + dot.phase);
+            const pulse = wave * 0.2 + 0.8; 
+            const shimmer = Math.sin(time * 10 + dot.phase) * dot.shimmer;
+            const alpha = Math.max(0.4, (dot.baseAlpha * pulse) + shimmer); 
             
-            // The wave moves outward from the center over time
-            const wave = Math.sin(time * 4.0 - (dist * 0.015));
-            const blend = (wave + 1) / 2; // Map to 0.0 - 1.0
-            
-            // High contrast pulse: very dim (0.2) to blindingly bright (1.0)
-            const pulse = blend * 0.8 + 0.2; 
-            const shimmer = Math.sin(time * 15 + dot.phase) * dot.shimmer;
-            const alpha = Math.max(0.1, (dot.baseAlpha * pulse) + shimmer); 
-            
-            // Dramatic hue shift: 335 (Hot Pink) to 360 (Pure Electric Red)
-            const hue = 335 + (blend * 25);
-            const dotColor = `hsl(${hue}, 100%, 60%)`;
-            const glowColor = `hsl(${hue}, 100%, 50%)`;
+            // Randomly distribute dots between Neon Pink (345) and Pure Red (360) based on their fixed phase
+            const blend = (Math.sin(dot.phase) + 1) / 2;
+            const hue = 345 + (blend * 15);
+            const dotColor = `hsl(${hue}, 100%, 65%)`;
+            const glowColor = `hsl(${hue}, 100%, 55%)`;
             
             // Layer 1: Core Glow (Bloom)
-            ctx.shadowBlur = 18; 
+            ctx.shadowBlur = 12; 
             ctx.shadowColor = glowColor;
             ctx.globalAlpha = alpha * 0.9; 
             ctx.fillStyle = glowColor;
