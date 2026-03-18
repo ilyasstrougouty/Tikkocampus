@@ -14,6 +14,30 @@
 
 ---
 
+## 📦 Downloads (Executables)
+
+🚀 **Download the latest v1.0.2 release for your OS:**
+
+- **Windows (.exe)**: [Download Tikkocampus Installer](https://github.com/ilyasstrougouty/Tikkocampus/releases/latest/download/Tikkocampus-v1.0.2-Setup.exe)  
+- **macOS (.dmg)**: [Download Tikkocampus DMG](https://github.com/ilyasstrougouty/Tikkocampus/releases/latest/download/Tikkocampus-v1.0.2.dmg)
+- **Linux (AppImage)**: [Download Tikkocampus AppImage](https://github.com/ilyasstrougouty/Tikkocampus/releases/latest/download/Tikkocampus-v1.0.2.AppImage)
+
+> [!NOTE]  
+> If the links above haven't finished building yet, you can also find them on the [Releases Page](https://github.com/ilyasstrougouty/Tikkocampus/releases).
+
+---
+
+## 🛠️ Next Steps
+
+We're constantly improving Tikkocampus. Here's what's coming next:
+
+1. **Hardware Acceleration**: Better support for Mac Silicon (Metal) and Windows (NVIDIA/AMD) local inference.
+2. **Improved Search**: Hybrid search combining BM25 keyword matching with semantic embeddings.
+3. **Multi-Platform Scraping**: Expanding beyond TikTok to YouTube Shorts and Instagram Reels.
+4. **Desktop UI Polish**: Theme customization and a more refined "Discovery" tab.
+
+---
+
 ## ⚙️ What is Tikkocampus?
 
 Tikkocampus is a professional-grade **Retrieval-Augmented Generation (RAG)** pipeline designed for content researchers and fans. It allows you to ingest TikTok profiles and turn them into a searchable, interactive database.
@@ -25,9 +49,9 @@ Tikkocampus is a professional-grade **Retrieval-Augmented Generation (RAG)** pip
 
 ---
 
-## 🚀 Quick Start (Electron Desktop App)
+## 🚀 Dev Setup & Installation
 
-Tikkocampus is now a standalone desktop application. Follow these steps to get started:
+If you prefer to run from source:
 
 ### 1. Requirements
 - **Node.js 18+**
@@ -49,27 +73,6 @@ npm install
 # In the electron-app directory:
 npm start
 ```
-
----
-
-## 📦 Downloads (Executables)
-
-Download the latest pre-compiled versions for your operating system:
-
-- **Windows (.exe)**: [Download Tikkocampus v1.0.2 Installer](https://github.com/ilyasstrougouty/Tikkocampus/releases/download/v1.0.2/Tikkocampus-v1.0.2-Setup.exe)  
-- **macOS (.dmg)**: [Download Tikkocampus v1.0.2 DMG](https://github.com/ilyasstrougouty/Tikkocampus/releases/download/v1.0.2/Tikkocampus-v1.0.2.dmg)
-- **Linux (AppImage)**: [Download Tikkocampus v1.0.2 AppImage](https://github.com/ilyasstrougouty/Tikkocampus/releases/download/v1.0.2/Tikkocampus-v1.0.2.AppImage)
-
----
-
-## 🛠️ Next Steps
-
-We're constantly improving Tikkocampus. Here's what's coming next:
-
-1. **Hardware Acceleration**: Better support for Mac Silicon (Metal) and Windows (NVIDIA/AMD) local inference.
-2. **Improved Search**: Hybrid search combining BM25 keyword matching with semantic embeddings.
-3. **Multi-Platform Scraping**: Expanding beyond TikTok to YouTube Shorts and Instagram Reels.
-4. **Desktop UI Polish**: Theme customization and a more refined "Discovery" tab.
 
 ---
 
