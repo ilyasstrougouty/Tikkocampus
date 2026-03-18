@@ -497,15 +497,15 @@ async function startLogoAnimation() {
     if (!canvas) return;
     
     // Retina-ready Setup
-    canvas.width = 400; 
-    canvas.height = 400;
+    canvas.width = 800; 
+    canvas.height = 800;
     canvas.style.width = '200px';
     canvas.style.height = '200px';
     const ctx = canvas.getContext('2d');
     
     // High-resolution grid
-    const dotRadius = 3.0; // High-quality circular dots
-    const gap = 1.2;      
+    const dotRadius = 7.0; // Bigger dots for higher resolution grid
+    const gap = 2.0;      
     const gridSize = (dotRadius * 2) + gap;
     
     // Load and sample the logo
@@ -560,15 +560,15 @@ async function startLogoAnimation() {
             const wave = Math.sin(time * 2.5 + dot.phase);
             const pulse = wave * 0.2 + 0.8;
             const shimmer = Math.sin(time * 10 + dot.phase) * dot.shimmer;
-            const alpha = Math.max(0.2, (dot.baseAlpha * pulse) + shimmer);
+            const alpha = Math.max(0.4, (dot.baseAlpha * pulse) + shimmer); // Boosted base alpha
             
             // Layer 1: Core Glow (Bloom)
-            ctx.shadowBlur = 18;
+            ctx.shadowBlur = 24; // Increased glow
             ctx.shadowColor = brandColor;
-            ctx.globalAlpha = alpha * 0.5;
+            ctx.globalAlpha = alpha * 0.8; // Stronger glow opacity
             ctx.fillStyle = brandColor;
             ctx.beginPath();
-            ctx.arc(dot.x, dot.y, dotRadius * 1.2, 0, Math.PI * 2);
+            ctx.arc(dot.x, dot.y, dotRadius * 1.3, 0, Math.PI * 2);
             ctx.fill();
             
             // Layer 2: Main Dot
@@ -1073,7 +1073,7 @@ function quickAction(type) {
     const prompts = {
         'Summarize': 'Please summarize the main themes and topics covered by this creator.',
         'Notes': 'Can you provide detailed notes on the key points mentioned in these videos?',
-        'Advice': 'Based on this content, what advice would you give for someone looking to succeed in this niche?',
+        'Advices': 'Please extract and list all of the specific advice, tips, and insights mentioned by the creator across all of their videos.',
         'Recommendations': 'What top 3 videos would you recommend me to watch first, and why?'
     };
     
