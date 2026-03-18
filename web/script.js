@@ -504,8 +504,8 @@ async function startLogoAnimation() {
     const ctx = canvas.getContext('2d');
     
     // High-resolution grid
-    const dotRadius = 4.0; // Smaller dots for higher density to define shape
-    const gap = 1.0; // Tighter gap for denser matrix
+    const dotRadius = 3.5; // Slightly smaller dots
+    const gap = 2.0; // Crisper gap for LED definition
     const gridSize = (dotRadius * 2) + gap;
     
     // Load and sample the logo
@@ -538,16 +538,15 @@ async function startLogoAnimation() {
             const g = imgData[idx + 1];
             const b = imgData[idx + 2];
             
-            const isLogo = (r + g + b) > 30; // Threshold for the bright logo dots
-            
-            dots.push({ 
-                x: x * gridSize + dotRadius, 
-                y: y * gridSize + dotRadius, 
-                baseAlpha: isLogo ? (0.6 + Math.random() * 0.4) : (0.1 + Math.random() * 0.1),
-                phase: Math.random() * Math.PI * 2,
-                shimmer: isLogo ? (Math.random() * 0.2) : 0.05,
-                isLogo: isLogo
-            });
+            if (r + g + b > 30) { // Threshold for the bright logo dots
+                dots.push({ 
+                    x: x * gridSize + dotRadius, 
+                    y: y * gridSize + dotRadius, 
+                    baseAlpha: 0.8 + Math.random() * 0.2, // Higher base alpha so it matches original brightness
+                    phase: Math.random() * Math.PI * 2,
+                    shimmer: Math.random() * 0.1
+                });
+            }
         }
     }
     
@@ -559,29 +558,36 @@ async function startLogoAnimation() {
         
         dots.forEach(dot => {
             const wave = Math.sin(time * 2.5 + dot.phase);
-            const pulse = wave * 0.2 + 0.8;
+            const pulse = wave * 0.15 + 0.85; 
             const shimmer = Math.sin(time * 10 + dot.phase) * dot.shimmer;
-            const alpha = Math.max(dot.isLogo ? 0.4 : 0.05, (dot.baseAlpha * pulse) + shimmer); 
+            const alpha = Math.max(0.6, (dot.baseAlpha * pulse) + shimmer); 
             
-            const color = dot.isLogo ? brandColor : '#3d0815'; // Dark red for inactive matrix background
+            // Layer 1: Core Glow (Bloom)
+            ctx.shadowBlur = 12; 
+            ctx.shadowColor = brandColor;
+            ctx.globalAlpha = alpha * 0.8; 
+            ctx.fillStyle = brandColor;
             
-            if (dot.isLogo) {
-                // Layer 1: Core Glow (Bloom)
-                ctx.shadowBlur = 16; 
-                ctx.shadowColor = color;
-                ctx.globalAlpha = alpha * 0.9; 
-                ctx.fillStyle = color;
-                ctx.beginPath();
-                ctx.arc(dot.x, dot.y, dotRadius * 1.4, 0, Math.PI * 2);
-                ctx.fill();
+            ctx.beginPath();
+            // Optional fallback to arc if roundRect unsupported, but modern Chromium handles it perfectly
+            if (ctx.roundRect) {
+                ctx.roundRect(dot.x - dotRadius * 1.1, dot.y - dotRadius * 1.1, dotRadius * 2.2, dotRadius * 2.2, 2.5);
+            } else {
+                ctx.arc(dot.x, dot.y, dotRadius * 1.2, 0, Math.PI * 2);
             }
+            ctx.fill();
             
             // Layer 2: Main Dot
             ctx.shadowBlur = 0;
-            ctx.globalAlpha = dot.isLogo ? alpha : (alpha * 0.6);
-            ctx.fillStyle = color;
+            ctx.globalAlpha = alpha;
+            ctx.fillStyle = brandColor;
+            
             ctx.beginPath();
-            ctx.arc(dot.x, dot.y, dotRadius, 0, Math.PI * 2);
+            if (ctx.roundRect) {
+                ctx.roundRect(dot.x - dotRadius, dot.y - dotRadius, dotRadius * 2, dotRadius * 2, 2);
+            } else {
+                ctx.arc(dot.x, dot.y, dotRadius, 0, Math.PI * 2);
+            }
             ctx.fill();
         });
         
