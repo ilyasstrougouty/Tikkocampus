@@ -80,6 +80,11 @@ def run_embedding_pipeline(creator_filter=None):
 
         # 4. Process and Embed
         for video_id, transcript, file_path, creator_name in queue:
+            import config
+            if getattr(config, 'CANCEL_REQUESTED', False):
+                print("\n[!] Embedding cancelled by user.")
+                break
+                
             print(f"-> Chunking and embedding video {video_id}...")
             
             # Split the transcript into chunks

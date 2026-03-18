@@ -265,6 +265,9 @@ function resetScraper() {
     if (scrapeBtn) {
         scrapeBtn.disabled = false;
         scrapeBtn.innerHTML = '<i class="fa-solid fa-bolt mr-2"></i> 1. Scrape & Process Data';
+        scrapeBtn.classList.remove('bg-red-500', 'hover:bg-red-600');
+        scrapeBtn.classList.add('bg-brand', 'hover:bg-brandHover');
+        scrapeBtn.onclick = startProcessing;
     }
     
     const term = document.getElementById('process-status');
@@ -771,6 +774,19 @@ async function handleFileUpload(file) {
     }
 }
 
+async function cancelProcessing() {
+    const scrapeBtn = document.getElementById('scrape-btn');
+    if (scrapeBtn) {
+        scrapeBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Cancelling...';
+        scrapeBtn.disabled = true;
+    }
+    try {
+        await fetch(`${API_BASE}/api/process/cancel`, { method: 'POST' });
+    } catch (e) {
+        console.error("Cancel failed", e);
+    }
+}
+
 async function startProcessing() {
     const target = document.getElementById('tiktok-url').value;
     const videoCount = parseInt(document.getElementById('video-count').value) || 10;
@@ -779,10 +795,13 @@ async function startProcessing() {
 
     if (!target) return alert("Please enter a TikTok URL.");
 
-    // Lock UI
-    scrapeBtn.innerText = "Processing...";
-    scrapeBtn.disabled = true;
+    // Transform UI into a Stop Button
+    scrapeBtn.innerHTML = '<i class="fa-solid fa-stop mr-2"></i> Stop Scrape';
+    scrapeBtn.classList.remove('bg-brand', 'hover:bg-brandHover');
+    scrapeBtn.classList.add('bg-red-500', 'hover:bg-red-600');
+    scrapeBtn.onclick = cancelProcessing;
     statusText.style.color = "#fbbf24";
+    statusText.innerText = "Starting...";
 
     try {
         // 1. Tell the server to start the job
@@ -837,8 +856,11 @@ async function startProcessing() {
                     setTimeout(() => showChat(), 1500);
                 }
 
-                // Unlock the scrape button
-                scrapeBtn.innerText = "1. Scrape & Process Data";
+                // Restore the scrape button
+                scrapeBtn.innerHTML = '<i class="fa-solid fa-bolt mr-2"></i> 1. Scrape & Process Data';
+                scrapeBtn.classList.remove('bg-red-500', 'hover:bg-red-600');
+                scrapeBtn.classList.add('bg-brand', 'hover:bg-brandHover');
+                scrapeBtn.onclick = startProcessing;
                 scrapeBtn.disabled = false;
             }
         }, 2000); // 2000 milliseconds = 2 seconds
@@ -846,8 +868,12 @@ async function startProcessing() {
     } catch (error) {
         statusText.innerText = `❌ API Error: ${error.message}`;
         statusText.style.color = "#f87171";
+        // Restore the scrape button
+        scrapeBtn.innerHTML = '<i class="fa-solid fa-bolt mr-2"></i> 1. Scrape & Process Data';
+        scrapeBtn.classList.remove('bg-red-500', 'hover:bg-red-600');
+        scrapeBtn.classList.add('bg-brand', 'hover:bg-brandHover');
+        scrapeBtn.onclick = startProcessing;
         scrapeBtn.disabled = false;
-        scrapeBtn.innerText = "1. Scrape & Process Data";
     }
 }
 

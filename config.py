@@ -14,6 +14,9 @@ MAX_VIDEOS_PER_PROFILE = int(os.environ.get("MAX_VIDEOS_PER_PROFILE", 5))
 LLM_MODEL = os.environ.get("LLM_MODEL", "groq/llama-3.1-8b-instant")
 TRANSCRIPTION_METHOD = os.environ.get("TRANSCRIPTION_METHOD", "local")
 
+# Global state for interrupting background threads
+CANCEL_REQUESTED = False
+
 # Ensure the required directories exist
 os.makedirs(TEMP_PROCESSING_DIR, exist_ok=True)
 os.makedirs(COOKIES_DIR, exist_ok=True)

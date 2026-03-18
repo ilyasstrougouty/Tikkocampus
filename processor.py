@@ -113,6 +113,13 @@ def run_processing_pipeline(status_callback=None, method="local", creator_filter
 
     # 2. PROCESS THE BATCH
     for i, (video_id, file_path) in enumerate(queue):
+        import config
+        if getattr(config, 'CANCEL_REQUESTED', False):
+            msg = "[!] Transcription processing cancelled by user."
+            print(msg)
+            if status_callback: status_callback(msg)
+            break
+            
         remaining = total_videos - i
         eta_seconds = remaining * est_per_video
         eta_str = f"{eta_seconds}s" if eta_seconds < 60 else f"{eta_seconds//60}m {eta_seconds%60}s"

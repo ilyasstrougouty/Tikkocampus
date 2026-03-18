@@ -71,6 +71,11 @@ def run_heavy_pipeline(url: str, max_videos: int = 10):
         # Capture the actual creator name and nickname used by the scraper
         actual_creator, actual_nickname = scraper.download_profile_videos(url, max_downloads=max_videos) 
         
+        import config
+        if getattr(config, 'CANCEL_REQUESTED', False):
+            task_state["status"] = "Cancelled by user"
+            return
+            
         # If scraper failed to determine a name, fallback to url-based one
         final_creator = actual_creator or creator_filter or "unknown"
         final_nickname = actual_nickname or final_creator
@@ -91,9 +96,17 @@ def run_heavy_pipeline(url: str, max_videos: int = 10):
             creator_filter=final_creator
         )
         
+        if getattr(config, 'CANCEL_REQUESTED', False):
+            task_state["status"] = "Cancelled by user"
+            return
+            
         task_state["status"] = "Phase 3: Chunking text and building Vector DB..."
         embedder.run_embedding_pipeline(creator_filter=final_creator)
         
+        if getattr(config, 'CANCEL_REQUESTED', False):
+            task_state["status"] = "Cancelled by user"
+            return
+            
         # Save to history
         with db.db_session() as conn:
             c = conn.cursor()
@@ -336,6 +349,9 @@ async def trigger_pipeline(req: ProcessRequest, background_tasks: BackgroundTask
     if task_state["is_running"]:
         raise HTTPException(status_code=400, detail="A process is already running.")
     
+    import config
+    config.CANCEL_REQUESTED = False # Reset cancel flag
+
     # Lock the state
     task_state["is_running"] = True
     task_state["status"] = "Starting..."
@@ -346,6 +362,15 @@ async def trigger_pipeline(req: ProcessRequest, background_tasks: BackgroundTask
     
     # Immediately return a success message so the browser doesn't timeout
     return {"message": "Job started in the background."}
+
+@app.post("/api/process/cancel")
+async def cancel_process():
+    global task_state
+    if task_state["is_running"]:
+        import config
+        config.CANCEL_REQUESTED = True
+        return {"message": "Cancellation requested."}
+    return {"message": "No process is currently running."}
 
 @app.get("/api/status")
 async def get_status():

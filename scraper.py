@@ -159,6 +159,11 @@ def download_profile_videos(profile_url, max_downloads=MAX_VIDEOS_PER_PROFILE):
                 last_count = 0
                 stale_scrolls = 0
                 while len(found_videos) < max_downloads and stale_scrolls < 5:
+                    import config
+                    if getattr(config, 'CANCEL_REQUESTED', False):
+                        print("\n[!] Scraping cancelled by user during scroll!")
+                        break
+                        
                     page.keyboard.press("PageDown")
                     page.wait_for_timeout(1500)
                     
@@ -186,6 +191,11 @@ def download_profile_videos(profile_url, max_downloads=MAX_VIDEOS_PER_PROFILE):
             
             # Process up to max_downloads
             for count, item in enumerate(video_list[:max_downloads]):
+                import config
+                if getattr(config, 'CANCEL_REQUESTED', False):
+                    print("\n[!] Scraping cancelled by user during download!")
+                    break
+                    
                 video_id = item.get('id')
                 if not video_id:
                     continue
