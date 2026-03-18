@@ -56,8 +56,20 @@ npm start
 
 Download the latest pre-compiled versions for your operating system:
 
-- **Windows**: [Tikkocampus-Win-Setup.exe](#) (Coming Soon)
-- **macOS**: [Tikkocampus-Mac.dmg](#) (Coming Soon)
+- **Windows (.exe)**: [Download Tikkocampus v1.0.2 Installer](https://github.com/ilyasstrougouty/Tikkocampus/releases/download/v1.0.2/Tikkocampus-v1.0.2-Setup.exe)  
+- **macOS (.dmg)**: [Download Tikkocampus v1.0.2 DMG](https://github.com/ilyasstrougouty/Tikkocampus/releases/download/v1.0.2/Tikkocampus-v1.0.2.dmg)
+- **Linux (AppImage)**: [Download Tikkocampus v1.0.2 AppImage](https://github.com/ilyasstrougouty/Tikkocampus/releases/download/v1.0.2/Tikkocampus-v1.0.2.AppImage)
+
+---
+
+## 🛠️ Next Steps
+
+We're constantly improving Tikkocampus. Here's what's coming next:
+
+1. **Hardware Acceleration**: Better support for Mac Silicon (Metal) and Windows (NVIDIA/AMD) local inference.
+2. **Improved Search**: Hybrid search combining BM25 keyword matching with semantic embeddings.
+3. **Multi-Platform Scraping**: Expanding beyond TikTok to YouTube Shorts and Instagram Reels.
+4. **Desktop UI Polish**: Theme customization and a more refined "Discovery" tab.
 
 ---
 
