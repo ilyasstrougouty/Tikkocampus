@@ -13,7 +13,7 @@ jobs:
       contents: write
     strategy:
       matrix:
-        os: [windows-latest, macos-13, ubuntu-latest]
+        os: [windows-latest, macos-latest, ubuntu-latest]
 
     steps:
       - name: Check out repository
