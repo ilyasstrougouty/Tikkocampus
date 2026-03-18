@@ -538,15 +538,16 @@ async function startLogoAnimation() {
             const g = imgData[idx + 1];
             const b = imgData[idx + 2];
             
-            if (r + g + b > 30) { // Lower threshold for more edge dots
-                dots.push({ 
-                    x: x * gridSize + dotRadius, 
-                    y: y * gridSize + dotRadius, 
-                    baseAlpha: 0.6 + Math.random() * 0.4,
-                    phase: Math.random() * Math.PI * 2,
-                    shimmer: Math.random() * 0.2
-                });
-            }
+            const isLogo = (r + g + b) > 30; // Threshold for the bright logo dots
+            
+            dots.push({ 
+                x: x * gridSize + dotRadius, 
+                y: y * gridSize + dotRadius, 
+                baseAlpha: isLogo ? (0.6 + Math.random() * 0.4) : (0.1 + Math.random() * 0.1),
+                phase: Math.random() * Math.PI * 2,
+                shimmer: isLogo ? (Math.random() * 0.2) : 0.05,
+                isLogo: isLogo
+            });
         }
     }
     
@@ -560,20 +561,25 @@ async function startLogoAnimation() {
             const wave = Math.sin(time * 2.5 + dot.phase);
             const pulse = wave * 0.2 + 0.8;
             const shimmer = Math.sin(time * 10 + dot.phase) * dot.shimmer;
-            const alpha = Math.max(0.4, (dot.baseAlpha * pulse) + shimmer); // Boosted base alpha
+            const alpha = Math.max(dot.isLogo ? 0.4 : 0.05, (dot.baseAlpha * pulse) + shimmer); 
             
-            // Layer 1: Core Glow (Bloom)
-            ctx.shadowBlur = 16; // Moderate glow
-            ctx.shadowColor = brandColor;
-            ctx.globalAlpha = alpha * 0.9; // Solid glow opacity
-            ctx.fillStyle = brandColor;
-            ctx.beginPath();
-            ctx.arc(dot.x, dot.y, dotRadius * 1.4, 0, Math.PI * 2);
-            ctx.fill();
+            const color = dot.isLogo ? brandColor : '#3d0815'; // Dark red for inactive matrix background
+            
+            if (dot.isLogo) {
+                // Layer 1: Core Glow (Bloom)
+                ctx.shadowBlur = 16; 
+                ctx.shadowColor = color;
+                ctx.globalAlpha = alpha * 0.9; 
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(dot.x, dot.y, dotRadius * 1.4, 0, Math.PI * 2);
+                ctx.fill();
+            }
             
             // Layer 2: Main Dot
             ctx.shadowBlur = 0;
-            ctx.globalAlpha = alpha;
+            ctx.globalAlpha = dot.isLogo ? alpha : (alpha * 0.6);
+            ctx.fillStyle = color;
             ctx.beginPath();
             ctx.arc(dot.x, dot.y, dotRadius, 0, Math.PI * 2);
             ctx.fill();
