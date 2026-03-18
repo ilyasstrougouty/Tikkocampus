@@ -43,11 +43,7 @@ jobs:
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          rm -f package-lock.json
-          npm cache clean --force
-          npm install @electron/get
-          npm install
+        run: yarn install
 
       - name: Build & Package Electron App
         working-directory: electron-app
