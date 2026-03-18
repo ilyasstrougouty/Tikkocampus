@@ -499,9 +499,6 @@ async function startLogoAnimation() {
         });
         ctx.globalAlpha = 1.0;
         
-        const scanY = (time * 150) % canvas.height;
-        ctx.fillStyle = 'rgba(239, 51, 89, 0.1)';
-        ctx.fillRect(0, scanY, canvas.width, 2);
         requestAnimationFrame(animate);
     }
     animate();
@@ -510,7 +507,7 @@ async function startLogoAnimation() {
     return new Promise(resolve => {
         const progressBar = document.getElementById('loader-progress');
         const statusText = document.getElementById('loader-status');
-        const states = ["Initializing Core", "Loading Assets", "Syncing Database", "Connecting to TikTok", "System Ready"];
+        const states = ["Loading .", "Loading ..", "Loading ...", "Loading .", "Loading ..", "Loading ...", "Loading ."];
         let progress = 0;
         const interval = setInterval(() => {
             if (progress >= 100) { 

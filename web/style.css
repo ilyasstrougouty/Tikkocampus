@@ -415,7 +415,7 @@ select {
 
 .font-typewriter {
     font-family: 'Courier Prime', monospace;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.02em; /* Tightened */
 }
 
 @keyframes cursor-blink {
