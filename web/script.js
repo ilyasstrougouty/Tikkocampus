@@ -557,10 +557,16 @@ async function startLogoAnimation() {
         const time = (Date.now() - startTime) / 1000;
         
         dots.forEach(dot => {
-            const wave = Math.sin(time * 3.5 + dot.phase); // Slightly faster wave
-            const pulse = wave * 0.4 + 0.6; // Deep pulse: 0.2 to 1.0 multiplier
-            const shimmer = Math.sin(time * 15 + dot.phase) * dot.shimmer;
-            const alpha = Math.max(0.1, (dot.baseAlpha * pulse) + shimmer); // Allow alpha to drop very low
+            // Combine multiple sine waves at erratic fractional frequencies to create fluid, non-looping organic motion
+            const w1 = Math.sin(time * 1.7 + dot.phase);
+            const w2 = Math.sin(time * 2.3 - dot.phase * 1.5);
+            const w3 = Math.sin(time * 3.1 + dot.phase * 0.8);
+            
+            const fluidWave = (w1 + w2 + w3) / 3;
+            const pulse = fluidWave * 0.5 + 0.5; // Smooth pulse from 0.0 to 1.0
+            
+            const shimmer = Math.sin(time * 12 + dot.phase) * dot.shimmer;
+            const alpha = Math.max(0.1, (dot.baseAlpha * pulse) + shimmer);
             
             // Randomly distribute dots between Neon Pink (345) and Pure Red (360) based on their fixed phase
             const blend = (Math.sin(dot.phase) + 1) / 2;
