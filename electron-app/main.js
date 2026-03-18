@@ -35,6 +35,21 @@ function createWindow() {
     mainWindow.show();
   });
 
+  // Open external links in the default browser instead of the app window
+  mainWindow.webContents.on('will-navigate', (event, url) => {
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      event.preventDefault();
+      require('electron').shell.openExternal(url);
+    }
+  });
+
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      require('electron').shell.openExternal(url);
+    }
+    return { action: 'deny' };
+  });
+
   // Robust polling for backend readiness (background logging)
   const pollBackend = () => {
     const request = http.get(`${apiUrl}/api/status`, (res) => {

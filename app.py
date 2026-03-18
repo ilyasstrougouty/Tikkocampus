@@ -5,7 +5,7 @@ import threading
 from fastapi import FastAPI, HTTPException, BackgroundTasks, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 import uvicorn
 import shutil
@@ -352,19 +352,24 @@ async def get_status():
     """The frontend will poll this endpoint every few seconds."""
     return task_state
 
+import json
+
 @app.post("/api/chat")
 async def chat_endpoint(req: ChatRequest):
     """Endpoint for the JS frontend to ask questions."""
-    try:
-        response = chat.get_rag_response(req.query, req.creator_name)
-        return {"response": response}
-    except Exception as e:
-        # Return error as a chat message so the user sees what went wrong
-        return {"response": f"❌ Error: {str(e)}"}
+    def generate():
+        try:
+            for chunk in chat.get_rag_response_generator(req.query, req.creator_name):
+                yield chunk
+        except Exception as e:
+            yield json.dumps({"response": f"❌ Error: {str(e)}"}) + "\n"
+            
+    return StreamingResponse(generate(), media_type="application/x-ndjson")
 
 class SettingsRequest(BaseModel):
     model: str
     api_key: str = ""
+    transcription_api_key: str = ""
     transcription_method: str = "local"
 
 @app.post("/api/settings")
@@ -381,6 +386,10 @@ async def save_settings(req: SettingsRequest):
         elif req.model.startswith("gpt") or req.model.startswith("openai"):
             os.environ["OPENAI_API_KEY"] = req.api_key
             env_updates["OPENAI_API_KEY"] = req.api_key
+            
+    if req.transcription_api_key:
+        os.environ["TRANSCRIPTION_API_KEY"] = req.transcription_api_key
+        env_updates["TRANSCRIPTION_API_KEY"] = req.transcription_api_key
     
     # Update the active model in the chat module
     chat.LLM_MODEL = req.model
@@ -427,6 +436,7 @@ async def get_settings():
     model = getattr(chat, 'LLM_MODEL', os.environ.get('LLM_MODEL', 'groq/llama-3.1-8b-instant'))
     has_groq_key = bool(os.environ.get("GROQ_API_KEY"))
     has_openai_key = bool(os.environ.get("OPENAI_API_KEY"))
+    has_transcription_key = bool(os.environ.get("TRANSCRIPTION_API_KEY"))
     
     transcription = os.environ.get("TRANSCRIPTION_METHOD", config.TRANSCRIPTION_METHOD)
     if not transcription or transcription == "local":
@@ -435,7 +445,8 @@ async def get_settings():
         "model": model,
         "transcription_method": transcription,
         "has_groq_key": has_groq_key,
-        "has_openai_key": has_openai_key
+        "has_openai_key": has_openai_key,
+        "has_transcription_key": has_transcription_key
     }
 
 @app.get("/api/history")

@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tikkocampus</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style data-purpose="custom-fonts">
         @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&family=Inter:wght@400;500;600&display=swap');
         
@@ -187,7 +188,7 @@
         </aside>
 
         <!-- MAIN CONTENT AREA -->
-        <main class="flex-1 flex flex-col relative z-0 bg-main overflow-y-auto">
+        <main class="flex-1 flex flex-col relative z-0 bg-main overflow-y-auto grid-bg">
             
             <!-- Dashboard View -->
             <div id="dashboard-view" class="flex-1 flex flex-col items-center justify-center p-8 transition-all">
@@ -258,8 +259,9 @@
                     <div class="w-full relative flex flex-col overflow-hidden group transition-all border border-borderDark/50 bg-white/5 rounded-xl">
                         <textarea id="chat-input" class="w-full bg-transparent border-none text-textMain placeholder-neutral-600 p-2 resize-none focus:ring-0 outline-none focus:outline-none text-lg transition-all duration-300 chat-input-area" placeholder="Type a query..." spellcheck="false"></textarea>
                         <div class="p-4 flex justify-end items-center bg-transparent">
-                            <button id="send-btn" onclick="sendMessage()" class="bg-brand hover:bg-brandHover text-white font-bold py-2.5 px-8 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-brand/20">
-                                Send <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <button id="send-btn" onclick="sendOrStopMessage()" class="bg-brand hover:bg-brandHover text-white font-bold py-2.5 px-8 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-brand/20 min-w-[120px]">
+                                <span id="send-btn-text">Send</span>
+                                <svg id="send-btn-icon" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
                                 </svg>
                             </button>
@@ -316,6 +318,12 @@
                 </select>
             </div>
 
+            <!-- Transcription API Key -->
+            <div class="space-y-3 font-typewriter">
+                <label class="text-[10px] font-bold text-textMuted tracking-[0.2em] uppercase">Transcription API Key</label>
+                <input type="password" id="transcription-api-key-input" placeholder="Enter Transcription key (auto-saved)..." class="w-full bg-black/40 border border-borderDark rounded-xl p-4 text-textMain focus:outline-none focus:border-brand placeholder:text-neutral-700">
+            </div>
+
             <!-- LLM Model -->
             <div class="space-y-3 font-typewriter">
                 <label class="text-[10px] font-bold text-textMuted tracking-[0.2em] uppercase">Brain Model</label>
@@ -331,8 +339,8 @@
 
             <!-- API Key -->
             <div class="space-y-3 font-typewriter">
-                <label class="text-[10px] font-bold text-textMuted tracking-[0.2em] uppercase">Secure API Key</label>
-                <input type="password" id="api-key-input" placeholder="Enter key (auto-saved)..." class="w-full bg-black/40 border border-borderDark rounded-xl p-4 text-textMain focus:outline-none focus:border-brand placeholder:text-neutral-700">
+                <label class="text-[10px] font-bold text-textMuted tracking-[0.2em] uppercase">Brain API Key</label>
+                <input type="password" id="api-key-input" placeholder="Enter Brain API key (auto-saved)..." class="w-full bg-black/40 border border-borderDark rounded-xl p-4 text-textMain focus:outline-none focus:border-brand placeholder:text-neutral-700">
             </div>
         </div>
 

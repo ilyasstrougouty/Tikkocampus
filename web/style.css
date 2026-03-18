@@ -22,6 +22,14 @@ body {
     overflow: hidden;
 }
 
+/* Background Grid for main pages */
+.grid-bg {
+    background-size: 40px 40px;
+    background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+}
+
 .font-typewriter {
     font-family: 'Courier Prime', monospace;
 }
@@ -130,6 +138,83 @@ body {
     color: #d4d4d8;
 }
 
+/* Markdown Formatting within AI Message */
+.message.ai h1, .message.ai h2, .message.ai h3 {
+    font-weight: 700;
+    color: white;
+    margin-top: 1.25rem;
+    margin-bottom: 0.5rem;
+}
+.message.ai h1 { font-size: 1.5rem; }
+.message.ai h2 { font-size: 1.25rem; }
+.message.ai h3 { font-size: 1.1rem; }
+.message.ai h1:first-child, .message.ai h2:first-child, .message.ai h3:first-child { margin-top: 0; }
+
+.message.ai ul {
+    list-style-type: none;
+    padding-left: 0;
+    margin-top: 0.75rem;
+    margin-bottom: 1rem;
+}
+.message.ai ul > li {
+    margin-bottom: 0.5rem;
+    position: relative;
+    padding-left: 1.25rem;
+}
+.message.ai ul > li::before {
+    content: '•';
+    color: var(--app-text-muted);
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+.message.ai ol {
+    list-style-type: decimal;
+    margin-left: 1.5rem;
+    margin-bottom: 1rem;
+    margin-top: 0.75rem;
+}
+.message.ai ol > li {
+    margin-bottom: 0.5rem;
+}
+
+.message.ai p {
+    margin-bottom: 0.75rem;
+}
+.message.ai p:last-child {
+    margin-bottom: 0;
+}
+.message.ai strong {
+    font-weight: 700;
+    color: white;
+}
+
+/* Citation Links as Squares */
+.message.ai a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #2b303b;
+    color: #a0a4ab;
+    font-size: 10px;
+    font-weight: 700;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    margin: 0 4px;
+    padding: 0 4px;
+    text-decoration: none;
+    transition: all 0.2s;
+    vertical-align: middle;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.message.ai a:hover {
+    background-color: rgba(239, 51, 89, 0.2);
+    color: var(--brand);
+}
+
 .input-area {
     display: flex;
     gap: 12px;
@@ -149,8 +234,18 @@ input[type="number"] {
     transition: 0.2s border-color;
 }
 
-input:focus {
+input:focus, textarea:focus {
     border-color: rgba(255, 255, 255, 0.3);
+    outline: none;
+}
+
+textarea::-webkit-resizer {
+    display: none;
+}
+
+#chat-input {
+    resize: none !important;
+    box-shadow: none !important;
 }
 
 button {

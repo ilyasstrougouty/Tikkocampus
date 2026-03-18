@@ -2,7 +2,8 @@ let pollInterval;
 let currentCreator = null;
 let apiState = {
     has_groq_key: false,
-    has_openai_key: false
+    has_openai_key: false,
+    has_transcription_key: false
 };
 
 const API_BASE = window.location.protocol === 'file:' ? 'http://127.0.0.1:8000' : '';
@@ -217,6 +218,7 @@ async function loadSettings() {
         // Store saved state
         apiState.has_groq_key = data.has_groq_key;
         apiState.has_openai_key = data.has_openai_key;
+        apiState.has_transcription_key = data.has_transcription_key;
 
         // Show active config status
         const statusEl = document.getElementById('settings-status');
@@ -436,10 +438,18 @@ async function triggerLogin() {
 async function startLogoAnimation() {
     const canvas = document.getElementById('logo-canvas');
     if (!canvas) return;
+    
+    // Retina-ready Setup
+    canvas.width = 400; 
+    canvas.height = 400;
+    canvas.style.width = '200px';
+    canvas.style.height = '200px';
     const ctx = canvas.getContext('2d');
-    const dotSize = 2.5; // Bigger dots
-    const gap = 1;      
-    const gridSize = dotSize + gap;
+    
+    // High-resolution grid
+    const dotRadius = 3.0; // High-quality circular dots
+    const gap = 1.2;      
+    const gridSize = (dotRadius * 2) + gap;
     
     // Load and sample the logo
     const img = new Image();
@@ -454,14 +464,14 @@ async function startLogoAnimation() {
     offCanvas.height = rows;
     const offCtx = offCanvas.getContext('2d');
     
-    // Draw centered on off-canvas
+    // Center logo on sampling canvas
     const ratio = Math.min(cols / img.width, rows / img.height) * 0.85;
     const w = img.width * ratio;
     const h = img.height * ratio;
     offCtx.drawImage(img, (cols - w) / 2, (rows - h) / 2, w, h);
     
     const imgData = offCtx.getImageData(0, 0, cols, rows).data;
-    const brandColor = '#ff1a4a'; // More vibrant Red
+    const brandColor = '#ff3b66'; // High-fidelity vibrant pinkish-red
     
     const dots = [];
     for (let y = 0; y < rows; y++) {
@@ -471,13 +481,13 @@ async function startLogoAnimation() {
             const g = imgData[idx + 1];
             const b = imgData[idx + 2];
             
-            // Threshold: Target the glitchy colors (cyan/red/white) 
             if (r + g + b > 40) { 
                 dots.push({ 
-                    x: x * gridSize, 
-                    y: y * gridSize, 
-                    baseAlpha: 0.5 + Math.random() * 0.5,
-                    phase: Math.random() * Math.PI * 2
+                    x: x * gridSize + dotRadius, 
+                    y: y * gridSize + dotRadius, 
+                    baseAlpha: 0.6 + Math.random() * 0.4,
+                    phase: Math.random() * Math.PI * 2,
+                    shimmer: Math.random() * 0.2
                 });
             }
         }
@@ -489,20 +499,30 @@ async function startLogoAnimation() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         const time = (Date.now() - startTime) / 1000;
         
-        ctx.shadowBlur = 8;
-        ctx.shadowColor = brandColor;
-        
         dots.forEach(dot => {
-            const pulse = Math.sin(time * 3 + dot.phase) * 0.3 + 0.7;
-            const alpha = dot.baseAlpha * pulse;
+            const wave = Math.sin(time * 2.5 + dot.phase);
+            const pulse = wave * 0.2 + 0.8;
+            const shimmer = Math.sin(time * 10 + dot.phase) * dot.shimmer;
+            const alpha = Math.max(0.2, (dot.baseAlpha * pulse) + shimmer);
+            
+            // Layer 1: Core Glow (Bloom)
+            ctx.shadowBlur = 18;
+            ctx.shadowColor = brandColor;
+            ctx.globalAlpha = alpha * 0.5;
             ctx.fillStyle = brandColor;
+            ctx.beginPath();
+            ctx.arc(dot.x, dot.y, dotRadius * 1.2, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Layer 2: Main Dot
+            ctx.shadowBlur = 0;
             ctx.globalAlpha = alpha;
-            ctx.fillRect(dot.x, dot.y, dotSize, dotSize);
+            ctx.beginPath();
+            ctx.arc(dot.x, dot.y, dotRadius, 0, Math.PI * 2);
+            ctx.fill();
         });
         
         ctx.globalAlpha = 1.0;
-        ctx.shadowBlur = 0; // Reset for next frame
-        
         requestAnimationFrame(animate);
     }
     animate();
@@ -726,11 +746,54 @@ async function startProcessing() {
     }
 }
 
+let currentAbortController = null;
+
+function setStopButton() {
+    const btnText = document.getElementById('send-btn-text');
+    const btnIcon = document.getElementById('send-btn-icon');
+    if (btnText) btnText.style.display = 'none';
+    if (btnIcon) {
+        btnIcon.innerHTML = `<rect x="6" y="6" width="12" height="12"></rect>`;
+        btnIcon.setAttribute("viewBox", "0 0 24 24");
+        btnIcon.setAttribute("stroke-width", "2");
+        btnIcon.setAttribute("fill", "currentColor");
+    }
+}
+
+function resetSendButton() {
+    const btnText = document.getElementById('send-btn-text');
+    const btnIcon = document.getElementById('send-btn-icon');
+    if (btnText) btnText.style.display = 'inline';
+    if (btnIcon) {
+        btnIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>`;
+        btnIcon.setAttribute("fill", "none");
+    }
+    const inputElement = document.getElementById('chat-input');
+    if (inputElement) {
+        inputElement.disabled = false;
+        inputElement.focus();
+    }
+}
+
+function sendOrStopMessage() {
+    if (currentAbortController) {
+        currentAbortController.abort();
+        currentAbortController = null;
+        resetSendButton();
+        return;
+    }
+    sendMessage();
+}
+
 async function sendMessage() {
     const inputElement = document.getElementById("chat-input");
     const text = inputElement.value;
 
     if (text.trim() === "") return;
+    
+    currentAbortController = new AbortController();
+    setStopButton();
+    inputElement.disabled = true;
 
     const chatBox = document.getElementById("chat-box");
     
@@ -756,12 +819,15 @@ async function sendMessage() {
 
     // 2. Create a temporary "loading" bubble for the AI
     const loadingMsg = document.createElement("div");
-    loadingMsg.className = "message ai italic text-textMuted font-typewriter";
-    loadingMsg.innerText = "Analyzing Creator Data...";
+    loadingMsg.className = "message ai italic text-brand font-typewriter animate-pulse";
     chatBox.appendChild(loadingMsg);
     chatBox.scrollTop = chatBox.scrollHeight;
 
-    // 3. Call the Python backend logic via standard REST!
+    const loadingStates = ["Thinking...", "Searching database...", "Analyzing Creator Data...", "Planning...", "Formatting..."];
+    let stateIdx = 0;
+    loadingMsg.innerText = loadingStates[0];
+
+    // 3. Call the Python backend logic via standard REST using a stream reader
     try {
         const fetchRes = await fetch(`${API_BASE}/api/chat`, {
             method: 'POST',
@@ -769,21 +835,65 @@ async function sendMessage() {
             body: JSON.stringify({
                 query: text,
                 creator_name: currentCreator
-            })
+            }),
+            signal: currentAbortController.signal
         });
 
         if (!fetchRes.ok) throw new Error("Could not fetch response from AI.");
 
-        const data = await fetchRes.json();
-        const response = data.response;
+        const reader = fetchRes.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let fullResponse = "";
+        let isGenerating = false;
 
-        // 4. Update the loading bubble with the actual LLM response
-        loadingMsg.innerText = response;
-        loadingMsg.classList.remove('italic', 'text-textMuted', 'font-typewriter');
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop(); // keep incomplete line in buffer
+
+            for (const line of lines) {
+                if (!line.trim()) continue;
+                try {
+                    const data = JSON.parse(line);
+                    if (data.state) {
+                        if (data.state === "Generating...") {
+                            isGenerating = true;
+                            loadingMsg.innerHTML = "";
+                            loadingMsg.classList.remove('italic', 'text-brand', 'font-typewriter', 'animate-pulse');
+                        } else if (data.state !== "Done" && !isGenerating) {
+                            loadingMsg.innerText = data.state;
+                        }
+                    } else if (data.chunk) {
+                        fullResponse += data.chunk;
+                        // Parse as it comes in
+                        loadingMsg.innerHTML = marked.parse(fullResponse);
+                        chatBox.scrollTop = chatBox.scrollHeight;
+                    } else if (data.response) {
+                        // Error or one-shot responses
+                        loadingMsg.innerHTML = marked.parse(data.response);
+                        loadingMsg.classList.remove('italic', 'text-brand', 'font-typewriter', 'animate-pulse');
+                    }
+                } catch (err) {
+                    console.error("Error parsing NDJSON line:", line, err);
+                }
+            }
+        }
     } catch (e) {
-        loadingMsg.innerText = `❌ Error: ${e.message}`;
+        if (e.name === 'AbortError') {
+            loadingMsg.innerHTML += "<br><em class='text-textMuted'>[Generation stopped by user]</em>";
+        } else {
+            loadingMsg.innerText = `❌ Error: ${e.message}`;
+        }
+        loadingMsg.classList.remove('italic', 'text-brand', 'font-typewriter', 'animate-pulse');
+    } finally {
+        currentAbortController = null;
+        resetSendButton();
+        chatBox.scrollTop = chatBox.scrollHeight;
     }
-    chatBox.scrollTop = chatBox.scrollHeight;
 }
 
 // Allow pressing 'Enter' to send
@@ -805,18 +915,28 @@ function updateKeyPlaceholder() {
     let needsOpenAI = model.startsWith('gpt') || model.startsWith('openai');
 
     if ((needsGroq && apiState.has_groq_key) || (needsOpenAI && apiState.has_openai_key)) {
-        input.placeholder = "🔑 API Key Saved (Enter new to overwrite)";
+        input.placeholder = "🔑 Brain API Key Saved (Enter new to overwrite)";
     } else if (needsGroq || needsOpenAI) {
         input.placeholder = "Paste Groq/OpenAI key...";
     } else {
         input.placeholder = "No key required for local models";
         statusEl.innerText = ""; // Clear warning if we switch to local
     }
+    
+    const transInput = document.getElementById('transcription-api-key-input');
+    if (transInput) {
+        if (apiState.has_transcription_key) {
+            transInput.placeholder = "🔑 Transcription Key Saved (Enter to overwrite)";
+        } else {
+            transInput.placeholder = "Enter Transcription API key...";
+        }
+    }
 }
 
 async function saveSettings() {
     const modelSelection = document.getElementById('model-select').value;
     const apiKey = document.getElementById('api-key-input').value;
+    const transApiKey = document.getElementById('transcription-api-key-input').value;
     const transMethod = document.getElementById('transcription-method').value;
     const statusEl = document.getElementById('settings-status');
 
@@ -847,7 +967,8 @@ async function saveSettings() {
         const payload = {
             model: modelSelection,
             transcription_method: transMethod,
-            api_key: apiKey
+            api_key: apiKey,
+            transcription_api_key: transApiKey
         };
 
         const res = await fetch(`${API_BASE}/api/settings`, {
@@ -863,6 +984,10 @@ async function saveSettings() {
             if (needsGroq) apiState.has_groq_key = true;
             if (needsOpenAI) apiState.has_openai_key = true;
             document.getElementById('api-key-input').value = ""; // Clear input after successful save
+        }
+        if (transApiKey) {
+            apiState.has_transcription_key = true;
+            document.getElementById('transcription-api-key-input').value = "";
         }
 
         statusEl.innerHTML = `✅ <b>Saved!</b> Chat: <b>${modelLabel}</b> · Transcription: <b>${transLabel}</b> · 🔑 Key stored`;
