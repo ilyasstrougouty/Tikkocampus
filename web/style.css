@@ -384,12 +384,22 @@ select {
     font-size: 1rem !important;
 }
 
-.chat-active #quick-actions-row {
+#quick-actions-row {
     opacity: 0;
     pointer-events: none;
     height: 0;
-    margin-top: 0;
+    margin-bottom: 0;
     overflow: hidden;
+    transform: translateY(10px);
+}
+
+.chat-active #quick-actions-row {
+    opacity: 1;
+    pointer-events: auto;
+    height: auto;
+    margin-bottom: 1rem;
+    overflow: visible;
+    transform: translateY(0);
 }
 
 #chat-placeholder {

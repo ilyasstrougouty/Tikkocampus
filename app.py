@@ -357,14 +357,44 @@ import json
 @app.post("/api/chat")
 async def chat_endpoint(req: ChatRequest):
     """Endpoint for the JS frontend to ask questions."""
+    import db
+    db.init_db()
+    
+    # Save user message immediately if not a general query
+    if req.creator_name and req.creator_name != "All Data":
+        db.save_chat_message(req.creator_name, "user", req.query)
+
     def generate():
+        full_response = ""
         try:
             for chunk in chat.get_rag_response_generator(req.query, req.creator_name):
                 yield chunk
+                try:
+                    data = json.loads(chunk)
+                    if "chunk" in data:
+                        full_response += data["chunk"]
+                    elif "response" in data:
+                        full_response += data["response"]
+                except:
+                    pass
         except Exception as e:
-            yield json.dumps({"response": f"❌ Error: {str(e)}"}) + "\n"
+            # We don't want to yield the error if the generator exited because of client disconnect
+            if type(e).__name__ != 'GeneratorExit':
+                yield json.dumps({"response": f"❌ Error: {str(e)}"}) + "\n"
+        finally:
+            # Ensure whatever text was generated is saved!
+            if req.creator_name and req.creator_name != "All Data" and full_response:
+                db.save_chat_message(req.creator_name, "ai", full_response)
             
     return StreamingResponse(generate(), media_type="application/x-ndjson")
+
+@app.get("/api/chat/history/{creator_name}")
+async def get_chat_history_endpoint(creator_name: str):
+    """Returns the chat history for a specific creator."""
+    import db
+    db.init_db()
+    messages = db.get_chat_history(creator_name)
+    return {"messages": messages}
 
 class SettingsRequest(BaseModel):
     model: str

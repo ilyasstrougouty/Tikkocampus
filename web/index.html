@@ -254,22 +254,12 @@
                     </div>
                 </div>
 
+                </div>
+
                 <!-- Chat Input Area -->
                 <div class="mt-auto px-4 pb-4">
-                    <div class="w-full relative flex flex-col overflow-hidden group transition-all border border-borderDark/50 bg-white/5 rounded-xl">
-                        <textarea id="chat-input" class="w-full bg-transparent border-none text-textMain placeholder-neutral-600 p-2 resize-none focus:ring-0 outline-none focus:outline-none text-lg transition-all duration-300 chat-input-area" placeholder="Type a query..." spellcheck="false"></textarea>
-                        <div class="p-4 flex justify-end items-center bg-transparent">
-                            <button id="send-btn" onclick="sendOrStopMessage()" class="bg-brand hover:bg-brandHover text-white font-bold py-2.5 px-8 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-brand/20 min-w-[120px]">
-                                <span id="send-btn-text">Send</span>
-                                <svg id="send-btn-icon" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- NEW QUICK ACTIONS (Below Input) -->
-                    <div id="quick-actions-row" class="flex flex-wrap justify-center gap-4 mt-6 transition-all duration-500">
+                    <!-- NEW QUICK ACTIONS (Above Input) -->
+                    <div id="quick-actions-row" class="flex flex-wrap justify-center gap-4 transition-all duration-500">
                         <button onclick="quickAction('Summarize')" class="flex items-center gap-2 px-5 py-2.5 bg-card/40 hover:bg-card/80 border border-borderDark rounded-full text-textMuted hover:text-white transition-all text-xs font-medium backdrop-blur-sm group">
                             <i class="fa-solid fa-file-lines text-brand/60 group-hover:text-brand"></i>
                             <span class="font-typewriter">Summarize</span>
@@ -286,6 +276,20 @@
                             <i class="fa-solid fa-thumbs-up text-brand/60 group-hover:text-brand"></i>
                             <span class="font-typewriter">Recommendations</span>
                         </button>
+                    </div>
+
+                    <div class="w-full relative flex flex-col overflow-hidden group transition-all border border-borderDark/50 bg-white/5 rounded-xl">
+                        <textarea id="chat-input" class="w-full bg-transparent border-none text-textMain placeholder-neutral-600 p-2 resize-none focus:ring-0 outline-none focus:outline-none text-lg transition-all duration-300 chat-input-area" placeholder="Type a query..." spellcheck="false"></textarea>
+                        <div class="p-4 flex justify-end items-center bg-transparent">
+                            <button id="send-btn" onclick="sendOrStopMessage()" class="bg-brand hover:bg-brandHover text-white font-bold py-2.5 px-8 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-brand/20 min-w-[120px]">
+                                <span id="send-btn-text">Send</span>
+                                <svg id="send-btn-icon" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
                     </div>
                 </div>
             </div>

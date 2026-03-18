@@ -38,6 +38,15 @@ def init_db():
                 scraped_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS chat_messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                creator_name TEXT,
+                role TEXT,
+                content TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
         
         # MIGRATION: Check if creator_nickname exists, if not add it
         try:
@@ -92,6 +101,7 @@ def delete_creator(creator_name):
         # 2. Delete from SQLite
         cursor.execute('DELETE FROM scrape_history WHERE creator_name = ?', (creator_name,))
         cursor.execute('DELETE FROM videos WHERE creator_name = ?', (creator_name,))
+        cursor.execute('DELETE FROM chat_messages WHERE creator_name = ?', (creator_name,))
         conn.commit()
     print(f"Successfully deleted creator {creator_name} and all associated files.")
 
@@ -115,6 +125,29 @@ def insert_video_metadata(video_id, upload_date, caption, creator_name, file_pat
             VALUES (?, ?, ?, ?, ?)
         ''', (video_id, upload_date, caption, creator_name, file_path))
         conn.commit()
+
+def save_chat_message(creator_name, role, content):
+    """Saves a single chat message (user or ai) for a given creator."""
+    with db_session() as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO chat_messages (creator_name, role, content)
+            VALUES (?, ?, ?)
+        ''', (creator_name, role, content))
+        conn.commit()
+
+def get_chat_history(creator_name):
+    """Retrieves all chat messages for a given creator in chronological order."""
+    with db_session() as conn:
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT role, content, created_at
+            FROM chat_messages 
+            WHERE creator_name = ?
+            ORDER BY created_at ASC
+        ''', (creator_name,))
+        return [dict(row) for row in cursor.fetchall()]
 
 if __name__ == "__main__":
     init_db()

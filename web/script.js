@@ -21,7 +21,7 @@ function copyToClipboard(text, btn) {
 }
 
 // --- UI Navigation ---
-function setCreator(creatorName, creatorNickname = null) {
+async function setCreator(creatorName, creatorNickname = null) {
     currentCreator = creatorName;
     const chatInput = document.getElementById('chat-input');
     const chatTitle = document.getElementById('chat-title');
@@ -53,6 +53,51 @@ function setCreator(creatorName, creatorNickname = null) {
     if (headerName) {
         headerName.innerText = `@${creatorName}`;
         if (chatSubtitle) chatSubtitle.classList.remove('hidden');
+    }
+
+    // Load Chat History
+    if (creatorName !== "All Data") {
+        try {
+            const res = await fetch(`${API_BASE}/api/chat/history/${creatorName}`);
+            const data = await res.json();
+            if (data.messages && data.messages.length > 0) {
+                // Clear the placeholder
+                document.getElementById('chat-placeholder')?.remove();
+                
+                // Add chat active classes
+                if (chatInput) chatInput.classList.add('shrunk');
+                document.body.classList.add('chat-active');
+
+                // Render history
+                data.messages.forEach(msg => {
+                    const msgDiv = document.createElement("div");
+                    if (msg.role === "user") {
+                        msgDiv.className = "message user";
+                        msgDiv.innerText = msg.content;
+                        chatBox.appendChild(msgDiv);
+                    } else if (msg.role === "ai") {
+                        const loadingMsgContainer = document.createElement("div");
+                        loadingMsgContainer.className = "message ai";
+                        
+                        const textCont = document.createElement("div");
+                        textCont.className = "markdown-content"; 
+                        textCont.innerHTML = marked.parse(msg.content);
+                        loadingMsgContainer.appendChild(textCont);
+                        
+                        const copyBtn = document.createElement("button");
+                        copyBtn.className = "copy-btn";
+                        copyBtn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>`;
+                        copyBtn.onclick = () => copyToClipboard(textCont.innerText, copyBtn);
+                        loadingMsgContainer.appendChild(copyBtn);
+
+                        chatBox.appendChild(loadingMsgContainer);
+                    }
+                });
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }
+        } catch (e) {
+            console.error("Failed to load chat history", e);
+        }
     }
 }
 
