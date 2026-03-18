@@ -1,13 +1,13 @@
 /* Modern Dark Theme Base */
 :root {
-    --app-accent: #ef3359;
+    --app-accent: #ff1a4a;
     --app-dark: #22252a;
     --app-sidebar: #191a1f;
     --app-surface: #191a1f;
     --app-text: #E5E7EB;
     --app-text-muted: #9CA3AF;
-    --brand: #ef3359;
-    --brand-hover: #d92c50;
+    --brand: #ff1a4a;
+    --brand-hover: #e60039;
     --border-dark: #333333;
 }
 

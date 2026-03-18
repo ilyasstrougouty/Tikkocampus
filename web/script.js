@@ -437,7 +437,7 @@ async function startLogoAnimation() {
     const canvas = document.getElementById('logo-canvas');
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    const dotSize = 1.5; // High resolution
+    const dotSize = 2.5; // Bigger dots
     const gap = 1;      
     const gridSize = dotSize + gap;
     
@@ -461,7 +461,7 @@ async function startLogoAnimation() {
     offCtx.drawImage(img, (cols - w) / 2, (rows - h) / 2, w, h);
     
     const imgData = offCtx.getImageData(0, 0, cols, rows).data;
-    const brandColor = '#ef3359'; // Pink Red
+    const brandColor = '#ff1a4a'; // More vibrant Red
     
     const dots = [];
     for (let y = 0; y < rows; y++) {
@@ -472,12 +472,11 @@ async function startLogoAnimation() {
             const b = imgData[idx + 2];
             
             // Threshold: Target the glitchy colors (cyan/red/white) 
-            // Since the background is black [0,0,0], any significant color indicates the logo
             if (r + g + b > 40) { 
                 dots.push({ 
                     x: x * gridSize, 
                     y: y * gridSize, 
-                    baseAlpha: 0.4 + Math.random() * 0.6,
+                    baseAlpha: 0.5 + Math.random() * 0.5,
                     phase: Math.random() * Math.PI * 2
                 });
             }
@@ -490,6 +489,9 @@ async function startLogoAnimation() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         const time = (Date.now() - startTime) / 1000;
         
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = brandColor;
+        
         dots.forEach(dot => {
             const pulse = Math.sin(time * 3 + dot.phase) * 0.3 + 0.7;
             const alpha = dot.baseAlpha * pulse;
@@ -497,7 +499,9 @@ async function startLogoAnimation() {
             ctx.globalAlpha = alpha;
             ctx.fillRect(dot.x, dot.y, dotSize, dotSize);
         });
+        
         ctx.globalAlpha = 1.0;
+        ctx.shadowBlur = 0; // Reset for next frame
         
         requestAnimationFrame(animate);
     }
