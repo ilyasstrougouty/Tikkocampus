@@ -22,7 +22,7 @@ function createWindow() {
       contextIsolation: true,
       preload: path.join(__dirname, 'preload.js')
     },
-    icon: path.join(__dirname, '..', 'web', 'logo.ico')
+    icon: path.join(__dirname, 'app_logo.ico')
   });
 
   // Load the frontend from local files (Static Mode)
