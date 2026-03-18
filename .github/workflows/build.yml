@@ -40,7 +40,9 @@ jobs:
 
       - name: NPM Install
         working-directory: electron-app
-        run: npm install
+        run: |
+          rm -f package-lock.json
+          npm install
 
       - name: Build & Package Electron App
         working-directory: electron-app
