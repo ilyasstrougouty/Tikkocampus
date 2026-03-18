@@ -852,8 +852,8 @@ async function startProcessing() {
                     document.getElementById('chat-input').disabled = false;
                     document.getElementById('send-btn').disabled = false;
                     loadHistory(); // Refresh history with the new scrape
-                    // Auto-switch to chat page
-                    setTimeout(() => showChat(), 1500);
+                    // Provide visual indication they can proceed to chat
+                    statusText.innerHTML = '✅ Processing Complete! <a href="#" onclick="showChat()" class="underline text-brand">Go to Chat</a>';
                 }
 
                 // Restore the scrape button
