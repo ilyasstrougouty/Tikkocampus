@@ -504,8 +504,8 @@ async function startLogoAnimation() {
     const ctx = canvas.getContext('2d');
     
     // High-resolution grid
-    const dotRadius = 7.0; // Bigger dots for higher resolution grid
-    const gap = 2.0;      
+    const dotRadius = 4.0; // Smaller dots for higher density to define shape
+    const gap = 1.0; // Tighter gap for denser matrix
     const gridSize = (dotRadius * 2) + gap;
     
     // Load and sample the logo
@@ -538,7 +538,7 @@ async function startLogoAnimation() {
             const g = imgData[idx + 1];
             const b = imgData[idx + 2];
             
-            if (r + g + b > 40) { 
+            if (r + g + b > 30) { // Lower threshold for more edge dots
                 dots.push({ 
                     x: x * gridSize + dotRadius, 
                     y: y * gridSize + dotRadius, 
@@ -563,12 +563,12 @@ async function startLogoAnimation() {
             const alpha = Math.max(0.4, (dot.baseAlpha * pulse) + shimmer); // Boosted base alpha
             
             // Layer 1: Core Glow (Bloom)
-            ctx.shadowBlur = 24; // Increased glow
+            ctx.shadowBlur = 16; // Moderate glow
             ctx.shadowColor = brandColor;
-            ctx.globalAlpha = alpha * 0.8; // Stronger glow opacity
+            ctx.globalAlpha = alpha * 0.9; // Solid glow opacity
             ctx.fillStyle = brandColor;
             ctx.beginPath();
-            ctx.arc(dot.x, dot.y, dotRadius * 1.3, 0, Math.PI * 2);
+            ctx.arc(dot.x, dot.y, dotRadius * 1.4, 0, Math.PI * 2);
             ctx.fill();
             
             // Layer 2: Main Dot
