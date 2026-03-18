@@ -557,21 +557,21 @@ async function startLogoAnimation() {
         const time = (Date.now() - startTime) / 1000;
         
         dots.forEach(dot => {
-            const wave = Math.sin(time * 2.5 + dot.phase);
-            const pulse = wave * 0.2 + 0.8; 
-            const shimmer = Math.sin(time * 10 + dot.phase) * dot.shimmer;
-            const alpha = Math.max(0.4, (dot.baseAlpha * pulse) + shimmer); 
+            const wave = Math.sin(time * 3.5 + dot.phase); // Slightly faster wave
+            const pulse = wave * 0.4 + 0.6; // Deep pulse: 0.2 to 1.0 multiplier
+            const shimmer = Math.sin(time * 15 + dot.phase) * dot.shimmer;
+            const alpha = Math.max(0.1, (dot.baseAlpha * pulse) + shimmer); // Allow alpha to drop very low
             
             // Randomly distribute dots between Neon Pink (345) and Pure Red (360) based on their fixed phase
             const blend = (Math.sin(dot.phase) + 1) / 2;
             const hue = 345 + (blend * 15);
-            const dotColor = `hsl(${hue}, 100%, 65%)`;
-            const glowColor = `hsl(${hue}, 100%, 55%)`;
+            const dotColor = `hsl(${hue}, 100%, 70%)`; // Brighter core
+            const glowColor = `hsl(${hue}, 100%, 60%)`; // Brighter glow
             
             // Layer 1: Core Glow (Bloom)
-            ctx.shadowBlur = 12; 
+            ctx.shadowBlur = 15; 
             ctx.shadowColor = glowColor;
-            ctx.globalAlpha = alpha * 0.9; 
+            ctx.globalAlpha = alpha; 
             ctx.fillStyle = glowColor;
             
             ctx.beginPath();
