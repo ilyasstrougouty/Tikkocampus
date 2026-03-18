@@ -432,58 +432,146 @@ async function triggerLogin() {
     }
 }
 
-// Run on page load with retries for backend boot-up
-async function initApp(retries = 10) {
-    console.log(`Connecting to backend... (${retries} attempts left)`);
-    try {
-        // 1. Check if backend is alive
-        const resCheck = await fetch(`${API_BASE}/api/status`);
-        if (!resCheck.ok && resCheck.status !== 404) throw new Error("Backend not ready");
-        
-        console.log("Connected to backend! Initializing UI...");
-        
-        // Hide loader and show login card with animation
-        const loader = document.getElementById('startup-loader');
-        const loginCard = document.getElementById('login-card');
-        if (loader) {
-            loader.style.opacity = '0';
-            loader.style.pointerEvents = 'none';
-            setTimeout(() => loader.remove(), 700);
-        }
-        if (loginCard) {
-            loginCard.classList.add('show');
-        }
-
-        // 2. Initial Load of sessions
-        loadCookieSessions();
-        
-        // 3. Settings Listeners
-        const modelSelect = document.getElementById('model-select');
-        const transSelect = document.getElementById('transcription-method');
-        if (modelSelect) modelSelect.addEventListener('change', updateKeyPlaceholder);
-        if (transSelect) transSelect.addEventListener('change', updateKeyPlaceholder);
-
-        // 4. Check if we already have an active cookies.txt session AND if it's valid
-        const resCookies = await fetch(`${API_BASE}/api/check-cookies`);
-        const data = await resCookies.json();
-        if (data.exists) {
-            console.log("Active session found. Validating...");
-            const isValid = await validateSession();
-            if (isValid) {
-                showMainApp();
+// --- Startup Animation (Dot Matrix Logo) ---
+async function startLogoAnimation() {
+    const canvas = document.getElementById('logo-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const dotSize = 4;
+    const gap = 2;
+    const gridSize = dotSize + gap;
+    
+    // Load and sample the logo
+    const img = new Image();
+    img.src = 'logo.png';
+    await new Promise(resolve => img.onload = resolve);
+    
+    const cols = Math.floor(canvas.width / gridSize);
+    const rows = Math.floor(canvas.height / gridSize);
+    
+    const offCanvas = document.createElement('canvas');
+    offCanvas.width = cols;
+    offCanvas.height = rows;
+    const offCtx = offCanvas.getContext('2d');
+    offCtx.drawImage(img, 0, 0, cols, rows);
+    const imgData = offCtx.getImageData(0, 0, cols, rows).data;
+    
+    const dots = [];
+    for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+            const idx = (y * cols + x) * 4;
+            const r = imgData[idx];
+            const g = imgData[idx + 1];
+            const b = imgData[idx + 2];
+            const alpha = imgData[idx + 3];
+            // If pixel is not transparent OR is bright (white/light)
+            if (alpha > 128 || (r + g + b) > 400) { 
+                dots.push({ 
+                    x: x * gridSize, 
+                    y: y * gridSize, 
+                    baseAlpha: 0.2 + Math.random() * 0.8,
+                    phase: Math.random() * Math.PI * 2
+                });
             }
         }
-    } catch (e) {
-        if (retries > 0) {
-            console.warn("Backend connection failed, retrying in 1s...");
-            setTimeout(() => initApp(retries - 1), 1000);
-        } else {
-            console.error("Failed to connect to backend after several attempts:", e);
-        }
     }
+    
+    let startTime = Date.now();
+    function animate() {
+        if (!document.getElementById('startup-loader')) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const time = (Date.now() - startTime) / 1000;
+        
+        dots.forEach(dot => {
+            const pulse = Math.sin(time * 3 + dot.phase) * 0.3 + 0.7;
+            const alpha = dot.baseAlpha * pulse;
+            ctx.fillStyle = `rgba(239, 51, 89, ${alpha})`;
+            ctx.fillRect(dot.x, dot.y, dotSize, dotSize);
+        });
+        
+        const scanY = (time * 150) % canvas.height;
+        ctx.fillStyle = 'rgba(239, 51, 89, 0.1)';
+        ctx.fillRect(0, scanY, canvas.width, 2);
+        requestAnimationFrame(animate);
+    }
+    animate();
+    
+    // Progress bar simulation
+    return new Promise(resolve => {
+        const progressBar = document.getElementById('loader-progress');
+        const statusText = document.getElementById('loader-status');
+        const states = ["Initializing Core", "Loading Assets", "Syncing Database", "Connecting to TikTok", "System Ready"];
+        let progress = 0;
+        const interval = setInterval(() => {
+            if (progress >= 100) { 
+                clearInterval(interval); 
+                resolve();
+                return; 
+            }
+            progress += Math.random() * 10;
+            if (progress > 100) progress = 100;
+            if (progressBar) progressBar.style.width = `${progress}%`;
+            if (statusText) {
+                const stateIdx = Math.floor((progress / 100) * (states.length - 1));
+                statusText.innerText = states[stateIdx];
+            }
+        }, 300);
+    });
 }
 
-document.addEventListener('DOMContentLoaded', () => initApp());
+document.addEventListener('DOMContentLoaded', async () => {
+    const logoAnimPromise = startLogoAnimation();
+    const appInitPromise = initApp();
+    
+    // Wait for BOTH backend to be ready AND animation to finish
+    await Promise.all([logoAnimPromise, appInitPromise]);
+    
+    // Final transition
+    const loader = document.getElementById('startup-loader');
+    const loginCard = document.getElementById('login-card');
+    if (loader) {
+        loader.style.opacity = '0';
+        loader.style.pointerEvents = 'none';
+        setTimeout(() => loader.remove(), 700);
+    }
+    if (loginCard) {
+        loginCard.classList.add('show');
+    }
+});
+
+async function initApp(retries = 15) {
+    for (let i = 0; i < retries; i++) {
+        console.log(`Connecting to backend... (${i + 1}/${retries})`);
+        try {
+            const resCheck = await fetch(`${API_BASE}/api/status`);
+            if (resCheck.ok || resCheck.status === 404) {
+                console.log("Connected to backend!");
+                loadCookieSessions();
+                
+                // Settings Listeners
+                const modelSelect = document.getElementById('model-select');
+                const transSelect = document.getElementById('transcription-method');
+                if (modelSelect) modelSelect.addEventListener('change', updateKeyPlaceholder);
+                if (transSelect) transSelect.addEventListener('change', updateKeyPlaceholder);
+
+                // Check active session
+                const resCookies = await fetch(`${API_BASE}/api/check-cookies`);
+                const data = await resCookies.json();
+                if (data.exists) {
+                    const isValid = await validateSession();
+                    if (isValid) showMainApp();
+                }
+                return true;
+            }
+        } catch (e) {
+            console.warn("Backend connection attempt failed...");
+        }
+        await new Promise(r => setTimeout(r, 1000));
+    }
+    console.error("Failed to connect to backend after 15 attempts.");
+    return false;
+}
+
 
 // --- Method 2: Drag & Drop Cookies ---
 const dropZone = document.getElementById('drop-zone');
