@@ -113,7 +113,14 @@ def download_profile_videos(profile_url, max_downloads=MAX_VIDEOS_PER_PROFILE):
     
     try:
         with Stealth().use_sync(sync_playwright()) as p:
-            browser = p.chromium.launch(headless=False)
+            import platform
+            channel = "msedge" if platform.system() == "Windows" else "chrome"
+            try:
+                browser = p.chromium.launch(headless=False, channel=channel)
+            except Exception as e:
+                print(f"Warning: System browser {channel} not found. Falling back to generic chromium bundle.")
+                browser = p.chromium.launch(headless=False)
+                
             # Use a realistic user agent to avoid basic blocks
             context = browser.new_context(
                 user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"

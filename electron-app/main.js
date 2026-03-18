@@ -93,16 +93,32 @@ function createWindow() {
 }
 
 function startPythonBackend() {
-  const pythonExec = path.resolve(__dirname, '..', 'venv', 'Scripts', 'python.exe');
-  const appPath = path.resolve(__dirname, '..', 'app.py');
-  const cwd = path.resolve(__dirname, '..');
+  let pythonExec;
+  let args;
+  let cwd;
 
-  console.log(`Spawning Python: "${pythonExec}" "${appPath}"`);
+  if (app.isPackaged) {
+    // In production, the backend is bundled in resources/backend
+    const backendName = process.platform === 'win32' ? 'backend.exe' : 'backend';
+    // PyInstaller outputs to a directory named after the app.
+    // In our build pipeline, we will copy 'dist/backend' to 'resources/backend'
+    pythonExec = path.join(process.resourcesPath, 'backend', backendName);
+    args = ['--server-only']; 
+    cwd = path.join(process.resourcesPath, 'backend');
+  } else {
+    // In development mode, use local venv
+    pythonExec = path.resolve(__dirname, '..', 'venv', 'Scripts', 'python.exe');
+    if (process.platform !== 'win32') {
+        pythonExec = path.resolve(__dirname, '..', 'venv', 'bin', 'python');
+    }
+    const appPath = path.resolve(__dirname, '..', 'app.py');
+    args = ['-u', appPath, '--server-only'];
+    cwd = path.resolve(__dirname, '..');
+  }
+
+  console.log(`Spawning Python Backend: "${pythonExec}" with args:`, args);
   
-  // To handle spaces in path on Windows without shell: true breaking everything:
-  // We use the array form and escape/quote correctly.
-  // Actually, spawn with array works fine on Windows if the elements themselves are the paths.
-  pythonProcess = spawn(pythonExec, ['-u', appPath, '--server-only'], {
+  pythonProcess = spawn(pythonExec, args, {
     cwd: cwd,
     shell: false, // Safer and handles array args better for paths with spaces
     env: { ...process.env, PYTHONUNBUFFERED: '1' }

@@ -15,6 +15,13 @@
     "directories": {
       "output": "dist"
     },
+    "extraResources": [
+      {
+        "from": "../dist/backend",
+        "to": "backend",
+        "filter": ["**/*"]
+      }
+    ],
     "win": {
       "target": "nsis",
       "icon": "app_logo.ico"
@@ -22,6 +29,10 @@
     "mac": {
       "target": "dmg",
       "category": "public.app-category.education"
+    },
+    "linux": {
+      "target": "AppImage",
+      "category": "Education"
     }
   },
   "keywords": [],
