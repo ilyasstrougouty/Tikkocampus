@@ -35,6 +35,10 @@
       "category": "Education"
     }
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ilyasstrougouty/Tikkocampus.git"
+  },
   "keywords": [],
   "author": "Tikkocampus Team",
   "license": "ISC",
