@@ -8,6 +8,18 @@ let apiState = {
 
 const API_BASE = window.location.protocol === 'file:' ? 'http://127.0.0.1:8000' : '';
 
+function copyToClipboard(text, btn) {
+    navigator.clipboard.writeText(text).then(() => {
+        const originalIcon = btn.innerHTML;
+        btn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
+        btn.classList.add('copied');
+        setTimeout(() => {
+            btn.innerHTML = originalIcon;
+            btn.classList.remove('copied');
+        }, 2000);
+    });
+}
+
 // --- UI Navigation ---
 function setCreator(creatorName, creatorNickname = null) {
     currentCreator = creatorName;
@@ -818,9 +830,20 @@ async function sendMessage() {
     chatBox.scrollTop = chatBox.scrollHeight;
 
     // 2. Create a temporary "loading" bubble for the AI
+    const loadingMsgContainer = document.createElement("div");
+    loadingMsgContainer.className = "message ai italic text-brand font-typewriter animate-pulse";
+    
     const loadingMsg = document.createElement("div");
-    loadingMsg.className = "message ai italic text-brand font-typewriter animate-pulse";
-    chatBox.appendChild(loadingMsg);
+    loadingMsg.className = "markdown-content"; // Container for actual text
+    loadingMsgContainer.appendChild(loadingMsg);
+    
+    const copyBtn = document.createElement("button");
+    copyBtn.className = "copy-btn";
+    copyBtn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>`;
+    copyBtn.onclick = () => copyToClipboard(loadingMsg.innerText, copyBtn);
+    loadingMsgContainer.appendChild(copyBtn);
+
+    chatBox.appendChild(loadingMsgContainer);
     chatBox.scrollTop = chatBox.scrollHeight;
 
     const loadingStates = ["Thinking...", "Searching database...", "Analyzing Creator Data...", "Planning...", "Formatting..."];
@@ -863,7 +886,7 @@ async function sendMessage() {
                         if (data.state === "Generating...") {
                             isGenerating = true;
                             loadingMsg.innerHTML = "";
-                            loadingMsg.classList.remove('italic', 'text-brand', 'font-typewriter', 'animate-pulse');
+                            loadingMsgContainer.classList.remove('italic', 'text-brand', 'font-typewriter', 'animate-pulse');
                         } else if (data.state !== "Done" && !isGenerating) {
                             loadingMsg.innerText = data.state;
                         }
@@ -875,7 +898,7 @@ async function sendMessage() {
                     } else if (data.response) {
                         // Error or one-shot responses
                         loadingMsg.innerHTML = marked.parse(data.response);
-                        loadingMsg.classList.remove('italic', 'text-brand', 'font-typewriter', 'animate-pulse');
+                        loadingMsgContainer.classList.remove('italic', 'text-brand', 'font-typewriter', 'animate-pulse');
                     }
                 } catch (err) {
                     console.error("Error parsing NDJSON line:", line, err);
@@ -888,7 +911,7 @@ async function sendMessage() {
         } else {
             loadingMsg.innerText = `❌ Error: ${e.message}`;
         }
-        loadingMsg.classList.remove('italic', 'text-brand', 'font-typewriter', 'animate-pulse');
+        loadingMsgContainer.classList.remove('italic', 'text-brand', 'font-typewriter', 'animate-pulse');
     } finally {
         currentAbortController = null;
         resetSendButton();
