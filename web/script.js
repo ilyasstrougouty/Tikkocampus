@@ -437,8 +437,8 @@ async function startLogoAnimation() {
     const canvas = document.getElementById('logo-canvas');
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    const dotSize = 4;
-    const gap = 2;
+    const dotSize = 2; // smaller dots
+    const gap = 1;     // smaller gap
     const gridSize = dotSize + gap;
     
     // Load and sample the logo
@@ -453,7 +453,13 @@ async function startLogoAnimation() {
     offCanvas.width = cols;
     offCanvas.height = rows;
     const offCtx = offCanvas.getContext('2d');
-    offCtx.drawImage(img, 0, 0, cols, rows);
+    
+    // Draw centered on off-canvas to keep aspect ratio
+    const ratio = Math.min(cols / img.width, rows / img.height) * 0.9;
+    const w = img.width * ratio;
+    const h = img.height * ratio;
+    offCtx.drawImage(img, (cols - w) / 2, (rows - h) / 2, w, h);
+    
     const imgData = offCtx.getImageData(0, 0, cols, rows).data;
     
     const dots = [];
@@ -464,12 +470,12 @@ async function startLogoAnimation() {
             const g = imgData[idx + 1];
             const b = imgData[idx + 2];
             const alpha = imgData[idx + 3];
-            // If pixel is not transparent OR is bright (white/light)
-            if (alpha > 128 || (r + g + b) > 400) { 
+            // Significant pixel: Trust alpha channel for silhouettes
+            if (alpha > 20) { 
                 dots.push({ 
                     x: x * gridSize, 
                     y: y * gridSize, 
-                    baseAlpha: 0.2 + Math.random() * 0.8,
+                    baseAlpha: 0.5 + Math.random() * 0.5,
                     phase: Math.random() * Math.PI * 2
                 });
             }
