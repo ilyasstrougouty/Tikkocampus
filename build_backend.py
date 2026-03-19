@@ -1,13 +1,12 @@
 import PyInstaller.__main__
 import platform
+import os
 
 print("Starting PyInstaller compilation for Target OS...")
 
 executable_name = 'backend'
 if platform.system() == 'Windows':
     executable_name = 'backend.exe'
-
-import os
 
 # Define PyInstaller arguments
 args = [
@@ -19,14 +18,6 @@ args = [
     '--clean',
     '--collect-all', 'uvicorn',
     '--collect-all', 'fastapi',
-    '--collect-all', 'playwright',
-    '--collect-all', 'tiktok_uploader',
-    '--hidden-import', 'uvicorn.protocols.http.httptools_impl',
-    '--hidden-import', 'uvicorn.protocols.http.h11_impl',
-    '--hidden-import', 'uvicorn.protocols.websockets.websockets_impl',
-    '--hidden-import', 'uvicorn.loggers',
-    '--hidden-import', 'uvicorn.lifespan.on',
-    '--hidden-import', 'email_validator',
     '--collect-all', 'playwright',
     '--collect-all', 'webview',
     '--collect-all', 'onnxruntime',
