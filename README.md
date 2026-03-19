@@ -18,7 +18,7 @@
 
 🚀 **Download the latest v1.1.4 release for your OS:**
 
-- **Windows (.exe)**: [Tikkocampus-Setup-1.1.4.exe](https://github.com/ilyasstrougouty/Tikkocampus/releases/download/v1.1.4/Tikkocampus.Setup.1.1.4.exe)
+- **Windows (.exe)**: [Tikkocampus-Setup-1.1.4.exe](https://github.com/ilyasstrougouty/Tikkocampus/releases/download/v1.1.4/Tikkocampus-Setup-1.1.4.exe)
 - **macOS (.dmg)**: [Download Tikkocampus-1.1.4-arm64.dmg](https://github.com/ilyasstrougouty/Tikkocampus/releases/download/v1.1.4/Tikkocampus-1.1.4-arm64.dmg)
 - **Linux (AppImage)**: [Download Tikkocampus-1.1.4.AppImage](https://github.com/ilyasstrougouty/Tikkocampus/releases/download/v1.1.4/Tikkocampus-1.1.4.AppImage)
 
