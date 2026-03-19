@@ -60,9 +60,7 @@ jobs:
 
       - name: NPM Install
         working-directory: electron-app
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm install
+        run: npm ci
 
       - name: Build & Package Electron App
         working-directory: electron-app
