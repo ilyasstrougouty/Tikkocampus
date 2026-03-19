@@ -2,20 +2,39 @@ const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const { spawn } = require('child_process');
 const http = require('http');
+const fs = require('fs');
 
 let mainWindow;
 let pythonProcess;
 let windowCreated = false;
 
+// --- Production Diagnostic Logging ---
+const logPath = path.join(app.getPath('userData'), 'startup-debug.log');
+function logDebug(message) {
+  const timestamp = new Date().toISOString();
+  const logMessage = `[${timestamp}] ${message}\n`;
+  console.log(message);
+  try {
+    fs.appendFileSync(logPath, logMessage);
+  } catch (err) {
+    // Fallback if fs fails
+  }
+}
+
+logDebug('--- App Startup Initiated ---');
+logDebug(`isPackaged: ${app.isPackaged}`);
+logDebug(`App Path: ${app.getAppPath()}`);
+
 function createWindow() {
+  logDebug('createWindow() called');
   if (windowCreated) return;
   windowCreated = true;
 
   mainWindow = new BrowserWindow({
     width: 900,
     height: 700,
-    frame: false, // Frameless for premium look
-    show: false,  // Hidden until backend is ready
+    frame: false,
+    show: false,
     backgroundColor: '#1a1a1a',
     webPreferences: {
       nodeIntegration: false,
@@ -25,39 +44,32 @@ function createWindow() {
     icon: path.join(__dirname, 'app_logo.ico')
   });
 
-  // Load the frontend from local files (Static Mode)
-  mainWindow.loadFile(path.join(__dirname, '..', 'web', 'index.html'));
+  const indexPath = path.join(__dirname, '..', 'web', 'index.html');
+  logDebug(`Loading index.html from: ${indexPath}`);
+  
+  mainWindow.loadFile(indexPath).catch(err => {
+    logDebug(`CRITICAL: failed to load index.html: ${err.message}`);
+  });
 
   const apiUrl = 'http://127.0.0.1:8000';
 
-  // Show the window immediately for a faster native feel
   mainWindow.once('ready-to-show', () => {
+    logDebug('Window ready-to-show event fired');
     mainWindow.show();
   });
 
-  // Open external links in the default browser instead of the app window
-  mainWindow.webContents.on('will-navigate', (event, url) => {
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      event.preventDefault();
-      require('electron').shell.openExternal(url);
-    }
+  mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
+    logDebug(`ERROR: Frontend failed to load (${errorCode}): ${errorDescription}`);
   });
 
-  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      require('electron').shell.openExternal(url);
-    }
-    return { action: 'deny' };
-  });
-
-  // Robust polling for backend readiness (background logging)
+  // Robust polling for backend readiness
   const pollBackend = () => {
     const request = http.get(`${apiUrl}/api/status`, (res) => {
-      console.log('Backend API is responsive!');
+      logDebug('Backend API is responsive!');
     });
 
     request.on('error', (err) => {
-      console.log('Backend API not ready yet, retrying in 1000ms...');
+      logDebug('Backend API not ready yet, retrying...');
       setTimeout(pollBackend, 1000);
     });
 
@@ -71,7 +83,7 @@ function createWindow() {
   });
 
   ipcMain.on('window-control', (event, action) => {
-    console.log(`Received window control action: ${action}`);
+    logDebug(`Received window control action: ${action}`);
     if (!mainWindow) return;
     switch (action) {
       case 'close':
@@ -98,15 +110,26 @@ function startPythonBackend() {
   let cwd;
 
   if (app.isPackaged) {
-    // In production, the backend is bundled in resources/backend
     const backendName = process.platform === 'win32' ? 'backend.exe' : 'backend';
-    // PyInstaller outputs to a directory named after the app.
-    // In our build pipeline, we will copy 'dist/backend' to 'resources/backend'
-    pythonExec = path.join(process.resourcesPath, 'backend', backendName);
+    
+    // PyInstaller directory mode structure: dist/backend/backend.exe
+    // When moved to resources: resources/backend/backend.exe
+    // BUT build_backend.py creates a folder named 'backend' INSIDE 'dist/backend'
+    // Resulting in: resources/backend/backend/backend.exe
+    const nestedPath = path.join(process.resourcesPath, 'backend', 'backend', backendName);
+    const flatPath = path.join(process.resourcesPath, 'backend', backendName);
+    
+    if (fs.existsSync(nestedPath)) {
+      pythonExec = nestedPath;
+      logDebug(`Using nested backend path: ${pythonExec}`);
+    } else {
+      pythonExec = flatPath;
+      logDebug(`Nested path not found, falling back to flat path: ${pythonExec}`);
+    }
+
     args = ['--server-only']; 
-    cwd = path.join(process.resourcesPath, 'backend');
+    cwd = path.dirname(pythonExec);
   } else {
-    // In development mode, use local venv
     pythonExec = path.resolve(__dirname, '..', 'venv', 'Scripts', 'python.exe');
     if (process.platform !== 'win32') {
         pythonExec = path.resolve(__dirname, '..', 'venv', 'bin', 'python');
@@ -116,33 +139,35 @@ function startPythonBackend() {
     cwd = path.resolve(__dirname, '..');
   }
 
-  console.log(`Spawning Python Backend: "${pythonExec}" with args:`, args);
+  logDebug(`Spawning Python Backend: "${pythonExec}"`);
+  logDebug(`Current Working Directory: "${cwd}"`);
   
   pythonProcess = spawn(pythonExec, args, {
     cwd: cwd,
-    shell: false, // Safer and handles array args better for paths with spaces
+    shell: false,
     env: { ...process.env, PYTHONUNBUFFERED: '1' }
   });
 
   pythonProcess.stdout.on('data', (data) => {
-    process.stdout.write(`[Python Stdout]: ${data}`);
+    logDebug(`[Python Stdout]: ${data}`);
   });
 
   pythonProcess.stderr.on('data', (data) => {
-    process.stderr.write(`[Python Stderr]: ${data}`);
+    logDebug(`[Python Stderr]: ${data}`);
   });
 
   pythonProcess.on('error', (err) => {
-    console.error(`FAILED TO START BACKEND: ${err.message}`);
+    logDebug(`FAILED TO START BACKEND: ${err.message}`);
   });
 
   pythonProcess.on('close', (code) => {
-    console.log(`Python process closed with code ${code}`);
+    logDebug(`Python process closed with code ${code}`);
     if (mainWindow) app.quit();
   });
 }
 
 app.on('ready', () => {
+  logDebug('app ready event fired');
   startPythonBackend();
   createWindow();
 });
