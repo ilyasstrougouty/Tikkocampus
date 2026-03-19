@@ -19,13 +19,15 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Cleanup & Create Build Assets
-        shell: pwsh
+      - name: Cleanup Previous Build
         run: |
-          IF (Test-Path dist) { Remove-Item -Recurse -Force dist }
-          IF (Test-Path build) { Remove-Item -Recurse -Force build }
-          New-Item -ItemType File -Path cookies.txt -Force
-          New-Item -ItemType File -Path targets.txt -Force
+          mkdir -p dist build
+          rm -rf dist/* build/*
+
+      - name: Create Build Assets
+        run: |
+          echo "Placeholder" > cookies.txt
+          echo "Placeholder" > targets.txt
 
       - name: Set up Python
         uses: actions/setup-python@v5
