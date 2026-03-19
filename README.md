@@ -18,9 +18,9 @@
 
 🚀 **Download the latest v1.0.2 release for your OS:**
 
-- **Windows (.exe)**: [Download Tikkocampus Installer](https://github.com/ilyasstrougouty/Tikkocampus/releases/latest/download/Tikkocampus-v1.0.2-Setup.exe)  
-- **macOS (.dmg)**: [Download Tikkocampus DMG](https://github.com/ilyasstrougouty/Tikkocampus/releases/latest/download/Tikkocampus-v1.0.2.dmg)
-- **Linux (AppImage)**: [Download Tikkocampus AppImage](https://github.com/ilyasstrougouty/Tikkocampus/releases/latest/download/Tikkocampus-v1.0.2.AppImage)
+- **Windows (.exe)**: [Download Tikkocampus Installer](https://github.com/ilyasstrougouty/Tikkocampus/releases/latest/download/Tikkocampus-Setup-1.0.2.exe)  
+- **macOS (.dmg)**: [Download Tikkocampus DMG](https://github.com/ilyasstrougouty/Tikkocampus/releases/latest/download/Tikkocampus-1.0.2-arm64.dmg)
+- **Linux (AppImage)**: [Download Tikkocampus AppImage](https://github.com/ilyasstrougouty/Tikkocampus/releases/latest/download/Tikkocampus-1.0.2.AppImage)
 
 > [!NOTE]  
 > If the links above haven't finished building yet, you can also find them on the [Releases Page](https://github.com/ilyasstrougouty/Tikkocampus/releases).
