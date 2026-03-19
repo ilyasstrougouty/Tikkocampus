@@ -27,7 +27,6 @@ args = [
     '--hidden-import', 'uvicorn.loggers',
     '--hidden-import', 'uvicorn.lifespan.on',
     '--hidden-import', 'email_validator',
-    '--add-data', f'web;web',
     '--collect-all=playwright',
     '--collect-all=webview',
     '--collect-all=onnxruntime',

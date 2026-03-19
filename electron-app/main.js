@@ -44,9 +44,16 @@ function createWindow() {
     icon: path.join(__dirname, 'app_logo.ico')
   });
 
-  const indexPath = path.join(__dirname, '..', 'web', 'index.html');
+  const indexPath = app.isPackaged
+    ? path.join(process.resourcesPath, 'web', 'index.html')
+    : path.join(__dirname, '..', 'web', 'index.html');
+    
   logDebug(`Loading index.html from: ${indexPath}`);
   
+  if (!fs.existsSync(indexPath)) {
+    logDebug(`CRITICAL ERROR: index.html not found at ${indexPath}`);
+  }
+
   mainWindow.loadFile(indexPath).catch(err => {
     logDebug(`CRITICAL: failed to load index.html: ${err.message}`);
   });
