@@ -45,7 +45,7 @@ jobs:
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: yarn install
+        run: npm install
 
       - name: Build & Package Electron App
         working-directory: electron-app
