@@ -20,11 +20,12 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Cleanup & Create Build Assets
+        shell: pwsh
         run: |
-          # Remove previous build artifacts
-          rm -rf dist build
-          # Create empty placeholder files if they don't exist
-          touch cookies.txt targets.txt
+          IF (Test-Path dist) { Remove-Item -Recurse -Force dist }
+          IF (Test-Path build) { Remove-Item -Recurse -Force build }
+          New-Item -ItemType File -Path cookies.txt -Force
+          New-Item -ItemType File -Path targets.txt -Force
 
       - name: Set up Python
         uses: actions/setup-python@v5
