@@ -7,6 +7,8 @@ executable_name = 'backend'
 if platform.system() == 'Windows':
     executable_name = 'backend.exe'
 
+import os
+
 # Define PyInstaller arguments
 args = [
     'app.py',
@@ -26,13 +28,17 @@ args = [
     '--hidden-import', 'uvicorn.lifespan.on',
     '--hidden-import', 'email_validator',
     '--add-data', f'web;web',
-    '--add-data', f'cookies.txt;.',
-    '--add-data', f'targets.txt;.',
     '--collect-all=playwright',
     '--collect-all=webview',
     '--collect-all=onnxruntime',
     '--collect-all=posthog',
 ]
+
+# Add optional data files if they exist (CI fix)
+for extra_file in ['cookies.txt', 'targets.txt']:
+    if os.path.exists(extra_file):
+        args.extend(['--add-data', f'{extra_file};.'])
+
 
 print(f"Running PyInstaller with args: {args}")
 PyInstaller.__main__.run(args)
