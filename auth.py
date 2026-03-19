@@ -122,34 +122,70 @@ def monitor_login(window):
 
 def on_loaded(window):
     """
-    Inject JS into every page load to trap popups (like Google OAuth) 
-    inside this window instead of opening the user's default browser.
+    Inject JS into every page load to bypass bot detection and trap popups.
     """
     js = """
-        // 1. Intercept window.open (used by Google/Facebook login popups)
-        window.oldOpen = window.open;
-        window.open = function(url, name, features) {
-            window.location.href = url;
-            return null;
-        };
-        
-        // 2. Intercept target='_blank' links
-        document.addEventListener('click', function(e) {
-            var target = e.target;
-            while (target && target.tagName !== 'A') {
-                target = target.parentNode;
+        (function() {
+            // 1. Mask webdriver safely
+            try {
+                if (Object.getOwnPropertyDescriptor(navigator, 'webdriver')) {
+                    Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+                }
+            } catch (e) {
+                console.warn("Could not mask webdriver:", e);
             }
-            if (target && target.tagName === 'A' && target.getAttribute('target') === '_blank') {
-                e.preventDefault();
-                target.setAttribute('target', '_self');
-                window.location.href = target.href;
-            }
-        });
+
+            // 2. Mock Chrome properties more fully
+            window.chrome = {
+                runtime: {},
+                loadTimes: function() {},
+                csi: function() {},
+                app: {}
+            };
+
+            // 3. Realistic Browser Properties
+            const newUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
+            Object.defineProperty(navigator, 'userAgent', { get: () => newUserAgent });
+            Object.defineProperty(navigator, 'platform', { get: () => 'Win32' });
+            Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'] });
+            
+            // Mock plugins to look less like a headless/embedded browser
+            Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4, 5] });
+
+            // 4. Improved window.open handling
+            // Google's "One moment please" often happens when the opener-child relationship is broken.
+            // We use a slight delay or try to maintain the relationship if possible.
+            const originalOpen = window.open;
+            window.open = function(url, name, specs) {
+                console.log("Attempting to open: " + url);
+                if (url && (url.includes('google.com') || url.includes('facebook.com') || url.includes('apple.com'))) {
+                    // For OAuth providers, we MUST redirect in the same window because 
+                    // pywebview struggles with multi-window session sharing.
+                    window.location.href = url;
+                    return null;
+                }
+                return originalOpen(url, name, specs);
+            };
+
+            // 5. Intercept target='_blank' links
+            document.addEventListener('click', function(e) {
+                let target = e.target.closest('a');
+                if (target && target.getAttribute('target') === '_blank') {
+                    // Only intercept if it's not a download or something specific
+                    if (target.href && !target.href.startsWith('javascript:')) {
+                        e.preventDefault();
+                        window.location.href = target.href;
+                    }
+                }
+            }, true);
+
+            console.log("Advanced Stealth initialized");
+        })();
     """
     try:
         window.evaluate_js(js)
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"JS Injection failed: {e}")
 
 def run_login_flow():
     """

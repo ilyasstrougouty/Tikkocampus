@@ -1,4 +1,5 @@
 let pollInterval;
+let deleteModalResolve;
 let currentCreator = null;
 let apiState = {
     has_groq_key: false,
@@ -18,6 +19,40 @@ function copyToClipboard(text, btn) {
             btn.classList.remove('copied');
         }, 2000);
     });
+}
+
+// --- Custom Modal Logic ---
+function showDeleteModal(creatorName, message = null) {
+    const modal = document.getElementById('delete-modal');
+    const nameSpan = document.getElementById('delete-creator-name');
+    const msgPara = modal.querySelector('p.text-sm');
+    
+    if (nameSpan) nameSpan.innerText = `@${creatorName}`;
+    
+    if (message) {
+        msgPara.innerHTML = message;
+    } else {
+        msgPara.innerHTML = `Are you sure you want to delete <span id="delete-creator-name" class="text-brand font-bold">@${creatorName}</span>? Please know that you cannot restore this action once confirmed.`;
+    }
+
+    modal.classList.remove('hidden');
+    setTimeout(() => modal.classList.add('show'), 10);
+
+    return new Promise((resolve) => {
+        deleteModalResolve = resolve;
+    });
+}
+
+function closeDeleteModal(confirmed) {
+    const modal = document.getElementById('delete-modal');
+    modal.classList.remove('show');
+    setTimeout(() => {
+        modal.classList.add('hidden');
+        if (deleteModalResolve) {
+            deleteModalResolve(confirmed);
+            deleteModalResolve = null;
+        }
+    }, 300);
 }
 
 // --- UI Navigation ---
@@ -358,9 +393,8 @@ async function loadHistory() {
 }
 
 async function deleteCreator(creatorName) {
-    if (!confirm(`Are you sure you want to permanently delete @${creatorName} and all associated videos?`)) {
-        return;
-    }
+    const confirmed = await showDeleteModal(creatorName);
+    if (!confirmed) return;
 
     try {
         const res = await fetch(`${API_BASE}/api/history/${creatorName}`, {
@@ -450,7 +484,8 @@ async function loadCookieSessions() {
 }
 
 async function deleteCookie(filename) {
-    if (!confirm(`Permanently delete this session file (${filename})?`)) return;
+    const confirmed = await showDeleteModal(filename, `Permanently delete this session file (<span class="text-brand font-bold">${filename}</span>)? This will remove your stored login cookies.`);
+    if (!confirmed) return;
     
     try {
         const res = await fetch(`${API_BASE}/api/cookies/${filename}`, { method: 'DELETE' });
@@ -642,7 +677,9 @@ async function startLogoAnimation() {
         const states = ["Loading .", "Loading ..", "Loading ...", "Loading .", "Loading ..", "Loading ...", "Loading ."];
         let progress = 0;
         const interval = setInterval(() => {
-            if (progress >= 100) { 
+            if (progress >= 100 || (window.backendConnected && progress > 50)) { 
+                progress = 100;
+                if (progressBar) progressBar.style.width = `100%`;
                 clearInterval(interval); 
                 resolve();
                 return; 
@@ -654,7 +691,7 @@ async function startLogoAnimation() {
                 const stateIdx = Math.floor((progress / 100) * (states.length - 1));
                 statusText.innerText = states[stateIdx];
             }
-        }, 300);
+        }, 150); // Faster interval
     });
 }
 
@@ -673,6 +710,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         loader.style.pointerEvents = 'none';
         setTimeout(() => loader.remove(), 700);
     }
+    // Delete Modal Listeners
+    document.getElementById('cancel-delete-btn')?.addEventListener('click', () => closeDeleteModal(false));
+    document.getElementById('confirm-delete-btn')?.addEventListener('click', () => closeDeleteModal(true));
+    document.getElementById('delete-modal')?.addEventListener('click', (e) => {
+        if (e.target.id === 'delete-modal') closeDeleteModal(false);
+    });
+
     if (loginCard) {
         loginCard.classList.add('show');
     }
@@ -685,6 +729,7 @@ async function initApp(retries = 15) {
             const resCheck = await fetch(`${API_BASE}/api/status`);
             if (resCheck.ok || resCheck.status === 404) {
                 console.log("Connected to backend!");
+                window.backendConnected = true; // Signal the animation to finish
                 loadCookieSessions();
                 
                 // Settings Listeners
@@ -705,7 +750,7 @@ async function initApp(retries = 15) {
         } catch (e) {
             console.warn("Backend connection attempt failed...");
         }
-        await new Promise(r => setTimeout(r, 1000));
+        await new Promise(r => setTimeout(r, 500)); // Half the retry interval
     }
     console.error("Failed to connect to backend after 15 attempts.");
     return false;
@@ -795,11 +840,15 @@ async function startProcessing() {
 
     if (!target) return alert("Please enter a TikTok URL.");
 
-    // Transform UI into a Stop Button
+    // Transform UI into a Stop Button and lock inputs
     scrapeBtn.innerHTML = '<i class="fa-solid fa-stop mr-2"></i> Stop Scrape';
     scrapeBtn.classList.remove('bg-brand', 'hover:bg-brandHover');
     scrapeBtn.classList.add('bg-red-500', 'hover:bg-red-600');
     scrapeBtn.onclick = cancelProcessing;
+    
+    document.getElementById('tiktok-url').disabled = true;
+    document.getElementById('video-count').disabled = true;
+
     statusText.style.color = "#fbbf24";
     statusText.innerText = "Starting...";
 
@@ -856,24 +905,25 @@ async function startProcessing() {
                     statusText.innerHTML = '✅ Processing Complete! <a href="#" onclick="showChat()" class="underline text-brand">Go to Chat</a>';
                 }
 
-                // Restore the scrape button
+                // Restore the scrape button and unlock inputs
                 scrapeBtn.innerHTML = '<i class="fa-solid fa-bolt mr-2"></i> 1. Scrape & Process Data';
                 scrapeBtn.classList.remove('bg-red-500', 'hover:bg-red-600');
                 scrapeBtn.classList.add('bg-brand', 'hover:bg-brandHover');
                 scrapeBtn.onclick = startProcessing;
                 scrapeBtn.disabled = false;
+                
+                document.getElementById('tiktok-url').disabled = false;
+                document.getElementById('video-count').disabled = false;
             }
         }, 2000); // 2000 milliseconds = 2 seconds
 
     } catch (error) {
         statusText.innerText = `❌ API Error: ${error.message}`;
         statusText.style.color = "#f87171";
-        // Restore the scrape button
-        scrapeBtn.innerHTML = '<i class="fa-solid fa-bolt mr-2"></i> 1. Scrape & Process Data';
-        scrapeBtn.classList.remove('bg-red-500', 'hover:bg-red-600');
-        scrapeBtn.classList.add('bg-brand', 'hover:bg-brandHover');
-        scrapeBtn.onclick = startProcessing;
         scrapeBtn.disabled = false;
+        
+        document.getElementById('tiktok-url').disabled = false;
+        document.getElementById('video-count').disabled = false;
     }
 }
 

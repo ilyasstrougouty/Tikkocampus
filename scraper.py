@@ -241,12 +241,18 @@ def download_profile_videos(profile_url, max_downloads=MAX_VIDEOS_PER_PROFILE):
             print(f"Successfully processed profile: {profile_url} (Extracted {extracted_count} videos)")
             if extracted_count < max_downloads:
                 print(f"\nWarning: Scrape ended early. Only extracted {extracted_count} of {max_downloads} videos.", file=sys.stderr)
-                
-            browser.close()
+            
             return target_username, creator_nickname
     except Exception as e:
-        print(f"Playwright initialization error: {e}", file=sys.stderr)
+        print(f"Playwright error during scrape: {e}", file=sys.stderr)
         return target_username, None
+    finally:
+        try:
+            if 'browser' in locals() and browser:
+                browser.close()
+            print("Playwright session cleaned up.")
+        except Exception:
+            pass
 
 if __name__ == "__main__":
     import db

@@ -11,3 +11,7 @@ httpx
 python-dotenv
 pytest
 pytest-mock
+numpy
+cryptography
+opentelemetry-api
+onnxruntime

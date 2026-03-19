@@ -1,8 +1,22 @@
 import os
 import sys
+
+# Fix for PyInstaller --windowed mode where stdout/stderr are None
+# This prevents 'AttributeError: NoneType has no attribute isatty' in uvicorn
+if sys.stdout is None:
+    try:
+        sys.stdout = open('backend.log', 'a', buffering=1)
+    except:
+        sys.stdout = open(os.devnull, 'w')
+if sys.stderr is None:
+    try:
+        sys.stderr = open('backend.log', 'a', buffering=1)
+    except:
+        sys.stderr = open(os.devnull, 'w')
+
 import time
 import threading
-from fastapi import FastAPI, HTTPException, BackgroundTasks, UploadFile, File
+from fastapi import FastAPI, HTTPException, Request, BackgroundTasks, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, StreamingResponse
@@ -513,7 +527,8 @@ async def get_history():
     return {"history": history}
 
 def run_server():
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    # log_config=None prevents uvicorn from trying to access standard streams for color/formatting
+    uvicorn.run(app, host="127.0.0.1", port=8000, log_config=None)
 
 def sigint_handler(signum, frame):
     print("\nCtrl+C detected! Shutting down Tikkocampus...")
