@@ -27,16 +27,16 @@ args = [
     '--hidden-import', 'uvicorn.loggers',
     '--hidden-import', 'uvicorn.lifespan.on',
     '--hidden-import', 'email_validator',
-    '--collect-all=playwright',
-    '--collect-all=webview',
-    '--collect-all=onnxruntime',
-    '--collect-all=posthog',
+    '--collect-all', 'playwright',
+    '--collect-all', 'webview',
+    '--collect-all', 'onnxruntime',
+    '--collect-all', 'posthog',
 ]
 
 # Add optional data files if they exist (CI fix)
 for extra_file in ['cookies.txt', 'targets.txt']:
     if os.path.exists(extra_file):
-        args.extend(['--add-data', f'{extra_file};.'])
+        args.extend(['--add-data', f'{extra_file}{os.pathsep}.'])
 
 
 print(f"Running PyInstaller with args: {args}")
