@@ -188,7 +188,7 @@
         </aside>
 
         <!-- MAIN CONTENT AREA -->
-        <main class="flex-1 flex flex-col relative z-0 bg-main overflow-y-auto">
+        <main class="flex-1 flex flex-col relative z-0 bg-main overflow-y-auto grid-bg">
             
             <!-- Dashboard View -->
             <div id="dashboard-view" class="flex-1 flex flex-col items-center justify-center p-8 transition-all">
@@ -245,19 +245,15 @@
                 </div>
 
                 <!-- Messages -->
-                <div id="chat-box" class="flex-1 overflow-y-auto mb-4 p-4 space-y-4 relative">
+                <div id="chat-box" class="flex-1 overflow-y-auto mb-2 p-4 space-y-4 relative">
                     <!-- Placeholder text -->
                     <div id="chat-placeholder" class="font-typewriter text-lg opacity-30 select-none">Hey, ask about...</div>
                     <!-- Messages will appear here -->
                     <div class="message ai">
                         System Initialized. I am hooked into the Vector Database. What do you want to know about the scraped videos?
                     </div>
-                </div>
-
-                <!-- Chat Input Area -->
-                <div class="mt-auto px-4 pb-4">
-                    <!-- NEW QUICK ACTIONS (Above Input) -->
-                    <div id="quick-actions-row" class="flex flex-wrap justify-center gap-4 transition-all duration-500">
+                    <!-- Quick Actions (inside chat scroll area) -->
+                    <div id="quick-actions-row" class="flex flex-wrap justify-center gap-4 transition-all duration-500 pt-2">
                         <button onclick="quickAction('Summarize')" class="flex items-center gap-2 px-5 py-2.5 bg-card/40 hover:bg-card/80 border border-borderDark rounded-full text-textMuted hover:text-white transition-all text-xs font-medium backdrop-blur-sm group">
                             <i class="fa-solid fa-file-lines text-brand/60 group-hover:text-brand"></i>
                             <span class="font-typewriter">Summarize</span>
@@ -275,7 +271,10 @@
                             <span class="font-typewriter">Recommendations</span>
                         </button>
                     </div>
+                </div>
 
+                <!-- Chat Input Area -->
+                <div class="px-4 pb-4">
                     <div class="w-full relative flex flex-col overflow-hidden group transition-all border border-borderDark/50 bg-white/5 rounded-xl">
                         <textarea id="chat-input" class="w-full bg-transparent border-none text-textMain placeholder-neutral-600 p-2 resize-none focus:ring-0 outline-none focus:outline-none text-lg transition-all duration-300 chat-input-area" placeholder="Type a query..." spellcheck="false"></textarea>
                         <div class="p-4 flex justify-end items-center bg-transparent">
@@ -287,7 +286,6 @@
                             </button>
                         </div>
                     </div>
-
                 </div>
             </div>
 
