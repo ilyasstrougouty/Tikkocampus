@@ -52,11 +52,14 @@ args = [
     '--collect-all', 'litellm',
     '--collect-all', 'langchain_text_splitters',
     '--collect-all', 'playwright',
+    '--collect-all', 'tiktoken',
+    '--collect-all', 'tiktoken_ext',
 
     # Hidden imports for the new modules
     '--hidden-import', 'cookie_manager',
     '--hidden-import', 'logger',
     '--hidden-import', 'unit_test_deps',
+    '--hidden-import', 'tiktoken_ext.openai_public',
 
     # Stealth submodules
     '--collect-submodules', 'playwright_stealth',
