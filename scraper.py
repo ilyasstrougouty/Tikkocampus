@@ -131,6 +131,7 @@ def download_profile_videos(profile_url, max_downloads=MAX_VIDEOS_PER_PROFILE):
             if not cookies:
                 print("Warning: No cookies found or could not parse cookies.txt. Trying anonymously.")
             else:
+                print(f"[DEBUG] Loaded {len(cookies)} cookies from cookies.txt")
                 context.add_cookies(cookies)
 
             page = context.new_page()
@@ -141,7 +142,8 @@ def download_profile_videos(profile_url, max_downloads=MAX_VIDEOS_PER_PROFILE):
                 nonlocal creator_nickname
                 # Log all intercepted URLs for debugging
                 if "item_list" in response.url or "post/item_list" in response.url or "api/post" in response.url:
-                    print(f"[DEBUG] Intercepted API Call: {response.url}")
+                    print(f"[DEBUG] INTERCEPTED TARGET API: {response.url}")
+                    print(f"[DEBUG] Response Status: {response.status}")
                     try:
                         data = response.json()
                         itemList = data.get('itemList', [])
