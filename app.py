@@ -545,10 +545,29 @@ async def get_history():
     history = db.get_scrape_history()
     return {"history": history}
 
+import socket
+
 def run_server(host="127.0.0.1", port=8000):
+    actual_port = port
+    try:
+        # Test if the port is available
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            s.bind((host, port))
+            actual_port = s.getsockname()[1]
+    except OSError:
+        # Port is busy, fallback to port 0
+        print(f"Port {port} is busy, falling back to an available port...")
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.bind((host, 0))
+            actual_port = s.getsockname()[1]
+
+    # This specific line is parsed by the Electron main process
+    print(f"BACKEND_PORT: {actual_port}")
+    print(f"Server starting on http://{host}:{actual_port}")
+    
     # log_config=None prevents uvicorn from trying to access standard streams for color/formatting
-    print(f"Server starting on http://{host}:{port}")
-    uvicorn.run(app, host=host, port=port, log_config=None)
+    uvicorn.run(app, host=host, port=actual_port, log_config=None)
 
 def sigint_handler(signum, frame):
     print("\nCtrl+C detected! Shutting down Tikkocampus...")

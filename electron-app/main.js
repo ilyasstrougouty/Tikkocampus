@@ -206,7 +206,18 @@ function startPythonBackend() {
   });
 
   pythonProcess.stdout.on('data', (data) => {
-    logDebug(`[Python Stdout]: ${data}`);
+    const output = data.toString();
+    logDebug(`[Python Stdout]: ${output.trim()}`);
+    
+    // Detect dynamic port fallback if reported by backend (e.g. "BACKEND_PORT: 8001")
+    const portMatch = output.match(/BACKEND_PORT: (\d+)/);
+    if (portMatch) {
+        const newPort = parseInt(portMatch[1]);
+        if (newPort !== backendPort) {
+            logDebug(`Backend reported new dynamic port: ${newPort}. Updating internal state.`);
+            backendPort = newPort;
+        }
+    }
   });
 
   pythonProcess.stderr.on('data', (data) => {
