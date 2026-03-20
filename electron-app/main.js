@@ -141,8 +141,8 @@ function startPythonBackend() {
     if (process.platform !== 'win32') {
         pythonExec = path.resolve(__dirname, '..', 'venv', 'bin', 'python');
     }
-    const appPath = path.resolve(__dirname, '..', 'app.py');
-    args = ['-u', appPath, '--server-only'];
+    const appPath = path.resolve(__dirname, '..', 'backend.py');
+    args = [appPath]; // backend.py handles routing its own arguments
     cwd = path.resolve(__dirname, '..');
   }
 

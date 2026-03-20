@@ -677,21 +677,32 @@ async function startLogoAnimation() {
         const states = ["Loading .", "Loading ..", "Loading ...", "Loading .", "Loading ..", "Loading ...", "Loading ."];
         let progress = 0;
         const interval = setInterval(() => {
-            if (progress >= 100 || (window.backendConnected && progress > 50)) { 
+            if (progress >= 99 && !window.backendConnected) {
+                // Hold at 99% until backend signals readiness
+                return;
+            }
+            
+            if (window.backendConnected || progress >= 100) { 
                 progress = 100;
                 if (progressBar) progressBar.style.width = `100%`;
+                if (statusText) statusText.innerText = "System Ready";
                 clearInterval(interval); 
-                resolve();
+                setTimeout(resolve, 500); // Give user a moment to see 100%
                 return; 
             }
-            progress += Math.random() * 10;
-            if (progress > 100) progress = 100;
+
+            // Variable speed for more natural feeling
+            const increment = progress < 70 ? (Math.random() * 8 + 2) : (Math.random() * 2 + 0.5);
+            progress += increment;
+            
+            if (progress > 99) progress = 99; // Cap at 99 until backendConnected
+            
             if (progressBar) progressBar.style.width = `${progress}%`;
             if (statusText) {
                 const stateIdx = Math.floor((progress / 100) * (states.length - 1));
                 statusText.innerText = states[stateIdx];
             }
-        }, 150); // Faster interval
+        }, 120);
     });
 }
 
@@ -706,9 +717,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const loader = document.getElementById('startup-loader');
     const loginCard = document.getElementById('login-card');
     if (loader) {
-        loader.style.opacity = '0';
-        loader.style.pointerEvents = 'none';
-        setTimeout(() => loader.remove(), 700);
+        loader.classList.add('fade-out'); // Use a CSS class for smoother fade
+        setTimeout(() => {
+            loader.style.display = 'none';
+            loader.remove();
+        }, 800);
     }
     // Delete Modal Listeners
     document.getElementById('cancel-delete-btn')?.addEventListener('click', () => closeDeleteModal(false));
@@ -726,10 +739,15 @@ async function initApp(retries = 15) {
     for (let i = 0; i < retries; i++) {
         console.log(`Connecting to backend... (${i + 1}/${retries})`);
         try {
-            const resCheck = await fetch(`${API_BASE}/api/status`);
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 2000); // 2s timeout per request
+            
+            const resCheck = await fetch(`${API_BASE}/api/status`, { signal: controller.signal });
+            clearTimeout(timeoutId);
+
             if (resCheck.ok || resCheck.status === 404) {
                 console.log("Connected to backend!");
-                window.backendConnected = true; // Signal the animation to finish
+                window.backendConnected = true; 
                 loadCookieSessions();
                 
                 // Settings Listeners
@@ -750,9 +768,17 @@ async function initApp(retries = 15) {
         } catch (e) {
             console.warn("Backend connection attempt failed...");
         }
-        await new Promise(r => setTimeout(r, 500)); // Half the retry interval
+        await new Promise(r => setTimeout(r, 800)); 
     }
-    console.error("Failed to connect to backend after 15 attempts.");
+    
+    // Explicit failure state
+    console.error("Failed to connect to backend.");
+    const statusText = document.getElementById('loader-status');
+    if (statusText) {
+        statusText.innerText = "Error: Backend unreachable. Please restart.";
+        statusText.style.color = "#f87171";
+    }
+    window.backendConnected = false;
     return false;
 }
 

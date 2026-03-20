@@ -153,8 +153,15 @@ async def trigger_auth():
     task_state["error"] = None
     
     try:
-        # Run the Playwright auth flow in an isolated subprocess to prevent asyncio loop clashes
-        subprocess.run([sys.executable, "auth.py"], check=True)
+        # Determine the correct command based on whether we're in a PyInstaller bundle
+        if getattr(sys, 'frozen', False):
+            # In a bundled app, sys.executable is the backend.exe. 
+            subprocess.run([sys.executable, "auth"], check=True)
+        else:
+            # In development, use the current python and point to backend.py
+            backend_script = os.path.join(BASE_DIR, "backend.py")
+            subprocess.run([sys.executable, backend_script, "auth"], check=True)
+            
         task_state["status"] = "Authentication Successful!"
         
         # Save a copy to the cookies history directory
