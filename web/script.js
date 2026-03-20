@@ -7,7 +7,7 @@ let apiState = {
     has_transcription_key: false
 };
 
-const API_BASE = window.location.protocol === 'file:' ? 'http://127.0.0.1:8000' : '';
+let API_BASE = window.location.protocol === 'file:' ? 'http://127.0.0.1:8000' : '';
 
 function copyToClipboard(text, btn) {
     navigator.clipboard.writeText(text).then(() => {
@@ -789,6 +789,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function initApp(retries = 15) {
+    if (window.electronAPI && window.electronAPI.getPort) {
+        try {
+            const port = await window.electronAPI.getPort();
+            API_BASE = `http://127.0.0.1:${port}`;
+            console.log(`Dynamic backend port detected: ${port}`);
+        } catch (e) {
+            console.warn("Failed to get port from electron, falling back to 8000", e);
+        }
+    }
     for (let i = 0; i < retries; i++) {
         console.log(`Connecting to backend... (${i + 1}/${retries})`);
         try {

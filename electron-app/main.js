@@ -1,12 +1,55 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
-const { spawn } = require('child_process');
+const { spawn, exec } = require('child_process');
 const http = require('http');
 const fs = require('fs');
+const net = require('net');
 
 let mainWindow;
 let pythonProcess;
 let windowCreated = false;
+let backendPort = 8000;
+
+/**
+ * Finds a free port starting from the given port.
+ */
+function getFreePort(startingPort) {
+  return new Promise((resolve, reject) => {
+    const server = net.createServer();
+    server.unref();
+    server.on('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        resolve(getFreePort(startingPort + 1));
+      } else {
+        reject(err);
+      }
+    });
+
+    server.listen(startingPort, '127.0.0.1', () => {
+      const { port } = server.address();
+      server.close(() => {
+        resolve(port);
+      });
+    });
+  });
+}
+
+function killExistingBackend() {
+  if (app.isPackaged && process.platform === 'win32') {
+    logDebug('Attempting to kill existing backend.exe processes...');
+    return new Promise((resolve) => {
+      exec('taskkill /F /IM backend.exe', (err, stdout, stderr) => {
+        if (err) {
+            logDebug(`taskkill info: ${err.message}`);
+        } else {
+            logDebug('Successfully killed existing backend.exe processes.');
+        }
+        resolve();
+      });
+    });
+  }
+  return Promise.resolve();
+}
 
 // --- Production Diagnostic Logging ---
 const logPath = path.join(app.getPath('userData'), 'startup-debug.log');
@@ -58,7 +101,7 @@ function createWindow() {
     logDebug(`CRITICAL: failed to load index.html: ${err.message}`);
   });
 
-  const apiUrl = 'http://127.0.0.1:8000';
+  const apiUrl = `http://127.0.0.1:${backendPort}`;
 
   mainWindow.once('ready-to-show', () => {
     logDebug('Window ready-to-show event fired');
@@ -109,6 +152,8 @@ function createWindow() {
         break;
     }
   });
+
+  ipcMain.handle('get-backend-port', () => backendPort);
 }
 
 function startPythonBackend() {
@@ -142,8 +187,13 @@ function startPythonBackend() {
         pythonExec = path.resolve(__dirname, '..', 'venv', 'bin', 'python');
     }
     const appPath = path.resolve(__dirname, '..', 'backend.py');
-    args = [appPath]; // backend.py handles routing its own arguments
+    args = [appPath, '--port', backendPort.toString()]; // backend.py handles routing its own arguments
     cwd = path.resolve(__dirname, '..');
+  }
+
+  // Common production and dev arguments
+  if (app.isPackaged) {
+      args.push('--port', backendPort.toString());
   }
 
   logDebug(`Spawning Python Backend: "${pythonExec}"`);
@@ -173,8 +223,18 @@ function startPythonBackend() {
   });
 }
 
-app.on('ready', () => {
+app.on('ready', async () => {
   logDebug('app ready event fired');
+  if (app.isPackaged) {
+      await killExistingBackend();
+  }
+  try {
+      backendPort = await getFreePort(8000);
+      logDebug(`Selected backend port: ${backendPort}`);
+  } catch (err) {
+      logDebug(`Error finding free port: ${err.message}. Falling back to 8000.`);
+      backendPort = 8000;
+  }
   startPythonBackend();
   createWindow();
 });

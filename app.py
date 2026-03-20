@@ -23,6 +23,7 @@ from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 import uvicorn
 import shutil
+import argparse
 
 # Resolve base directory (works both from source and PyInstaller bundle)
 if getattr(sys, 'frozen', False):
@@ -544,9 +545,10 @@ async def get_history():
     history = db.get_scrape_history()
     return {"history": history}
 
-def run_server():
+def run_server(host="127.0.0.1", port=8000):
     # log_config=None prevents uvicorn from trying to access standard streams for color/formatting
-    uvicorn.run(app, host="127.0.0.1", port=8000, log_config=None)
+    print(f"Server starting on http://{host}:{port}")
+    uvicorn.run(app, host=host, port=port, log_config=None)
 
 def sigint_handler(signum, frame):
     print("\nCtrl+C detected! Shutting down Tikkocampus...")
@@ -560,6 +562,11 @@ app.mount("/", StaticFiles(directory=WEB_DIR, html=True), name="web")
 import signal
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Tikkocampus Backend Server")
+    parser.add_argument("--port", type=int, default=8000, help="Port to run the server on")
+    parser.add_argument("--host", type=str, default="127.0.0.1", help="Host to bind to")
+    args, unknown = parser.parse_known_args()
+
     # signal.signal(signal.SIGINT, sigint_handler)
-    print("Starting Tikkocampus Backend Server...")
-    run_server()
+    print(f"Starting Tikkocampus Backend Server on port {args.port}...")
+    run_server(host=args.host, port=args.port)
