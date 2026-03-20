@@ -1194,21 +1194,55 @@ function updateKeyPlaceholder() {
     let needsGroq = model.startsWith('groq/') || trans === 'groq_whisper';
     let needsOpenAI = model.startsWith('gpt') || model.startsWith('openai');
 
+    // Create or get the "already saved" indicator
+    let savedIndicator = document.getElementById('api-key-saved-indicator');
+    if (!savedIndicator) {
+        savedIndicator = document.createElement('div');
+        savedIndicator.id = 'api-key-saved-indicator';
+        savedIndicator.style.cssText = 'font-size: 11px; margin-top: 4px; font-weight: 600; letter-spacing: 0.5px;';
+        input.parentNode.insertBefore(savedIndicator, input.nextSibling);
+    }
+
     if ((needsGroq && apiState.has_groq_key) || (needsOpenAI && apiState.has_openai_key)) {
         input.placeholder = "🔑 Brain API Key Saved (Enter new to overwrite)";
+        savedIndicator.innerHTML = '✓ API key already saved';
+        savedIndicator.style.color = '#4ade80';
+        savedIndicator.style.display = 'block';
     } else if (needsGroq || needsOpenAI) {
         input.placeholder = "Paste Groq/OpenAI key...";
+        savedIndicator.innerHTML = '';
+        savedIndicator.style.display = 'none';
     } else {
         input.placeholder = "No key required for local models";
-        statusEl.innerText = ""; // Clear warning if we switch to local
+        savedIndicator.innerHTML = '';
+        savedIndicator.style.display = 'none';
+        statusEl.innerText = "";
     }
     
     const transInput = document.getElementById('transcription-api-key-input');
+    // Create or get the transcription "already saved" indicator
+    let transSavedIndicator = document.getElementById('trans-key-saved-indicator');
+    if (transInput && !transSavedIndicator) {
+        transSavedIndicator = document.createElement('div');
+        transSavedIndicator.id = 'trans-key-saved-indicator';
+        transSavedIndicator.style.cssText = 'font-size: 11px; margin-top: 4px; font-weight: 600; letter-spacing: 0.5px;';
+        transInput.parentNode.insertBefore(transSavedIndicator, transInput.nextSibling);
+    }
+
     if (transInput) {
         if (apiState.has_transcription_key) {
             transInput.placeholder = "🔑 Transcription Key Saved (Enter to overwrite)";
+            if (transSavedIndicator) {
+                transSavedIndicator.innerHTML = '✓ Transcription key already saved';
+                transSavedIndicator.style.color = '#4ade80';
+                transSavedIndicator.style.display = 'block';
+            }
         } else {
             transInput.placeholder = "Enter Transcription API key...";
+            if (transSavedIndicator) {
+                transSavedIndicator.innerHTML = '';
+                transSavedIndicator.style.display = 'none';
+            }
         }
     }
 }

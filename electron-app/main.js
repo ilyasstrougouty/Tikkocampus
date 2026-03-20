@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const path = require('path');
 const { spawn, exec } = require('child_process');
 const http = require('http');
@@ -110,6 +110,23 @@ function createWindow() {
 
   mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
     logDebug(`ERROR: Frontend failed to load (${errorCode}): ${errorDescription}`);
+  });
+
+  // Open external links (TikTok, etc.) in the user's default browser
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      shell.openExternal(url);
+      return { action: 'deny' };
+    }
+    return { action: 'allow' };
+  });
+
+  mainWindow.webContents.on('will-navigate', (event, url) => {
+    // Only allow navigating to our own app (file:// or localhost)
+    if (!url.startsWith('file://') && !url.includes('127.0.0.1')) {
+      event.preventDefault();
+      shell.openExternal(url);
+    }
   });
 
   // Robust polling for backend readiness
