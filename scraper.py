@@ -70,6 +70,88 @@ def download_video_file(url, video_id, page):
         return None
 
 
+def _find_system_browsers():
+    """Discover all Chromium-based browsers installed on this system."""
+    import platform
+    found = []
+
+    if platform.system() == "Windows":
+        # Common install locations for Chromium-based browsers on Windows
+        candidates = {
+            "chrome": [
+                os.path.expandvars(r"%ProgramFiles%\Google\Chrome\Application\chrome.exe"),
+                os.path.expandvars(r"%ProgramFiles(x86)%\Google\Chrome\Application\chrome.exe"),
+                os.path.expandvars(r"%LocalAppData%\Google\Chrome\Application\chrome.exe"),
+            ],
+            "msedge": [
+                os.path.expandvars(r"%ProgramFiles%\Microsoft\Edge\Application\msedge.exe"),
+                os.path.expandvars(r"%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe"),
+            ],
+            "brave": [
+                os.path.expandvars(r"%ProgramFiles%\BraveSoftware\Brave-Browser\Application\brave.exe"),
+                os.path.expandvars(r"%LocalAppData%\BraveSoftware\Brave-Browser\Application\brave.exe"),
+            ],
+        }
+        for name, paths in candidates.items():
+            for p in paths:
+                if os.path.exists(p):
+                    found.append({"name": name, "path": p})
+                    break  # Only need one path per browser
+    else:
+        # macOS / Linux: just try the channel names (Playwright handles the paths)
+        found = [{"name": "chrome", "path": None}, {"name": "msedge", "path": None}]
+
+    return found
+
+
+def _launch_best_browser(playwright_instance):
+    """
+    Launch the best available Chromium-based browser.
+    Strategy:
+      1. Try Playwright channels for each detected browser
+      2. If channel fails, try executablePath directly
+      3. Last resort: bundled Chromium
+    """
+    p = playwright_instance
+    browsers = _find_system_browsers()
+
+    if browsers:
+        log.info(f"Detected system browsers: {[b['name'] for b in browsers]}")
+
+    # Step 1: Try Playwright channels
+    for browser_info in browsers:
+        channel = browser_info["name"]
+        # Playwright only supports "chrome" and "msedge" as channels
+        if channel not in ("chrome", "msedge"):
+            continue
+        try:
+            browser = p.chromium.launch(headless=False, channel=channel)
+            log.info(f"Launched via Playwright channel: {channel}")
+            return browser
+        except Exception as e:
+            log.debug(f"Channel '{channel}' failed: {e}")
+
+    # Step 2: Try executablePath directly for each detected browser
+    for browser_info in browsers:
+        exe_path = browser_info["path"]
+        if exe_path and os.path.exists(exe_path):
+            try:
+                browser = p.chromium.launch(headless=False, executable_path=exe_path)
+                log.info(f"Launched via executable path: {exe_path}")
+                return browser
+            except Exception as e:
+                log.debug(f"executablePath '{exe_path}' failed: {e}")
+
+    # Step 3: Last resort — bundled Chromium
+    try:
+        browser = p.chromium.launch(headless=False)
+        log.info("Launched bundled Chromium (last resort).")
+        return browser
+    except Exception as e:
+        log.error(f"Bundled Chromium also failed: {e}")
+
+    return None
+
 def download_profile_videos(profile_url, max_downloads=MAX_VIDEOS_PER_PROFILE):
     """
     Downloads the latest videos from a TikTok profile using Playwright.
@@ -117,20 +199,10 @@ def download_profile_videos(profile_url, max_downloads=MAX_VIDEOS_PER_PROFILE):
 
     try:
         with Stealth().use_sync(sync_playwright()) as p:
-            import platform
-            channel = "msedge" if platform.system() == "Windows" else "chrome"
-            
-            try:
-                browser = p.chromium.launch(headless=False, channel=channel)
-                log.info(f"Launched system browser: {channel}")
-            except Exception as e:
-                log.warning(f"System browser '{channel}' not found ({e}). Falling back to bundled chromium.")
-                try:
-                    browser = p.chromium.launch(headless=False)
-                    log.info("Launched bundled Chromium.")
-                except Exception as e2:
-                    log.error(f"CRITICAL: Cannot launch any browser: {e2}")
-                    return target_username, None, ERR_BROWSER_MISSING, str(e2)
+            browser = _launch_best_browser(p)
+            if browser is None:
+                log.error("CRITICAL: No Chromium-based browser found on this system.")
+                return target_username, None, ERR_BROWSER_MISSING, "No browser found. Please install Chrome or Edge."
 
             context = browser.new_context(
                 user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
