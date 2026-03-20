@@ -139,28 +139,61 @@ def download_profile_videos(profile_url, max_downloads=MAX_VIDEOS_PER_PROFILE):
 
             def handle_response(response):
                 nonlocal creator_nickname
-                if "item_list" in response.url or "post/item_list" in response.url:
+                # Log all intercepted URLs for debugging
+                if "item_list" in response.url or "post/item_list" in response.url or "api/post" in response.url:
+                    print(f"[DEBUG] Intercepted API Call: {response.url}")
                     try:
                         data = response.json()
                         itemList = data.get('itemList', [])
-                        for item in itemList:
-                            found_videos.append(item)
-                            if not creator_nickname:
-                                author = item.get('author', {})
-                                creator_nickname = author.get('nickname')
+                        if not itemList:
+                            # Fallback check for new API structure
+                            itemList = data.get('data', {}).get('videos', [])
+                        
+                        if itemList:
+                            print(f"[DEBUG] Found {len(itemList)} videos in this chunk.")
+                            for item in itemList:
+                                found_videos.append(item)
+                                if not creator_nickname:
+                                    author = item.get('author', {})
+                                    creator_nickname = author.get('nickname')
+                        else:
+                            print(f"[DEBUG] API chunk was empty or had unknown structure: {list(data.keys())}")
                     except Exception as e:
-                        pass # Silently fail chunk parses to avoid unhandled exception crashes in bg thread
+                        print(f"[DEBUG] Failed to parse API JSON: {e}")
+                elif "tiktok.com" in response.url and response.status == 200:
+                    # Optional: Log other 200-OK TikTok requests if needed
+                    pass
 
             page.on("response", handle_response)
             
             print("Navigating to profile to intercept API...")
             try:
                 page.goto(profile_url, timeout=60000)
-                page.wait_for_timeout(3000)
+                page.wait_for_timeout(5000) # Give it more time to settle
                 
                 # Check for "Too many attempts" or basic blocks
                 if "verify-login" in page.url or "captcha" in page.url:
                     print("TikTok CAPTCHA or Login wall detected. Falling back to cookies-only scraping.")
+
+                # FALLBACK: Try to extract metadata from __NEXT_DATA__ if interception failed
+                if not found_videos:
+                    print("[DEBUG] No videos intercepted yet. Attempting __NEXT_DATA__ extraction...")
+                    try:
+                        script_content = page.evaluate("() => document.getElementById('__NEXT_DATA__')?.textContent")
+                        if script_content:
+                            next_data = json.loads(script_content)
+                            # Locate video list in NEXT_DATA (structure varies, but usually under props.pageProps.itemList)
+                            # Simplified check:
+                            props = next_data.get('props', {}).get('pageProps', {})
+                            itemList = props.get('itemList', [])
+                            if itemList:
+                                print(f"[DEBUG] Extracted {len(itemList)} videos from __NEXT_DATA__")
+                                for item in itemList:
+                                    found_videos.append(item)
+                                    if not creator_nickname:
+                                        creator_nickname = item.get('author', {}).get('nickname')
+                    except Exception as e:
+                        print(f"[DEBUG] __NEXT_DATA__ extraction failed: {e}")
 
                 # Scroll to trigger pagination if needed
                 last_count = 0
@@ -171,8 +204,8 @@ def download_profile_videos(profile_url, max_downloads=MAX_VIDEOS_PER_PROFILE):
                         print("\n[!] Scraping cancelled by user during scroll!")
                         break
                         
-                    page.keyboard.press("PageDown")
-                    page.wait_for_timeout(1500)
+                    page.evaluate("window.scrollBy(0, 1500)") # More natural scroll
+                    page.wait_for_timeout(2000)
                     
                     if len(found_videos) == last_count:
                         stale_scrolls += 1

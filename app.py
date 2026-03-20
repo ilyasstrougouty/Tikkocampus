@@ -297,6 +297,17 @@ async def delete_cookie_file(filename: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/api/logout")
+async def logout():
+    """Deletes the active cookies.txt file."""
+    if os.path.exists("cookies.txt"):
+        try:
+            os.remove("cookies.txt")
+            return {"message": "Logged out successfully."}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+    return {"message": "No active session found."}
+
 @app.get("/api/check-cookies")
 async def check_cookies():
     """Check if cookies.txt already exists on disk."""

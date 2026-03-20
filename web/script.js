@@ -22,17 +22,28 @@ function copyToClipboard(text, btn) {
 }
 
 // --- Custom Modal Logic ---
-function showDeleteModal(creatorName, message = null) {
+function showModal(options) {
     const modal = document.getElementById('delete-modal');
-    const nameSpan = document.getElementById('delete-creator-name');
-    const msgPara = modal.querySelector('p.text-sm');
+    const title = document.getElementById('modal-title');
+    const subtitle = document.getElementById('modal-subtitle');
+    const description = document.getElementById('modal-description');
+    const confirmBtn = document.getElementById('confirm-modal-btn');
+    const iconContainer = document.getElementById('modal-icon-container');
+    const iconSvg = document.getElementById('modal-icon-svg');
+
+    title.innerText = options.title || "Confirm Action";
+    subtitle.innerText = options.subtitle || "Wait";
+    description.innerHTML = options.description || "Are you sure?";
+    confirmBtn.innerText = options.confirmText || "Confirm";
     
-    if (nameSpan) nameSpan.innerText = `@${creatorName}`;
-    
-    if (message) {
-        msgPara.innerHTML = message;
+    if (options.type === 'logout') {
+        iconContainer.className = "w-12 h-12 rounded-full bg-brand/10 flex items-center justify-center border border-brand/20 text-brand shadow-[0_0_15px_rgba(239,51,89,0.2)]";
+        iconSvg.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>`;
+        confirmBtn.className = "flex-1 py-3 rounded-xl bg-brand hover:bg-brandHover text-white transition-all font-bold uppercase tracking-widest text-[10px] shadow-[0_0_15px_rgba(239,51,89,0.3)]";
     } else {
-        msgPara.innerHTML = `Are you sure you want to delete <span id="delete-creator-name" class="text-brand font-bold">@${creatorName}</span>? Please know that you cannot restore this action once confirmed.`;
+        iconContainer.className = "w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center border border-red-500/20 text-red-500 shadow-[0_0_15px_rgba(239,68,68,0.2)]";
+        iconSvg.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>`;
+        confirmBtn.className = "flex-1 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white transition-all font-bold uppercase tracking-widest text-[10px] shadow-[0_0_15px_rgba(239,68,68,0.3)]";
     }
 
     modal.classList.remove('hidden');
@@ -179,6 +190,29 @@ async function validateSession(force = false) {
     } catch (e) {
         console.error("Validation failed:", e);
         return false;
+    }
+}
+
+async function logout() {
+    const confirmed = await showModal({
+        type: 'logout',
+        title: 'Logout Session',
+        subtitle: 'Bypass Stored Cookies',
+        description: 'Are you sure you want to log out? This will delete your current <code>cookies.txt</code> file and return you to the login screen.',
+        confirmText: 'Log Out Now'
+    });
+
+    if (!confirmed) return;
+    
+    try {
+        const res = await fetch(`${API_BASE}/api/logout`, { method: 'POST' });
+        const data = await res.json();
+        
+        // Clear local state and reload
+        lastValidationTime = 0;
+        window.location.reload();
+    } catch (e) {
+        console.error("Logout failed:", e);
     }
 }
 
@@ -343,10 +377,17 @@ async function loadSettings() {
         const statusEl = document.getElementById('settings-status');
         const modelLabel = modelSelect.options[modelSelect.selectedIndex].text;
         const transLabel = transcriptionSelect.options[transcriptionSelect.selectedIndex].text;
-        const keyStatus = data.has_groq_key ? '🔑 Groq key saved' :
-            data.has_openai_key ? '🔑 OpenAI key saved' : '⚠️ No API key set';
-
-        statusEl.innerHTML = `Active: <b>${modelLabel}</b> · <b>${transLabel}</b> · ${keyStatus}`;
+        const statusMsg = data.has_groq_key ? 'Brain Key Secured' :
+            data.has_openai_key ? 'Brain Key Secured' : 'No API key set';
+            
+        statusEl.innerHTML = `
+            <div class="flex flex-col gap-1 items-start bg-white/5 p-3 rounded-xl border border-white/10 text-left w-full font-typewriter">
+                <div class="text-[10px] text-green-400 font-bold uppercase tracking-wider">active : <span class="text-white">${modelLabel}</span></div>
+                <div class="text-[10px] text-green-400 font-bold uppercase tracking-wider mt-1">Apis saved:</div>
+                <div class="text-[10px] text-white/60 ml-2 italic">· ${transLabel}</div>
+                <div class="text-[10px] text-white/60 ml-2 italic">· ${statusMsg}</div>
+            </div>
+        `;
         updateKeyPlaceholder();
     } catch (e) {
         console.error('Failed to load settings:', e);
@@ -393,7 +434,13 @@ async function loadHistory() {
 }
 
 async function deleteCreator(creatorName) {
-    const confirmed = await showDeleteModal(creatorName);
+    const confirmed = await showModal({
+        type: 'delete',
+        title: 'Delete Creator',
+        subtitle: 'Permanent Action',
+        description: `Are you sure you want to permanently delete <span class="text-brand font-bold">@${creatorName}</span> and all associated video metadata, transcripts, and vectors? This action <span class="text-red-500 underline uppercase font-bold">cannot be undone</span>.`,
+        confirmText: 'Confirm Purge'
+    });
     if (!confirmed) return;
 
     try {
@@ -484,7 +531,13 @@ async function loadCookieSessions() {
 }
 
 async function deleteCookie(filename) {
-    const confirmed = await showDeleteModal(filename, `Permanently delete this session file (<span class="text-brand font-bold">${filename}</span>)? This will remove your stored login cookies.`);
+    const confirmed = await showModal({
+        type: 'delete',
+        title: 'Delete Session',
+        subtitle: 'Permanent Action',
+        description: `Permanently delete this session file (<span class="text-brand font-bold">${filename}</span>)? This will remove your stored login cookies.`,
+        confirmText: 'Confirm Purge'
+    });
     if (!confirmed) return;
     
     try {
@@ -1208,7 +1261,14 @@ async function saveSettings() {
             document.getElementById('transcription-api-key-input').value = "";
         }
 
-        statusEl.innerHTML = `✅ <b>Saved!</b> Chat: <b>${modelLabel}</b> · Transcription: <b>${transLabel}</b> · 🔑 Key stored`;
+        statusEl.innerHTML = `
+            <div class="flex flex-col gap-1 items-start bg-white/5 p-3 rounded-xl border border-white/10 text-left w-full font-typewriter">
+                <div class="text-[10px] text-green-400 font-bold uppercase tracking-wider">active : <span class="text-white">${modelLabel}</span></div>
+                <div class="text-[10px] text-green-400 font-bold uppercase tracking-wider mt-1">Apis saved:</div>
+                <div class="text-[10px] text-white/60 ml-2 italic">· ${transLabel}</div>
+                <div class="text-[10px] text-white/60 ml-2 italic">· Brain Key Secured</div>
+            </div>
+        `;
         statusEl.style.color = "#4ade80";
         updateKeyPlaceholder();
 
