@@ -1,6 +1,6 @@
 {
   "name": "tikkocampus",
-  "version": "1.2.4",
+  "version": "1.2.5",
   "description": "Premium Electron interface for Tikkocampus",
   "main": "main.js",
   "scripts": {
@@ -33,7 +33,7 @@
     },
     "nsis": {
       "include": "installer.nsh",
-      "oneClick": true,
+      "oneClick": false,
       "perMachine": false,
       "allowToChangeInstallationDirectory": true
     },
