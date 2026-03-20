@@ -4,7 +4,7 @@ import os
 import importlib.util
 import sys
 
-print("Starting Tikkocampus Backend Build (v1.2.3)...")
+print("Starting Tikkocampus Backend Build (v1.2.6)...")
 
 # CRITICAL: Verify we are running in the venv (Skip for CI environments like GitHub Actions)
 if not os.environ.get('GITHUB_ACTIONS'):
@@ -29,6 +29,9 @@ def get_pkg_path(pkg_name):
 stealth_path = get_pkg_path('playwright_stealth')
 stealth_js_path = os.path.join(stealth_path, 'js') if stealth_path else None
 
+playwright_path = get_pkg_path('playwright')
+playwright_driver_path = os.path.join(playwright_path, 'driver') if playwright_path else None
+
 # Define PyInstaller arguments
 args = [
     'backend.py',
@@ -37,9 +40,6 @@ args = [
     '--windowed',
     '--noconfirm',
     '--clean',
-    
-    # Exclude heavy libraries for 10x faster and 90% smaller build
-    '--exclude-module', 'torch',
     
     # Collect only the ones that definitely need hints
     '--collect-all', 'dotenv',
@@ -56,6 +56,10 @@ args = [
 if stealth_js_path and os.path.exists(stealth_js_path):
     args.extend(['--add-data', f'{stealth_js_path}{os.pathsep}playwright_stealth/js'])
 
+# Add Playwright driver if found
+if playwright_driver_path and os.path.exists(playwright_driver_path):
+    args.extend(['--add-data', f'{playwright_driver_path}{os.pathsep}playwright/driver'])
+
 # Add the web directory (CRITICAL for the UI to work)
 if os.path.exists('web'):
     args.extend(['--add-data', f'web{os.pathsep}web'])
@@ -65,7 +69,7 @@ for extra_file in ['targets.txt']:
     if os.path.exists(extra_file):
         args.extend(['--add-data', f'{extra_file}{os.pathsep}.'])
 
-print(f"Running PyInstaller with VENV-enforced v1.2.3 configuration...")
+print(f"Running PyInstaller with VENV-enforced v1.2.6 configuration...")
 PyInstaller.__main__.run(args)
 
 print(f"\n[SUCCESS] Build complete! Results available in: dist/{executable_name}")

@@ -1,6 +1,6 @@
 {
   "name": "tikkocampus",
-  "version": "1.2.5",
+  "version": "1.2.6",
   "description": "Premium Electron interface for Tikkocampus",
   "main": "main.js",
   "scripts": {

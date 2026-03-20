@@ -127,7 +127,18 @@ def download_profile_videos(profile_url, max_downloads=MAX_VIDEOS_PER_PROFILE):
             )
             
             # Load the authenticated cookies from the native login window
-            cookies = parse_netscape_cookies('cookies.txt')
+            def log_diagnostic(msg):
+                print(f"[DEBUG] {msg}")
+
+            try:
+                from config import BASE_DIR
+                cookie_path = os.path.join(BASE_DIR, 'cookies.txt')
+                log_diagnostic(f"Attempting to load cookies from: {cookie_path}")
+                cookies = parse_netscape_cookies(cookie_path)
+            except Exception as e:
+                log_diagnostic(f"Warning: config dependency or cookie path error: {e}. Falling back to local cookies.txt")
+                cookies = parse_netscape_cookies('cookies.txt')
+
             if not cookies:
                 print("Warning: No cookies found or could not parse cookies.txt. Trying anonymously.")
             else:
@@ -142,8 +153,8 @@ def download_profile_videos(profile_url, max_downloads=MAX_VIDEOS_PER_PROFILE):
                 nonlocal creator_nickname
                 # Log all intercepted URLs for debugging
                 if "item_list" in response.url or "post/item_list" in response.url or "api/post" in response.url:
-                    print(f"[DEBUG] INTERCEPTED TARGET API: {response.url}")
-                    print(f"[DEBUG] Response Status: {response.status}")
+                    log_diagnostic(f"INTERCEPTED TARGET API: {response.url}")
+                    log_diagnostic(f"Response Status: {response.status}")
                     try:
                         data = response.json()
                         itemList = data.get('itemList', [])
@@ -171,18 +182,20 @@ def download_profile_videos(profile_url, max_downloads=MAX_VIDEOS_PER_PROFILE):
             print("Navigating to profile to intercept API...")
             try:
                 page.goto(profile_url, timeout=60000)
+                log_diagnostic(f"Navigation finished. Current URL: {page.url}")
                 page.wait_for_timeout(5000) # Give it more time to settle
                 
                 # Check for "Too many attempts" or basic blocks
-                if "verify-login" in page.url or "captcha" in page.url:
-                    print("TikTok CAPTCHA or Login wall detected. Falling back to cookies-only scraping.")
+                if "verify-login" in page.url or "captcha" in page.url or "notfound" in page.url:
+                    print(f"CRITICAL: Scraper blocked or page not found! URL: {page.url}")
 
                 # FALLBACK: Try to extract metadata from __NEXT_DATA__ if interception failed
                 if not found_videos:
-                    print("[DEBUG] No videos intercepted yet. Attempting __NEXT_DATA__ extraction...")
+                    log_diagnostic("No videos intercepted yet. Attempting __NEXT_DATA__ extraction...")
                     try:
                         script_content = page.evaluate("() => document.getElementById('__NEXT_DATA__')?.textContent")
                         if script_content:
+                            log_diagnostic("__NEXT_DATA__ script found.")
                             next_data = json.loads(script_content)
                             # Locate video list in NEXT_DATA (structure varies, but usually under props.pageProps.itemList)
                             # Simplified check:

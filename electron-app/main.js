@@ -230,6 +230,17 @@ function startPythonBackend() {
 
   pythonProcess.on('close', (code) => {
     logDebug(`Python process closed with code ${code}`);
+    if (code !== 0 && code !== null) {
+        const { dialog } = require('electron');
+        if (mainWindow) {
+            dialog.showMessageBoxSync(mainWindow, {
+                type: 'error',
+                title: 'Backend Process Crash',
+                message: `The Python backend exited unexpectedly with code ${code}.`,
+                detail: 'This usually means a dependency (like Playwright or FFmpeg) is missing or blocked by Antivirus. Please check startup-debug.log in your AppData folder.'
+            });
+        }
+    }
     if (mainWindow) app.quit();
   });
 }
