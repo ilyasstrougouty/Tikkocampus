@@ -81,6 +81,7 @@ def run_heavy_pipeline(url: str, max_videos: int = 10):
         
         task_state["status"] = "Phase 1: Verifying dependencies..."
         install_playwright_if_needed()
+        check_ffmpeg()
         
         task_state["status"] = f"Phase 1: Scraping {max_videos} videos from TikTok..."
         # Capture the actual creator name and nickname used by the scraper
@@ -184,9 +185,35 @@ async def trigger_auth():
     finally:
         task_state["is_running"] = False
 
+def check_system_browsers():
+    """Checks if common system browsers are available on Windows."""
+    import platform
+    if platform.system() != "Windows":
+        return None
+        
+    common_paths = [
+        os.path.expandvars(r"%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe"),
+        os.path.expandvars(r"%ProgramFiles%\Microsoft\Edge\Application\msedge.exe"),
+        os.path.expandvars(r"%ProgramFiles(x86)%\Google\Chrome\Application\chrome.exe"),
+        os.path.expandvars(r"%ProgramFiles%\Google\Chrome\Application\chrome.exe"),
+        os.path.expandvars(r"%LocalAppData%\Google\Chrome\Application\chrome.exe"),
+    ]
+    for path in common_paths:
+        if os.path.exists(path):
+            return path
+    return None
+
 def install_playwright_if_needed():
     """Checks for Playwright Chromium and installs it if missing."""
-    print("Checking Playwright Chromium...")
+    print(">>> Phase 1: Verifying dependencies...")
+    
+    # Check for system browsers first (Edge/Chrome)
+    system_browser = check_system_browsers()
+    if system_browser:
+        print(f"Found system browser at: {system_browser}. Scraping will use this.")
+        return
+
+    print("Checking Playwright Chromium bundle...")
     try:
         from playwright.sync_api import sync_playwright
         with sync_playwright() as p:
@@ -194,21 +221,39 @@ def install_playwright_if_needed():
                 # Try to launch headless to verify existence
                 browser = p.chromium.launch(headless=True)
                 browser.close()
-                print("Playwright Chromium is correctly installed.")
+                print("Playwright Chromium bundle is correctly installed.")
             except Exception as e:
+                # Handle missing playwright chromium bundle
                 if "Executable doesn't exist" in str(e) or "not found" in str(e):
-                    print("Playwright Chromium missing. Starting automatic installation...")
                     # In a frozen bundle, sys.executable is the .exe
-                    # We use it to run the playwright module installer
+                    # We skip automatic installation in frozen mode to avoid hangs
+                    if getattr(sys, 'frozen', False):
+                        print("WARNING: Playwright Chromium missing and no system browser (Edge/Chrome) detected.")
+                        print("Scraping might fail if a browser isn't manually installed.")
+                        return
+
+                    print("Playwright Chromium missing. Starting automatic installation...")
                     import subprocess
-                    subprocess.run([sys.executable, "-m", "playwright", "install", "chromium"], check=True)
-                    print("Playwright Chromium installed successfully!")
+                    try:
+                        subprocess.run([sys.executable, "-m", "playwright", "install", "chromium"], check=True, timeout=120)
+                        print("Playwright Chromium installed successfully!")
+                    except Exception as install_err:
+                        print(f"Playwright installation attempt failed: {install_err}")
                 else:
                     print(f"Playwright check info: {e}")
-                    # If it's another error, we don't necessarily want to block startup
-                    # but we also don't want to try to install if it's a driver error
     except Exception as e:
-        print(f"Failed to check/install Playwright: {e}")
+        print(f"Playwright check info: {e}")
+
+def check_ffmpeg():
+    """Checks if ffmpeg is available in the system path."""
+    import subprocess
+    try:
+        subprocess.run(["ffmpeg", "-version"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+        print("FFmpeg is available.")
+        return True
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        print("WARNING: FFmpeg not found. Audio extraction (Phase 2) will fail.")
+        return False
 
 from config import COOKIES_DIR
 from datetime import datetime
