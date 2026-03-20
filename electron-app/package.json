@@ -1,6 +1,6 @@
 {
   "name": "tikkocampus",
-  "version": "1.2.2",
+  "version": "1.2.4",
   "description": "Premium Electron interface for Tikkocampus",
   "main": "main.js",
   "scripts": {
@@ -30,6 +30,12 @@
     "win": {
       "target": "nsis",
       "icon": "app_logo.ico"
+    },
+    "nsis": {
+      "include": "installer.nsh",
+      "oneClick": true,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true
     },
     "mac": {
       "target": "dmg",

@@ -208,51 +208,60 @@ def install_playwright_if_needed():
     print(">>> Phase 1: Verifying dependencies...")
     
     # Check for system browsers first (Edge/Chrome)
+    print(">>> Phase 1: Checking for system browsers (Edge/Chrome)...")
     system_browser = check_system_browsers()
     if system_browser:
-        print(f"Found system browser at: {system_browser}. Scraping will use this.")
+        print(f">>> Phase 1: Found system browser at: {system_browser}. Scraping will use this.")
         return
 
-    print("Checking Playwright Chromium bundle...")
+    print(">>> Phase 1: System browser not found. Checking Playwright bundle...")
     try:
+        print(">>> Phase 1: Importing Playwright sync API...")
         from playwright.sync_api import sync_playwright
+        print(">>> Phase 1: Playwright sync API imported.")
+        
         with sync_playwright() as p:
+            print(">>> Phase 1: Playwright driver initialized.")
             try:
                 # Try to launch headless to verify existence
+                print(">>> Phase 1: Attempting to launch bundled Chromium...")
                 browser = p.chromium.launch(headless=True)
+                print(">>> Phase 1: Bundled Chromium launch success.")
                 browser.close()
-                print("Playwright Chromium bundle is correctly installed.")
+                print(">>> Phase 1: Playwright Chromium bundle is correctly installed.")
             except Exception as e:
                 # Handle missing playwright chromium bundle
                 if "Executable doesn't exist" in str(e) or "not found" in str(e):
+                    print(f">>> Phase 1: Playwright Chromium bundle missing (Error: {e})")
                     # In a frozen bundle, sys.executable is the .exe
                     # We skip automatic installation in frozen mode to avoid hangs
                     if getattr(sys, 'frozen', False):
-                        print("WARNING: Playwright Chromium missing and no system browser (Edge/Chrome) detected.")
-                        print("Scraping might fail if a browser isn't manually installed.")
+                        print(">>> Phase 1: WARNING: Playwright Chromium missing and no system browser detected.")
+                        print(">>> Phase 1: Scraping might fail if a browser isn't manually installed.")
                         return
 
-                    print("Playwright Chromium missing. Starting automatic installation...")
+                    print(">>> Phase 1: Playwright Chromium missing. Starting automatic installation...")
                     import subprocess
                     try:
                         subprocess.run([sys.executable, "-m", "playwright", "install", "chromium"], check=True, timeout=120)
-                        print("Playwright Chromium installed successfully!")
+                        print(">>> Phase 1: Playwright Chromium installed successfully!")
                     except Exception as install_err:
-                        print(f"Playwright installation attempt failed: {install_err}")
+                        print(f">>> Phase 1: Playwright installation attempt failed: {install_err}")
                 else:
-                    print(f"Playwright check info: {e}")
+                    print(f">>> Phase 1: Playwright check info: {e}")
     except Exception as e:
-        print(f"Playwright check info: {e}")
+        print(f">>> Phase 1: Dependency verification error: {e}")
 
 def check_ffmpeg():
     """Checks if ffmpeg is available in the system path."""
+    print(">>> Phase 1: Checking for FFmpeg...")
     import subprocess
     try:
         subprocess.run(["ffmpeg", "-version"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
-        print("FFmpeg is available.")
+        print(">>> Phase 1: FFmpeg is available.")
         return True
     except (subprocess.CalledProcessError, FileNotFoundError):
-        print("WARNING: FFmpeg not found. Audio extraction (Phase 2) will fail.")
+        print(">>> Phase 1: WARNING: FFmpeg not found. Audio extraction (Phase 2) will fail.")
         return False
 
 from config import COOKIES_DIR

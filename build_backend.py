@@ -4,7 +4,7 @@ import os
 import importlib.util
 import sys
 
-print("Starting Tikkocampus Backend Build (v1.1.6)...")
+print("Starting Tikkocampus Backend Build (v1.2.3)...")
 
 # CRITICAL: Verify we are running in the venv (Skip for CI environments like GitHub Actions)
 if not os.environ.get('GITHUB_ACTIONS'):
@@ -49,6 +49,8 @@ args = [
     
     # Manually bundle the missing stealth JS files if found
     '--collect-submodules', 'playwright_stealth',
+    '--collect-all', 'playwright',
+    '--hidden-import', 'unit_test_deps',
 ]
 
 if stealth_js_path and os.path.exists(stealth_js_path):
@@ -63,7 +65,7 @@ for extra_file in ['targets.txt']:
     if os.path.exists(extra_file):
         args.extend(['--add-data', f'{extra_file}{os.pathsep}.'])
 
-print(f"Running PyInstaller with VENV-enforced v1.1.6 configuration...")
+print(f"Running PyInstaller with VENV-enforced v1.2.3 configuration...")
 PyInstaller.__main__.run(args)
 
 print(f"\n[SUCCESS] Build complete! Results available in: dist/{executable_name}")

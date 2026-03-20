@@ -15,6 +15,19 @@ if __name__ == "__main__":
     # If the first argument is 'auth', run the authentication flow
     if len(sys.argv) > 1 and sys.argv[1] == "auth":
         run_auth()
+    elif "--test" in sys.argv:
+        # Diagnostic Mode: run the unit test logic
+        try:
+            import unit_test_deps
+            unit_test_deps.log("Starting Diagnostic Mode via backend.exe --test")
+            unit_test_deps.test_ports()
+            unit_test_deps.test_system_browsers()
+            unit_test_deps.test_playwright()
+            unit_test_deps.test_ffmpeg()
+            unit_test_deps.log("Diagnostic Complete.")
+        except Exception as e:
+            print(f"FAILED to run diagnostics: {e}")
+        sys.exit(0)
     else:
         # Default behavior: run the FastAPI server with dynamic port support
         port = 8000

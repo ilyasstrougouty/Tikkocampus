@@ -234,26 +234,51 @@ function startPythonBackend() {
   });
 }
 
-app.on('ready', async () => {
-  logDebug('app ready event fired');
-  if (app.isPackaged) {
-      await killExistingBackend();
-  }
-  try {
-      backendPort = await getFreePort(8000);
-      logDebug(`Selected backend port: ${backendPort}`);
-  } catch (err) {
-      logDebug(`Error finding free port: ${err.message}. Falling back to 8000.`);
-      backendPort = 8000;
-  }
-  startPythonBackend();
-  createWindow();
-});
+// --- Single Instance Lock ---
+const gotTheLock = app.requestSingleInstanceLock();
+
+if (!gotTheLock) {
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    }
+  });
+
+  app.on('ready', async () => {
+    logDebug('app ready event fired');
+    if (app.isPackaged) {
+        await killExistingBackend();
+    }
+    try {
+        backendPort = await getFreePort(8000);
+        logDebug(`Selected backend port: ${backendPort}`);
+    } catch (err) {
+        logDebug(`Error finding free port: ${err.message}. Falling back to 8000.`);
+        backendPort = 8000;
+    }
+    startPythonBackend();
+    createWindow();
+  });
+}
 
 app.on('window-all-closed', function () {
   if (process.platform !== 'darwin') {
-    if (pythonProcess) pythonProcess.kill();
-    app.quit();
+    if (pythonProcess) {
+        if (process.platform === 'win32') {
+            const { exec } = require('child_process');
+            exec(`taskkill /F /T /PID ${pythonProcess.pid}`, (err) => {
+                app.quit();
+            });
+        } else {
+            pythonProcess.kill();
+            app.quit();
+        }
+    } else {
+        app.quit();
+    }
   }
 });
 
@@ -262,5 +287,12 @@ app.on('activate', function () {
 });
 
 process.on('exit', () => {
-    if (pythonProcess) pythonProcess.kill();
+    if (pythonProcess) {
+        if (process.platform === 'win32') {
+            const { execSync } = require('child_process');
+            try { execSync(`taskkill /F /T /PID ${pythonProcess.pid}`); } catch (e) {}
+        } else {
+            pythonProcess.kill();
+        }
+    }
 });
