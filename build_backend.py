@@ -1,12 +1,17 @@
+"""
+build_backend.py — PyInstaller build script for Tikkocampus backend.
+
+Builds a directory-mode executable with all necessary dependencies bundled.
+"""
 import PyInstaller.__main__
 import platform
 import os
 import importlib.util
 import sys
 
-print("Starting Tikkocampus Backend Build (v1.2.6)...")
+print("Starting Tikkocampus Backend Build (v2.0.0)...")
 
-# CRITICAL: Verify we are running in the venv (Skip for CI environments like GitHub Actions)
+# CRITICAL: Verify we are running in the venv (Skip for CI environments)
 if not os.environ.get('GITHUB_ACTIONS'):
     if not hasattr(sys, 'real_prefix') and not (sys.base_prefix != sys.prefix):
         print("\n[!] ERROR: You must run this build using the virtual environment!")
@@ -37,26 +42,31 @@ args = [
     'backend.py',
     '--name', 'backend',
     '--onedir',
-    '--windowed',
+    '--console',  # Use console mode for proper stdout/stderr handling
     '--noconfirm',
     '--clean',
-    
-    # Collect only the ones that definitely need hints
+
+    # Collect required packages
     '--collect-all', 'dotenv',
     '--collect-all', 'chromadb',
     '--collect-all', 'litellm',
     '--collect-all', 'langchain_text_splitters',
-    
-    # Manually bundle the missing stealth JS files if found
-    '--collect-submodules', 'playwright_stealth',
     '--collect-all', 'playwright',
+
+    # Hidden imports for the new modules
+    '--hidden-import', 'cookie_manager',
+    '--hidden-import', 'logger',
     '--hidden-import', 'unit_test_deps',
+
+    # Stealth submodules
+    '--collect-submodules', 'playwright_stealth',
 ]
 
+# Bundle stealth JS files if available
 if stealth_js_path and os.path.exists(stealth_js_path):
     args.extend(['--add-data', f'{stealth_js_path}{os.pathsep}playwright_stealth/js'])
 
-# Add Playwright driver if found
+# Bundle Playwright driver if available
 if playwright_driver_path and os.path.exists(playwright_driver_path):
     args.extend(['--add-data', f'{playwright_driver_path}{os.pathsep}playwright/driver'])
 
@@ -64,12 +74,12 @@ if playwright_driver_path and os.path.exists(playwright_driver_path):
 if os.path.exists('web'):
     args.extend(['--add-data', f'web{os.pathsep}web'])
 
-# Add optional runtime data files if they exist (except cookies.txt which we want to keep external)
+# Add optional runtime data files (NOT cookies — those are runtime data)
 for extra_file in ['targets.txt']:
     if os.path.exists(extra_file):
         args.extend(['--add-data', f'{extra_file}{os.pathsep}.'])
 
-print(f"Running PyInstaller with VENV-enforced v1.2.6 configuration...")
+print(f"Running PyInstaller v2.0.0 build...")
 PyInstaller.__main__.run(args)
 
 print(f"\n[SUCCESS] Build complete! Results available in: dist/{executable_name}")

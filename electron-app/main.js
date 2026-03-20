@@ -164,10 +164,7 @@ function startPythonBackend() {
   if (app.isPackaged) {
     const backendName = process.platform === 'win32' ? 'backend.exe' : 'backend';
     
-    // PyInstaller directory mode structure: dist/backend/backend.exe
-    // When moved to resources: resources/backend/backend.exe
-    // BUT build_backend.py creates a folder named 'backend' INSIDE 'dist/backend'
-    // Resulting in: resources/backend/backend/backend.exe
+    // PyInstaller directory mode: resources/backend/backend/backend.exe or resources/backend/backend.exe
     const nestedPath = path.join(process.resourcesPath, 'backend', 'backend', backendName);
     const flatPath = path.join(process.resourcesPath, 'backend', backendName);
     
@@ -176,10 +173,10 @@ function startPythonBackend() {
       logDebug(`Using nested backend path: ${pythonExec}`);
     } else {
       pythonExec = flatPath;
-      logDebug(`Nested path not found, falling back to flat path: ${pythonExec}`);
+      logDebug(`Using flat backend path: ${pythonExec}`);
     }
 
-    args = ['--server-only']; 
+    args = ['--port', backendPort.toString()];
     cwd = path.dirname(pythonExec);
   } else {
     pythonExec = path.resolve(__dirname, '..', 'venv', 'Scripts', 'python.exe');
@@ -187,14 +184,10 @@ function startPythonBackend() {
         pythonExec = path.resolve(__dirname, '..', 'venv', 'bin', 'python');
     }
     const appPath = path.resolve(__dirname, '..', 'backend.py');
-    args = [appPath, '--port', backendPort.toString()]; // backend.py handles routing its own arguments
+    args = [appPath, '--port', backendPort.toString()];
     cwd = path.resolve(__dirname, '..');
   }
 
-  // Common production and dev arguments
-  if (app.isPackaged) {
-      args.push('--port', backendPort.toString());
-  }
 
   logDebug(`Spawning Python Backend: "${pythonExec}"`);
   logDebug(`Current Working Directory: "${cwd}"`);

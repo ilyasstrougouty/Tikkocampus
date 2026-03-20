@@ -30,7 +30,6 @@ jobs:
 
       - name: Create Build Assets
         run: |
-          echo "Placeholder" > cookies.txt
           echo "Placeholder" > targets.txt
 
       - name: Set up Python

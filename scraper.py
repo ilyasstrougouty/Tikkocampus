@@ -1,17 +1,36 @@
+"""
+scraper.py — TikTok profile scraper using Playwright + Stealth.
+
+Uses cookie_manager for cookie I/O and logger for all output.
+Returns structured results with error codes.
+"""
 import os
 import sys
 import time
+import json
 from config import TEMP_PROCESSING_DIR, MAX_VIDEOS_PER_PROFILE
 from db import insert_video_metadata, db_session
+from logger import get_logger
+import cookie_manager
+
+log = get_logger("scraper")
+
+# --- Error Codes ---
+OK = "ok"
+ERR_NO_COOKIES = "NO_COOKIES"
+ERR_BROWSER_MISSING = "BROWSER_MISSING"
+ERR_CAPTCHA_BLOCKED = "CAPTCHA_BLOCKED"
+ERR_NETWORK_ERROR = "NETWORK_ERROR"
+ERR_NO_VIDEOS_FOUND = "NO_VIDEOS_FOUND"
+ERR_PLAYWRIGHT_FAILED = "PLAYWRIGHT_FAILED"
+
 
 def cleanup_temp_folder(max_age_hours=24):
-    """
-    Scans the temp_processing folder and deletes files older than max_age_hours.
-    """
-    print(f"Running garbage collection on {TEMP_PROCESSING_DIR}...")
+    """Scans the temp_processing folder and deletes files older than max_age_hours."""
+    log.info(f"Running garbage collection on {TEMP_PROCESSING_DIR}...")
     now = time.time()
     deleted_count = 0
-    
+
     for filename in os.listdir(TEMP_PROCESSING_DIR):
         file_path = os.path.join(TEMP_PROCESSING_DIR, filename)
         if os.path.isfile(file_path):
@@ -20,41 +39,21 @@ def cleanup_temp_folder(max_age_hours=24):
                 try:
                     os.remove(file_path)
                     deleted_count += 1
-                    print(f"Deleted old file: {filename}")
+                    log.debug(f"Deleted old file: {filename}")
                 except Exception as e:
-                    print(f"Failed to delete {filename}: {e}", file=sys.stderr)
-                    
-    print(f"Garbage collection finished. Deleted {deleted_count} old files.")
+                    log.error(f"Failed to delete {filename}: {e}")
 
-import json
+    log.info(f"Garbage collection finished. Deleted {deleted_count} old files.")
+
+
 from playwright.sync_api import sync_playwright
 from playwright_stealth import Stealth
 
-def parse_netscape_cookies(filename):
-    cookies = []
-    if not os.path.exists(filename):
-        return cookies
-    with open(filename, 'r') as f:
-        for line in f:
-            if line.startswith('#') or not line.strip():
-                continue
-            parts = line.strip().split('\t')
-            if len(parts) >= 7:
-                cookies.append({
-                    'name': parts[5],
-                    'value': parts[6],
-                    'domain': parts[0],
-                    'path': parts[2],
-                    'secure': parts[3] == 'TRUE',
-                    'expires': float(parts[4]) if parts[4] != '0' else -1
-                })
-    return cookies
 
 def download_video_file(url, video_id, page):
-    """Downloads the raw mp4 video to the temp folder via playwright api route to reuse signatures"""
+    """Downloads the raw mp4 video to the temp folder via playwright api route."""
     file_path = os.path.join(TEMP_PROCESSING_DIR, f"{video_id}.mp4")
-    
-    # Use playwright context to ensure cookies, stealth configs, and headers map
+
     try:
         response = page.request.get(url, headers={
             "Referer": "https://www.tiktok.com/"
@@ -64,18 +63,20 @@ def download_video_file(url, video_id, page):
                 f.write(response.body())
             return file_path
         else:
-            print(f"Failed to download MP4. Status code: {response.status}", file=sys.stderr)
+            log.warning(f"Failed to download MP4 for {video_id}. Status: {response.status}")
             return None
     except Exception as e:
-        print(f"Playwright download exception: {e}", file=sys.stderr)
+        log.error(f"Playwright download exception for {video_id}: {e}")
         return None
+
 
 def download_profile_videos(profile_url, max_downloads=MAX_VIDEOS_PER_PROFILE):
     """
     Downloads the latest videos from a TikTok profile using Playwright.
+    Returns: (creator_username, creator_nickname, error_code, error_message)
     """
     profile_url = profile_url.strip().rstrip('/')
-    
+
     # Handle bare usernames: "mrbeast" or "@mrbeast"
     if 'tiktok.com' not in profile_url:
         username = profile_url.lstrip('@')
@@ -85,15 +86,19 @@ def download_profile_videos(profile_url, max_downloads=MAX_VIDEOS_PER_PROFILE):
         profile_url = f"https://www.tiktok.com/@{username}"
 
     target_username = profile_url.split('@')[-1].split('/')[0].split('?')[0]
-    print(f"Starting Playwright download for {profile_url} (Max {max_downloads} videos)")
+    log.info(f"Starting scrape for {profile_url} (max {max_downloads} videos)")
 
-    # CLEANUP: Remove any existing PENDING videos for this specific creator 
-    # to ensure they don't get mixed in with the new requested batch.
+    # --- Pre-flight: Check cookies ---
+    cookies = cookie_manager.read_netscape()
+    if not cookies:
+        log.warning(f"No cookies found at {cookie_manager.get_path()}. Scraping anonymously (likely to fail).")
+    else:
+        log.info(f"Loaded {len(cookies)} cookies from {cookie_manager.get_path()}")
+
+    # --- Pre-scrape cleanup ---
     try:
         with db_session() as conn:
             cursor = conn.cursor()
-            
-            # We only delete the ones WITHOUT a transcript (ghosts of previous failed scrapes)
             cursor.execute("SELECT file_path FROM videos WHERE creator_name = ? AND transcript IS NULL", (target_username,))
             pending_files = cursor.fetchall()
             for (fpath,) in pending_files:
@@ -102,140 +107,128 @@ def download_profile_videos(profile_url, max_downloads=MAX_VIDEOS_PER_PROFILE):
                         os.remove(fpath)
                     except Exception:
                         pass
-            
             cursor.execute("DELETE FROM videos WHERE creator_name = ? AND transcript IS NULL", (target_username,))
             conn.commit()
     except Exception as e:
-        print(f"Pre-scrape cleanup error (non-fatal): {e}")
+        log.warning(f"Pre-scrape cleanup error (non-fatal): {e}")
 
     extracted_count = 0
     found_videos = []
-    
+
     try:
         with Stealth().use_sync(sync_playwright()) as p:
             import platform
             channel = "msedge" if platform.system() == "Windows" else "chrome"
+            
             try:
                 browser = p.chromium.launch(headless=False, channel=channel)
+                log.info(f"Launched system browser: {channel}")
             except Exception as e:
-                print(f"Warning: System browser {channel} not found. Falling back to generic chromium bundle.")
-                browser = p.chromium.launch(headless=False)
-                
-            # Use a realistic user agent to avoid basic blocks
+                log.warning(f"System browser '{channel}' not found ({e}). Falling back to bundled chromium.")
+                try:
+                    browser = p.chromium.launch(headless=False)
+                    log.info("Launched bundled Chromium.")
+                except Exception as e2:
+                    log.error(f"CRITICAL: Cannot launch any browser: {e2}")
+                    return target_username, None, ERR_BROWSER_MISSING, str(e2)
+
             context = browser.new_context(
                 user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
             )
-            
-            # Load the authenticated cookies from the native login window
-            def log_diagnostic(msg):
-                print(f"[DEBUG] {msg}")
 
-            try:
-                from config import BASE_DIR
-                cookie_path = os.path.join(BASE_DIR, 'cookies.txt')
-                log_diagnostic(f"Attempting to load cookies from: {cookie_path}")
-                cookies = parse_netscape_cookies(cookie_path)
-            except Exception as e:
-                log_diagnostic(f"Warning: config dependency or cookie path error: {e}. Falling back to local cookies.txt")
-                cookies = parse_netscape_cookies('cookies.txt')
-
-            if not cookies:
-                print("Warning: No cookies found or could not parse cookies.txt. Trying anonymously.")
-            else:
-                print(f"[DEBUG] Loaded {len(cookies)} cookies from cookies.txt")
+            # Load cookies into context
+            if cookies:
                 context.add_cookies(cookies)
 
             page = context.new_page()
-
             creator_nickname = None
 
             def handle_response(response):
                 nonlocal creator_nickname
-                # Log all intercepted URLs for debugging
                 if "item_list" in response.url or "post/item_list" in response.url or "api/post" in response.url:
-                    log_diagnostic(f"INTERCEPTED TARGET API: {response.url}")
-                    log_diagnostic(f"Response Status: {response.status}")
+                    log.debug(f"INTERCEPTED API: {response.url} (status={response.status})")
                     try:
                         data = response.json()
                         itemList = data.get('itemList', [])
                         if not itemList:
-                            # Fallback check for new API structure
                             itemList = data.get('data', {}).get('videos', [])
-                        
+
                         if itemList:
-                            print(f"[DEBUG] Found {len(itemList)} videos in this chunk.")
+                            log.info(f"Found {len(itemList)} videos in API chunk.")
                             for item in itemList:
                                 found_videos.append(item)
                                 if not creator_nickname:
                                     author = item.get('author', {})
                                     creator_nickname = author.get('nickname')
                         else:
-                            print(f"[DEBUG] API chunk was empty or had unknown structure: {list(data.keys())}")
+                            log.debug(f"API chunk empty. Keys: {list(data.keys())}")
                     except Exception as e:
-                        print(f"[DEBUG] Failed to parse API JSON: {e}")
-                elif "tiktok.com" in response.url and response.status == 200:
-                    # Optional: Log other 200-OK TikTok requests if needed
-                    pass
+                        log.debug(f"Failed to parse API JSON: {e}")
 
             page.on("response", handle_response)
-            
-            print("Navigating to profile to intercept API...")
+
+            log.info("Navigating to profile to intercept API...")
             try:
                 page.goto(profile_url, timeout=60000)
-                log_diagnostic(f"Navigation finished. Current URL: {page.url}")
-                page.wait_for_timeout(5000) # Give it more time to settle
-                
-                # Check for "Too many attempts" or basic blocks
-                if "verify-login" in page.url or "captcha" in page.url or "notfound" in page.url:
-                    print(f"CRITICAL: Scraper blocked or page not found! URL: {page.url}")
+                log.info(f"Navigation complete. URL: {page.url}")
+                page.wait_for_timeout(5000)
 
-                # FALLBACK: Try to extract metadata from __NEXT_DATA__ if interception failed
+                # Check for blocks
+                if "verify-login" in page.url or "captcha" in page.url:
+                    log.error(f"BLOCKED: Captcha or login wall detected. URL: {page.url}")
+                    browser.close()
+                    return target_username, None, ERR_CAPTCHA_BLOCKED, f"Blocked at {page.url}"
+
+                if "notfound" in page.url or "/404" in page.url:
+                    log.error(f"Profile not found: {page.url}")
+                    browser.close()
+                    return target_username, None, ERR_NETWORK_ERROR, "Profile not found"
+
+                # FALLBACK: __NEXT_DATA__ extraction
                 if not found_videos:
-                    log_diagnostic("No videos intercepted yet. Attempting __NEXT_DATA__ extraction...")
+                    log.info("No videos intercepted. Attempting __NEXT_DATA__ extraction...")
                     try:
                         script_content = page.evaluate("() => document.getElementById('__NEXT_DATA__')?.textContent")
                         if script_content:
-                            log_diagnostic("__NEXT_DATA__ script found.")
+                            log.debug("__NEXT_DATA__ script found.")
                             next_data = json.loads(script_content)
-                            # Locate video list in NEXT_DATA (structure varies, but usually under props.pageProps.itemList)
-                            # Simplified check:
                             props = next_data.get('props', {}).get('pageProps', {})
                             itemList = props.get('itemList', [])
                             if itemList:
-                                print(f"[DEBUG] Extracted {len(itemList)} videos from __NEXT_DATA__")
+                                log.info(f"Extracted {len(itemList)} videos from __NEXT_DATA__")
                                 for item in itemList:
                                     found_videos.append(item)
                                     if not creator_nickname:
                                         creator_nickname = item.get('author', {}).get('nickname')
                     except Exception as e:
-                        print(f"[DEBUG] __NEXT_DATA__ extraction failed: {e}")
+                        log.debug(f"__NEXT_DATA__ extraction failed: {e}")
 
-                # Scroll to trigger pagination if needed
+                # Scroll to trigger pagination
                 last_count = 0
                 stale_scrolls = 0
                 while len(found_videos) < max_downloads and stale_scrolls < 5:
                     import config
                     if getattr(config, 'CANCEL_REQUESTED', False):
-                        print("\n[!] Scraping cancelled by user during scroll!")
+                        log.info("Scraping cancelled by user during scroll.")
                         break
-                        
-                    page.evaluate("window.scrollBy(0, 1500)") # More natural scroll
+
+                    page.evaluate("window.scrollBy(0, 1500)")
                     page.wait_for_timeout(2000)
-                    
+
                     if len(found_videos) == last_count:
                         stale_scrolls += 1
-                        print(f"No new videos found ({last_count} total). Scrolling again... ({stale_scrolls}/5)")
+                        log.debug(f"No new videos ({last_count} total). Stale scroll {stale_scrolls}/5")
                     else:
                         stale_scrolls = 0
                         last_count = len(found_videos)
-                        print(f"Intercepted {last_count} videos so far...")
-                        
-            except Exception as e:
-                print(f"Error navigating the profile: {e}", file=sys.stderr)
-                
-            print(f"Intercepted {len(found_videos)} video metadata chunks from API.")
+                        log.info(f"Intercepted {last_count} videos so far...")
 
-            # Deduplicate videos by ID
+            except Exception as e:
+                log.error(f"Error navigating profile: {e}")
+
+            log.info(f"Intercepted {len(found_videos)} video metadata chunks total.")
+
+            # Deduplicate
             unique_videos = {}
             for v in found_videos:
                 vid = v.get('id')
@@ -243,40 +236,37 @@ def download_profile_videos(profile_url, max_downloads=MAX_VIDEOS_PER_PROFILE):
                     unique_videos[vid] = v
 
             video_list = list(unique_videos.values())
-            
-            # Process up to max_downloads
+
+            # Download
             for count, item in enumerate(video_list[:max_downloads]):
                 import config
                 if getattr(config, 'CANCEL_REQUESTED', False):
-                    print("\n[!] Scraping cancelled by user during download!")
+                    log.info("Scraping cancelled by user during download.")
                     break
-                    
+
                 video_id = item.get('id')
                 if not video_id:
                     continue
-                    
-                # Get best quality mp4 url
+
                 video_url = item.get('video', {}).get('playAddr') or item.get('video', {}).get('downloadAddr')
                 if not video_url:
-                    print(f"Skipping {video_id}: No mp4 URL found.")
+                    log.debug(f"Skipping {video_id}: No mp4 URL found.")
                     continue
-                    
+
                 upload_date = item.get('createTime', 0)
-                # Convert timestamp to YYYYMMDD string for db matching old yt-dlp format
                 from datetime import datetime
                 if upload_date:
                     upload_date = datetime.fromtimestamp(upload_date).strftime('%Y%m%d')
                 else:
                     upload_date = ""
-                    
+
                 description = item.get('desc', '')
                 creator_name = item.get('author', {}).get('uniqueId') or target_username
-                
-                print(f"[{count+1}/{max_downloads}] Downloading mp4 for {video_id}...")
+
+                log.info(f"[{count + 1}/{max_downloads}] Downloading {video_id}...")
                 file_path = download_video_file(video_url, video_id, page)
-                
+
                 if file_path:
-                    print(f"Saving database metadata for video {video_id}")
                     insert_video_metadata(
                         video_id=video_id,
                         upload_date=upload_date,
@@ -285,38 +275,43 @@ def download_profile_videos(profile_url, max_downloads=MAX_VIDEOS_PER_PROFILE):
                         file_path=file_path
                     )
                     extracted_count += 1
-                    
-            print(f"Successfully processed profile: {profile_url} (Extracted {extracted_count} videos)")
-            if extracted_count < max_downloads:
-                print(f"\nWarning: Scrape ended early. Only extracted {extracted_count} of {max_downloads} videos.", file=sys.stderr)
-            
-            return target_username, creator_nickname
+
+            log.info(f"Scrape complete: {extracted_count}/{max_downloads} videos from {profile_url}")
+
+            if extracted_count == 0 and len(found_videos) == 0:
+                error_code = ERR_NO_COOKIES if not cookies else ERR_NO_VIDEOS_FOUND
+                error_msg = "No cookies available" if not cookies else "API returned no video data"
+                return target_username, creator_nickname, error_code, error_msg
+
+            return target_username, creator_nickname, OK, None
+
     except Exception as e:
-        print(f"Playwright error during scrape: {e}", file=sys.stderr)
-        return target_username, None
+        log.error(f"Playwright error during scrape: {e}")
+        return target_username, None, ERR_PLAYWRIGHT_FAILED, str(e)
     finally:
         try:
             if 'browser' in locals() and browser:
                 browser.close()
-            print("Playwright session cleaned up.")
+            log.info("Playwright session cleaned up.")
         except Exception:
             pass
 
+
 if __name__ == "__main__":
     import db
-    db.init_db() # Ensure DB exists
-    cleanup_temp_folder() # Garbage collection
-    
+    db.init_db()
+    cleanup_temp_folder()
+
     try:
         with open('targets.txt', 'r') as f:
             targets = [url.strip() for url in f.readlines() if url.strip()]
-            
+
         if not targets:
-            print("No targets found in targets.txt.")
+            log.info("No targets found in targets.txt.")
             sys.exit(0)
 
         for target in targets:
             download_profile_videos(target)
-            
+
     except FileNotFoundError:
-        print("targets.txt not found. Please create it and add TikTok profile URLs.")
+        log.error("targets.txt not found. Please create it and add TikTok profile URLs.")

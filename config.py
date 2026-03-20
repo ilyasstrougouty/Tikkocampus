@@ -1,28 +1,46 @@
+"""
+config.py — Single source of truth for all application paths and settings.
+
+In frozen mode (PyInstaller), BASE_DIR is the directory containing the executable.
+In dev mode, BASE_DIR is the project root.
+"""
 import os
 import sys
 from dotenv import load_dotenv
 
+# --- Path Management (THE single source of truth) ---
 if getattr(sys, 'frozen', False):
-    # In a frozen bundle, the base dir should be the directory where the executable lives
     BASE_DIR = os.path.dirname(sys.executable)
 else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Load variables from .env in the base directory
-load_dotenv(os.path.join(BASE_DIR, ".env"))
+# Resolve the internal assets directory (PyInstaller temp extraction folder)
+# Used ONLY for bundled read-only assets like the web/ folder.
+if getattr(sys, 'frozen', False):
+    INTERNAL_DIR = sys._MEIPASS
+else:
+    INTERNAL_DIR = BASE_DIR
 
-TEMP_PROCESSING_DIR = os.path.join(BASE_DIR, "temp_processing")
+# --- File Paths (all absolute, no relative paths anywhere) ---
+COOKIE_FILE = os.path.join(BASE_DIR, "cookies.txt")
+ENV_FILE = os.path.join(BASE_DIR, ".env")
+LOG_FILE = os.path.join(BASE_DIR, "backend.log")
 DB_PATH = os.path.join(BASE_DIR, "tiktok_data.db")
+TEMP_PROCESSING_DIR = os.path.join(BASE_DIR, "temp_processing")
 COOKIES_DIR = os.path.join(BASE_DIR, "cookies")
+WEB_DIR = os.path.join(INTERNAL_DIR, "web")
 
-# Defaults
+# --- Load .env from BASE_DIR ---
+load_dotenv(ENV_FILE)
+
+# --- Application Settings ---
 MAX_VIDEOS_PER_PROFILE = int(os.environ.get("MAX_VIDEOS_PER_PROFILE", 5))
 LLM_MODEL = os.environ.get("LLM_MODEL", "groq/llama-3.1-8b-instant")
 TRANSCRIPTION_METHOD = os.environ.get("TRANSCRIPTION_METHOD", "local")
 
-# Global state for interrupting background threads
+# --- Global State ---
 CANCEL_REQUESTED = False
 
-# Ensure the required directories exist
+# --- Ensure required directories exist ---
 os.makedirs(TEMP_PROCESSING_DIR, exist_ok=True)
 os.makedirs(COOKIES_DIR, exist_ok=True)
