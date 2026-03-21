@@ -13,7 +13,7 @@ jobs:
       contents: write
     strategy:
       matrix:
-        os: [windows-latest, macos-13, macos-14, ubuntu-latest]
+        os: [windows-latest, macos-12, macos-14, ubuntu-latest]
 
     defaults:
       run:
@@ -66,7 +66,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if [ "${{ matrix.os }}" == "macos-13" ]; then
+          if [ "${{ matrix.os }}" == "macos-12" ]; then
             npm run dist -- --mac --x64 -p always
           elif [ "${{ matrix.os }}" == "macos-14" ]; then
             npm run dist -- --mac --arm64 -p always
