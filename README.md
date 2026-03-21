@@ -18,9 +18,9 @@
 
 🚀 **Download the latest v1.1.7 release for your OS:**
 
-- **Windows (.exe)**: [Tikkocampus-Setup-1.1.7.exe](https://github.com/ilyasstrougouty/Tikkocampus/releases/download/v1.1.7/Tikkocampus-Setup-1.1.7.exe)
-- **macOS (.dmg)**: [Download Tikkocampus-1.1.7-arm64.dmg](https://github.com/ilyasstrougouty/Tikkocampus/releases/download/v1.1.7/Tikkocampus-1.1.7-arm64.dmg)
-- **Linux (AppImage)**: [Download Tikkocampus-1.1.7.AppImage](https://github.com/ilyasstrougouty/Tikkocampus/releases/download/v1.1.7/Tikkocampus-1.1.7.AppImage)
+- **Windows (.exe)**: [Tikkocampus-Setup-1.1.7.exe](https://github.com/ilyasstrougouty/Tikkocampus/releases/download/v2.0.4/Tikkocampus-Setup-2.0.4.exe)
+- **macOS (.dmg)**: [Download Tikkocampus-1.1.7-arm64.dmg](https://github.com/ilyasstrougouty/Tikkocampus/releases/download/v2.0.4/Tikkocampus-2.0.4-arm64.dmg)
+- **Linux (AppImage)**: [Download Tikkocampus-1.1.7.AppImage](https://github.com/ilyasstrougouty/Tikkocampus/releases/download/v2.0.4/Tikkocampus-2.0.4.AppImage)
 
 > [!NOTE]  
 > If the links above haven't finished building yet, you can also find them on the [Releases Page](https://github.com/ilyasstrougouty/Tikkocampus/releases).
