@@ -20,9 +20,7 @@
 ## 📺 Demo Video
 
 <div align="center">
-  <p><em>Watch how Tikkocampus transforms TikTok content into an interactive knowledge base.</em></p>
-  [![Watch the Demo](assets/demo_thumbnail.png)](https://github.com/ilyasstrougouty/Tikkocampus/blob/main/assets/demo.mp4)
-  <p><em>(Click to watch the demo video)</em></p>
+ 
 </div>
 
 ---
