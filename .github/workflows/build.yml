@@ -36,6 +36,8 @@ jobs:
             build_cmd: npm run dist -- --mac --x64 -p always
 
     name: Build (${{ matrix.name }})
+    env:
+      MACOSX_DEPLOYMENT_TARGET: "11.0"
     defaults:
       run:
         shell: bash
