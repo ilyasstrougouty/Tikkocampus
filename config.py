@@ -6,11 +6,20 @@ In dev mode, BASE_DIR is the project root.
 """
 import os
 import sys
+import platform
 from dotenv import load_dotenv
 
 # --- Path Management (THE single source of truth) ---
 if getattr(sys, 'frozen', False):
-    BASE_DIR = os.path.dirname(sys.executable)
+    app_name = "tikkocampus"
+    if platform.system() == "Windows":
+        app_data = os.environ.get('APPDATA', os.path.expanduser('~\\AppData\\Roaming'))
+        BASE_DIR = os.path.join(app_data, app_name, 'backend_data')
+    elif platform.system() == "Darwin":
+        BASE_DIR = os.path.join(os.path.expanduser('~/Library/Application Support'), app_name, 'backend_data')
+    else:
+        BASE_DIR = os.path.join(os.path.expanduser('~/.config'), app_name, 'backend_data')
+    os.makedirs(BASE_DIR, exist_ok=True)
 else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
