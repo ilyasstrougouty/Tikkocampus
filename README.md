@@ -21,7 +21,7 @@
 
 <div align="center">
   <p><em>Watch how Tikkocampus transforms TikTok content into an interactive knowledge base.</em></p>
-  <video src="assets/demo.mp4" width="800" controls></video>
+  <video src="https://raw.githubusercontent.com/ilyasstrougouty/Tikkocampus/main/assets/demo.mp4" width="800" controls></video>
 </div>
 
 ---
