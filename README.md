@@ -12,6 +12,14 @@
   </div>
 </div>
 
+<div align="center">
+  <a href="https://ko-fi.com/ilyasstrougouty">
+    <img src="assets/donations.png" alt="Donate with Ko-fi" height="36">
+  </a>
+  &nbsp;&nbsp;
+  <a href="https://ko-fi.com/ilyasstrougouty"><strong>Support the Project</strong></a>
+</div>
+
 ---
 
 ## 📦 Downloads (Executables)
@@ -115,6 +123,8 @@ No internet? No problem. Use Ollama to run everything on your own hardware.
 - `processor.py`: Audio & transcription logic.
 - `embedder.py`: Semantic search engine.
 - `chat.py`: AI communication layer.
+
+---
 
 ---
 
