@@ -20,7 +20,12 @@
 ## 📺 Demo Video
 
 <div align="center">
+<<<<<<< HEAD
  
+=======
+  <p><em>Watch how Tikkocampus transforms TikTok content into an interactive knowledge base.</em></p>
+  ![Demo Video](assets/demo.gif)
+>>>>>>> 5e9f3f4 (docs: use auto-playing GIF for demo video)
 </div>
 
 ---
