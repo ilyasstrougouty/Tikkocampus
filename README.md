@@ -42,33 +42,6 @@ Tikkocampus is a professional-grade **Retrieval-Augmented Generation (RAG)** pip
 
 ---
 
-## 🚀 Dev Setup & Installation
-
-If you prefer to run from source:
-
-### 1. Requirements
-- **Node.js 18+**
-- **Python 3.10+**
-- **FFmpeg** (For audio parsing. [Download](https://www.gyan.dev/ffmpeg/builds/))
-
-### 2. Setup
-```bash
-# Install Python dependencies
-pip install -r requirements.txt
-
-# Install Electron dependencies
-cd electron-app
-npm install
-```
-
-### 3. Launch
-```bash
-# In the electron-app directory:
-npm start
-```
-
----
-
 ## 📦 Downloads (Executables)
 
 🚀 **Download the latest release for your OS:**
@@ -114,14 +87,30 @@ No internet? No problem. Use Ollama to run everything on your own hardware.
 
 ---
 
-## 🛠️ Next Steps
+## 🚀 Dev Setup & Installation
 
-We're constantly improving Tikkocampus. Here's what's coming next:
+If you prefer to run from source:
 
-1. **Hardware Acceleration**: Better support for Mac Silicon (Metal) and Windows (NVIDIA/AMD) local inference.
-2. **Improved Search**: Hybrid search combining BM25 keyword matching with semantic embeddings.
-3. **Multi-Platform Scraping**: Expanding beyond TikTok to YouTube Shorts and Instagram Reels.
-4. **Desktop UI Polish**: Theme customization and a more refined "Discovery" tab.
+### 1. Requirements
+- **Node.js 18+**
+- **Python 3.10+**
+- **FFmpeg** (For audio parsing. [Download](https://www.gyan.dev/ffmpeg/builds/))
+
+### 2. Setup
+```bash
+# Install Python dependencies
+pip install -r requirements.txt
+
+# Install Electron dependencies
+cd electron-app
+npm install
+```
+
+### 3. Launch
+```bash
+# In the electron-app directory:
+npm start
+```
 
 ---
 
@@ -132,6 +121,17 @@ We're constantly improving Tikkocampus. Here's what's coming next:
 - `processor.py`: Audio & transcription logic.
 - `embedder.py`: Semantic search engine.
 - `chat.py`: AI communication layer.
+
+---
+
+## 🛠️ Next Steps
+
+We're constantly improving Tikkocampus. Here's what's coming next:
+
+1. **Hardware Acceleration**: Better support for Mac Silicon (Metal) and Windows (NVIDIA/AMD) local inference.
+2. **Improved Search**: Hybrid search combining BM25 keyword matching with semantic embeddings.
+3. **Multi-Platform Scraping**: Expanding beyond TikTok to YouTube Shorts and Instagram Reels.
+4. **Desktop UI Polish**: Theme customization and a more refined "Discovery" tab.
 
 ---
 
