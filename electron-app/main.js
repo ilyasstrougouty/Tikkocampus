@@ -212,6 +212,7 @@ function startPythonBackend() {
   pythonProcess = spawn(pythonExec, args, {
     cwd: cwd,
     shell: false,
+    windowsHide: true,
     env: { ...process.env, PYTHONUNBUFFERED: '1' }
   });
 

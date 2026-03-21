@@ -31,7 +31,8 @@ def extract_audio(video_path, audio_path):
     ]
     
     try:
-        subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+        creationflags = 0x08000000 if os.name == 'nt' else 0
+        subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=creationflags, check=True)
         # Verify file exists and is not empty
         if os.path.exists(audio_path) and os.path.getsize(audio_path) > 0:
             return True

@@ -1,6 +1,6 @@
 {
   "name": "tikkocampus",
-  "version": "2.0.7",
+  "version": "2.0.8",
   "description": "Premium Electron interface for Tikkocampus",
   "main": "main.js",
   "scripts": {
@@ -34,8 +34,15 @@
     "nsis": {
       "include": "installer.nsh",
       "oneClick": false,
-      "perMachine": false,
-      "allowToChangeInstallationDirectory": true
+      "perMachine": true,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": "always",
+      "createStartMenuShortcut": true,
+      "shortcutName": "Tikkocampus",
+      "installerIcon": "app_logo.ico",
+      "uninstallerIcon": "app_logo.ico",
+      "uninstallDisplayName": "Tikkocampus",
+      "deleteAppDataOnUninstall": false
     },
     "mac": {
       "target": "dmg",

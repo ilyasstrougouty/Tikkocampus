@@ -788,7 +788,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-async function initApp(retries = 15) {
+async function initApp(retries = 90) {
     if (window.electronAPI && window.electronAPI.getPort) {
         try {
             const port = await window.electronAPI.getPort();
