@@ -13,8 +13,29 @@ jobs:
       contents: write
     strategy:
       matrix:
-        os: [windows-latest, macos-12, macos-14, ubuntu-latest]
+        include:
+          - os: windows-latest
+            name: "Windows x64"
+            python_arch: x64
+            node_arch: x64
+            build_cmd: npm run dist -- --win --x64 -p always
+          - os: ubuntu-latest
+            name: "Linux x64"
+            python_arch: x64
+            node_arch: x64
+            build_cmd: npm run dist -- --linux -p always
+          - os: macos-14
+            name: "macOS Silicon (arm64)"
+            python_arch: arm64
+            node_arch: arm64
+            build_cmd: npm run dist -- --mac --arm64 -p always
+          - os: macos-14
+            name: "macOS Intel (x64) via Rosetta"
+            python_arch: x64
+            node_arch: x64
+            build_cmd: npm run dist -- --mac --x64 -p always
 
+    name: Build (${{ matrix.name }})
     defaults:
       run:
         shell: bash
@@ -36,6 +57,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+          architecture: ${{ matrix.python_arch }}
 
       - name: Upgrade Pip
         run: python -m pip install --upgrade pip
@@ -56,6 +78,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          architecture: ${{ matrix.node_arch }}
 
       - name: NPM Install
         working-directory: electron-app
@@ -65,13 +88,4 @@ jobs:
         working-directory: electron-app
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          if [ "${{ matrix.os }}" == "macos-12" ]; then
-            npm run dist -- --mac --x64 -p always
-          elif [ "${{ matrix.os }}" == "macos-14" ]; then
-            npm run dist -- --mac --arm64 -p always
-          elif [ "${{ matrix.os }}" == "windows-latest" ]; then
-            npm run dist -- --win --x64 -p always
-          else
-            npm run dist -- --linux -p always
-          fi
+        run: ${{ matrix.build_cmd }}
