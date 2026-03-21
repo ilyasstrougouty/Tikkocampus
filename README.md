@@ -17,6 +17,15 @@
 
 ---
 
+## 📺 Demo Video
+
+<div align="center">
+  <p><em>Watch how Tikkocampus transforms TikTok content into an interactive knowledge base.</em></p>
+  <video src="assets/demo.mp4" width="800" controls></video>
+</div>
+
+---
+
 ## ⚙️ What is Tikkocampus?
 
 Tikkocampus is a professional-grade **Retrieval-Augmented Generation (RAG)** pipeline designed for content researchers and fans. It allows you to ingest TikTok profiles and turn them into a searchable, interactive database.
