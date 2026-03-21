@@ -8,6 +8,7 @@ debug.json
 debug_ytdlp.py
 .pytest_cache/
 *.mp4
+!assets/demo.mp4
 output.txt
 test_results.txt
 .env
