@@ -21,7 +21,7 @@
 
 <div align="center">
   <p><em>Watch how Tikkocampus transforms TikTok content into an interactive knowledge base.</em></p>
-  ![Demo Video](assets/demo.gif)
+  <img src="assets/demo.gif" alt="Demo Video" width="800">
 </div>
 
 ---
