@@ -13,7 +13,7 @@ jobs:
       contents: write
     strategy:
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
+        os: [windows-latest, macos-13, macos-14, ubuntu-latest]
 
     defaults:
       run:
@@ -65,5 +65,13 @@ jobs:
         working-directory: electron-app
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        # The -p always flag automatically uploads the binaries to the GitHub Release
-        run: npm run dist -- -p always
+        run: |
+          if [ "${{ matrix.os }}" == "macos-13" ]; then
+            npm run dist -- --mac --x64 -p always
+          elif [ "${{ matrix.os }}" == "macos-14" ]; then
+            npm run dist -- --mac --arm64 -p always
+          elif [ "${{ matrix.os }}" == "windows-latest" ]; then
+            npm run dist -- --win --x64 -p always
+          else
+            npm run dist -- --linux -p always
+          fi
