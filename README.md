@@ -1,48 +1,19 @@
 <div align="center">
+  <div align="center">
+    <img src="https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white" alt="Python">
+    <img src="https://img.shields.io/badge/RAG-Powered-FF6F61" alt="RAG">
+    <img src="https://img.shields.io/badge/UI-Electron-4786D1?logo=electron&logoColor=white" alt="UI">
+    <a href="https://ko-fi.com/ilyasstrougouty">
+      <img src="https://img.shields.io/badge/Support-Ko--fi-FF5E5B?logo=kofi&logoColor=white" alt="Support">
+    </a>
+  </div>
+
   <img src="assets/banner.png" alt="Tikkocampus Banner">
   
   <p><strong>Transform TikTok into your personal knowledge base.</strong></p>
   
   <p><em>Scrape, Transcribe, and Chat with creator content using local or cloud AI.</em></p>
-
-  <div align="center">
-    <img src="https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white" alt="Python">
-    <img src="https://img.shields.io/badge/RAG-Powered-FF6F61" alt="RAG">
-    <img src="https://img.shields.io/badge/UI-Electron-4786D1?logo=electron&logoColor=white" alt="UI">
-  </div>
 </div>
-
-<div align="center">
-  <a href="https://ko-fi.com/ilyasstrougouty">
-    <img src="assets/donations.png" alt="Donate with Ko-fi" height="36">
-  </a>
-  &nbsp;&nbsp;
-  <a href="https://ko-fi.com/ilyasstrougouty"><strong>Support the Project</strong></a>
-</div>
-
----
-
-## 📦 Downloads (Executables)
-
-🚀 **Download the latest v2.0.4 release for your OS:**
-
-- **Windows (.exe)**: [Tikkocampus-Setup-2.0.4.exe](https://github.com/ilyasstrougouty/Tikkocampus/releases/download/v2.0.4/Tikkocampus-Setup-2.0.4.exe)
-- **macOS (.dmg)**: [Download Tikkocampus-2.0.4-arm64.dmg](https://github.com/ilyasstrougouty/Tikkocampus/releases/download/v2.0.4/Tikkocampus-2.0.4-arm64.dmg)
-- **Linux (AppImage)**: [Download Tikkocampus-2.0.4.AppImage](https://github.com/ilyasstrougouty/Tikkocampus/releases/download/v2.0.4/Tikkocampus-2.0.4.AppImage)
-
-> [!NOTE]  
-> If the links above haven't finished building yet, you can also find them on the [Releases Page](https://github.com/ilyasstrougouty/Tikkocampus/releases).
-
----
-
-## 🛠️ Next Steps
-
-We're constantly improving Tikkocampus. Here's what's coming next:
-
-1. **Hardware Acceleration**: Better support for Mac Silicon (Metal) and Windows (NVIDIA/AMD) local inference.
-2. **Improved Search**: Hybrid search combining BM25 keyword matching with semantic embeddings.
-3. **Multi-Platform Scraping**: Expanding beyond TikTok to YouTube Shorts and Instagram Reels.
-4. **Desktop UI Polish**: Theme customization and a more refined "Discovery" tab.
 
 ---
 
@@ -54,6 +25,20 @@ Tikkocampus is a professional-grade **Retrieval-Augmented Generation (RAG)** pip
 - **Intelligence**: High-fidelity transcription (Local or Cloud).
 - **Search**: Semantic indexing into ChromaDB for instant contextual retrieval.
 - **Chat**: A sleek conversational interface to "talk" to your favorite creators.
+
+---
+
+## ☕ Support the Project
+
+<div align="center">
+  <a href="https://ko-fi.com/ilyasstrougouty">
+    <img src="assets/donations.png" alt="Donate with Ko-fi" height="40">
+  </a>
+</div>
+
+> [!NOTE]  
+> If Tikkocampus has helped you in your research or content creation, consider buying me a treat! 🐱  
+> **[Support on Ko-fi](https://ko-fi.com/ilyasstrougouty)**
 
 ---
 
@@ -81,6 +66,19 @@ npm install
 # In the electron-app directory:
 npm start
 ```
+
+---
+
+## 📦 Downloads (Executables)
+
+🚀 **Download the latest release for your OS:**
+
+- **Windows (.exe)**: [Tikkocampus-Setup-2.0.4.exe](https://github.com/ilyasstrougouty/Tikkocampus/releases/download/v2.0.4/Tikkocampus-Setup-2.0.4.exe)
+- **macOS (.dmg)**: [Download Tikkocampus-2.0.4-arm64.dmg](https://github.com/ilyasstrougouty/Tikkocampus/releases/download/v2.0.4/Tikkocampus-2.0.4-arm64.dmg)
+- **Linux (AppImage)**: [Download Tikkocampus-2.0.4.AppImage](https://github.com/ilyasstrougouty/Tikkocampus/releases/download/v2.0.4/Tikkocampus-2.0.4.AppImage)
+
+> [!NOTE]  
+> If the links above haven't finished building yet, you can also find them on the [Releases Page](https://github.com/ilyasstrougouty/Tikkocampus/releases).
 
 ---
 
@@ -116,6 +114,17 @@ No internet? No problem. Use Ollama to run everything on your own hardware.
 
 ---
 
+## 🛠️ Next Steps
+
+We're constantly improving Tikkocampus. Here's what's coming next:
+
+1. **Hardware Acceleration**: Better support for Mac Silicon (Metal) and Windows (NVIDIA/AMD) local inference.
+2. **Improved Search**: Hybrid search combining BM25 keyword matching with semantic embeddings.
+3. **Multi-Platform Scraping**: Expanding beyond TikTok to YouTube Shorts and Instagram Reels.
+4. **Desktop UI Polish**: Theme customization and a more refined "Discovery" tab.
+
+---
+
 ## 📁 Project Structure
 - `electron-app/`: Native desktop interface.
 - `app.py`: Backend FastAPI server.
@@ -123,8 +132,6 @@ No internet? No problem. Use Ollama to run everything on your own hardware.
 - `processor.py`: Audio & transcription logic.
 - `embedder.py`: Semantic search engine.
 - `chat.py`: AI communication layer.
-
----
 
 ---
 
