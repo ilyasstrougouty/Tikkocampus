@@ -98,26 +98,34 @@ No internet? No problem. Use Ollama to run everything on your own hardware.
 
 ## 🚀 Dev Setup & Installation
 
-If you prefer to run from source:
+For developers looking to run or build Tikkocampus from source:
 
-### 1. Requirements
+### 1. Prerequisites
+Ensure your system meets the following requirements:
+- **Git**
 - **Node.js 18+**
 - **Python 3.10+**
-- **FFmpeg** (For audio parsing. [Download](https://www.gyan.dev/ffmpeg/builds/))
+- **FFmpeg** (Required for audio processing. [Download here](https://www.gyan.dev/ffmpeg/builds/) and add to your system PATH)
 
-### 2. Setup
+### 2. Installation
+Clone the repository and install the required dependencies.
+
 ```bash
-# Install Python dependencies
+git clone https://github.com/ilyasstrougouty/Tikkocampus.git
+cd Tikkocampus
+
+# Install backend dependencies
 pip install -r requirements.txt
 
-# Install Electron dependencies
+# Install frontend dependencies
 cd electron-app
 npm install
 ```
 
 ### 3. Launch
+Start the application from within the `electron-app` directory:
+
 ```bash
-# In the electron-app directory:
 npm start
 ```
 

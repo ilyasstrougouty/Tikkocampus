@@ -3,6 +3,7 @@ __pycache__/
 *.db
 temp_processing/
 cookies.txt
+*.log
 debug_output.txt
 debug.json
 debug_ytdlp.py
@@ -18,3 +19,6 @@ browser_profile/
 build/
 dist/
 *.spec
+node_modules/
+.DS_Store
+Thumbs.db
