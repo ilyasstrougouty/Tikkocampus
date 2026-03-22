@@ -46,7 +46,7 @@ Tikkocampus is a professional-grade **Retrieval-Augmented Generation (RAG)** pip
 </div>
 
 > [!NOTE]  
-> If Tikkocampus has helped you in your research or content creation, consider buying me a treat! 🐱  
+> If Tikkocampus has helped you in your research or content creation, consider buying a treat for my cat! 🐱  
 > **[Support on Ko-fi](https://ko-fi.com/ilyasstrougouty)**
 
 ---
