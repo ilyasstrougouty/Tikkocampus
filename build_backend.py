@@ -42,7 +42,7 @@ args = [
     'backend.py',
     '--name', 'backend',
     '--onedir',
-    '--console',  # Use console mode for proper stdout/stderr handling
+    '--noconsole',  # Suppresses the native Windows terminal entirely
     '--noconfirm',
     '--clean',
 
