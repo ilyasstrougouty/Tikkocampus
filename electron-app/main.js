@@ -1,4 +1,5 @@
 const { app, BrowserWindow, ipcMain, shell } = require('electron');
+const { autoUpdater } = require('electron-updater');
 const path = require('path');
 const { spawn, exec } = require('child_process');
 const http = require('http');
@@ -38,7 +39,7 @@ function killExistingBackend() {
   if (app.isPackaged && process.platform === 'win32') {
     logDebug('Attempting to kill existing backend.exe processes...');
     return new Promise((resolve) => {
-      exec('taskkill /F /IM backend.exe', (err, stdout, stderr) => {
+      exec('taskkill /F /IM backend.exe', { windowsHide: true }, (err, stdout, stderr) => {
         if (err) {
             logDebug(`taskkill info: ${err.message}`);
         } else {
@@ -271,6 +272,15 @@ if (!gotTheLock) {
 
   app.on('ready', async () => {
     logDebug('app ready event fired');
+
+    if (app.isPackaged) {
+      logDebug('Checking for updates...');
+      autoUpdater.logger = console;
+      autoUpdater.checkForUpdatesAndNotify().catch(e => {
+        logDebug(`Update check failed: ${e.message}`);
+      });
+    }
+
     if (app.isPackaged) {
         await killExistingBackend();
     }
@@ -291,7 +301,7 @@ app.on('window-all-closed', function () {
     if (pythonProcess) {
         if (process.platform === 'win32') {
             const { exec } = require('child_process');
-            exec(`taskkill /F /T /PID ${pythonProcess.pid}`, (err) => {
+            exec(`taskkill /F /T /PID ${pythonProcess.pid}`, { windowsHide: true }, (err) => {
                 app.quit();
             });
         } else {
@@ -312,7 +322,7 @@ process.on('exit', () => {
     if (pythonProcess) {
         if (process.platform === 'win32') {
             const { execSync } = require('child_process');
-            try { execSync(`taskkill /F /T /PID ${pythonProcess.pid}`); } catch (e) {}
+            try { execSync(`taskkill /F /T /PID ${pythonProcess.pid}`, { windowsHide: true }); } catch (e) {}
         } else {
             pythonProcess.kill();
         }

@@ -60,6 +60,7 @@ jobs:
         with:
           python-version: '3.11'
           architecture: ${{ matrix.python_arch }}
+          cache: 'pip'
 
       - name: Upgrade Pip
         run: python -m pip install --upgrade pip
@@ -81,6 +82,8 @@ jobs:
         with:
           node-version: 20
           architecture: ${{ matrix.node_arch }}
+          cache: 'npm'
+          cache-dependency-path: electron-app/package-lock.json
 
       - name: NPM Install
         working-directory: electron-app
