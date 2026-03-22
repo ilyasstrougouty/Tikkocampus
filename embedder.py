@@ -4,7 +4,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from db import DB_PATH, db_session
 
 # --- Configuration ---
-CHROMA_PATH = './chroma_db'
+from config import CHROMA_DB_DIR
 COLLECTION_NAME = 'tiktok_creator_collection'
 
 _CHROMA_CLIENT = None
@@ -13,7 +13,7 @@ def get_chroma_client():
     """Singleton getter for ChromaDB client."""
     global _CHROMA_CLIENT
     if _CHROMA_CLIENT is None:
-        _CHROMA_CLIENT = chromadb.PersistentClient(path=CHROMA_PATH)
+        _CHROMA_CLIENT = chromadb.PersistentClient(path=CHROMA_DB_DIR)
     return _CHROMA_CLIENT
 
 def reset_chroma():

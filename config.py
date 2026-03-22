@@ -37,6 +37,7 @@ LOG_FILE = os.path.join(BASE_DIR, "backend.log")
 DB_PATH = os.path.join(BASE_DIR, "tiktok_data.db")
 TEMP_PROCESSING_DIR = os.path.join(BASE_DIR, "temp_processing")
 COOKIES_DIR = os.path.join(BASE_DIR, "cookies")
+CHROMA_DB_DIR = os.path.join(BASE_DIR, "chroma_db")
 WEB_DIR = os.path.join(INTERNAL_DIR, "web")
 
 # --- Load .env from BASE_DIR ---
