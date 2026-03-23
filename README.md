@@ -55,9 +55,9 @@ Tikkocampus is a professional-grade **Retrieval-Augmented Generation (RAG)** pip
 
 🚀 **Download the latest release for your OS:**
 
-- **Windows (.exe)**: [Tikkocampus-Setup-2.1.5.exe](https://github.com/ilyasstrougouty/Tikkocampus/releases/download/v2.1.5/Tikkocampus-Setup-2.1.5.exe)
-- **macOS (.dmg)**: [Download Tikkocampus-2.1.5-arm64.dmg](https://github.com/ilyasstrougouty/Tikkocampus/releases/download/v2.1.5/Tikkocampus-Setup-2.1.5.dmg)
-- **Linux (AppImage)**: [Download Tikkocampus-2.1.5.AppImage](https://github.com/ilyasstrougouty/Tikkocampus/releases/download/v2.1.5/Tikkocampus-Setup-2.1.5.AppImage)
+- **Windows (.exe)**: [Tikkocampus-Setup-2.1.6.exe](https://github.com/ilyasstrougouty/Tikkocampus/releases/download/v2.1.6/Tikkocampus-Setup-2.1.6.exe)
+- **macOS (.dmg)**: [Download Tikkocampus-2.1.6-arm64.dmg](https://github.com/ilyasstrougouty/Tikkocampus/releases/download/v2.1.6/Tikkocampus-Setup-2.1.6.dmg)
+- **Linux (AppImage)**: [Download Tikkocampus-2.1.6.AppImage](https://github.com/ilyasstrougouty/Tikkocampus/releases/download/v2.1.6/Tikkocampus-Setup-2.1.6.AppImage)
 
 > [!NOTE]  
 > If the links above haven't finished building yet, you can also find them on the [Releases Page](https://github.com/ilyasstrougouty/Tikkocampus/releases).
