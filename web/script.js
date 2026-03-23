@@ -1297,7 +1297,25 @@ function quickAction(type) {
     };
     
     if (prompts[type]) {
+        // Automatically hide drawer on selection
+        toggleQuickActions(true); 
         input.value = prompts[type];
         sendMessage();
+    }
+}
+
+function toggleQuickActions(forceClose = false) {
+    const drawer = document.getElementById('quick-actions-drawer');
+    const icon = document.getElementById('toggle-icon');
+    const isOpen = drawer.classList.contains('w-[500px]'); 
+
+    if (isOpen || forceClose) {
+        drawer.classList.remove('w-[500px]', 'opacity-100');
+        drawer.classList.add('w-0', 'opacity-0');
+        icon.className = "fa-solid fa-chevron-right text-[10px]";
+    } else {
+        drawer.classList.remove('w-0', 'opacity-0');
+        drawer.classList.add('w-[500px]', 'opacity-100');
+        icon.className = "fa-solid fa-chevron-left text-[10px]";
     }
 }

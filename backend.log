@@ -49,3 +49,111 @@
 [2026-03-22 00:01:55] [scraper] [INFO] [1/2] Downloading 7618656405658144030...
 [2026-03-22 00:01:58] [scraper] [INFO] [2/2] Downloading 7616856763073088799...
 [2026-03-22 00:02:00] [scraper] [INFO] Scrape complete: 2/2 videos from https://www.tiktok.com/@rpn
+[2026-03-22 15:36:48] [auth] [INFO] ==================================================
+[2026-03-22 15:36:48] [auth] [INFO] Authentication Browser Opened!
+[2026-03-22 15:36:48] [auth] [INFO] Please log into TikTok in the new Chrome/Edge window.
+[2026-03-22 15:36:48] [auth] [INFO] The window will close automatically when you successfully log in.
+[2026-03-22 15:36:48] [auth] [INFO] ==================================================
+[2026-03-22 15:36:48] [auth] [INFO] Login success detected! Waiting for cookies to settle...
+[2026-03-22 15:36:48] [auth] [INFO] Saved <MagicMock name='write_netscape()' id='1472316932880'> cookies to C:\Users\trily\Desktop\Learning\TIKTOK RAG\cookies.txt
+[2026-03-22 18:27:54] [app] [INFO] Starting Tikkocampus Backend on port 8000...
+[2026-03-22 18:27:54] [app] [INFO] Server starting on http://127.0.0.1:8000
+[2026-03-22 18:28:35] [app] [INFO] Server starting on http://127.0.0.1:8001
+[2026-03-22 18:28:53] [auth] [INFO] ==================================================
+[2026-03-22 18:28:53] [auth] [INFO] Authentication Browser Opened!
+[2026-03-22 18:28:53] [auth] [INFO] Please log into TikTok in the new Chrome/Edge window.
+[2026-03-22 18:28:53] [auth] [INFO] The window will close automatically when you successfully log in.
+[2026-03-22 18:28:53] [auth] [INFO] ==================================================
+[2026-03-22 18:29:03] [scraper] [INFO] Detected system browsers: ['chrome', 'brave']
+[2026-03-22 18:29:03] [scraper] [INFO] Launched via Playwright channel: chrome
+[2026-03-22 18:29:36] [auth] [INFO] Browser or page closed early by user.
+[2026-03-22 18:29:36] [auth] [WARNING] Login not completed within 5 minutes or window closed.
+[2026-03-22 18:37:05] [app] [INFO] Starting Tikkocampus Backend on port 8000...
+[2026-03-22 18:37:05] [app] [INFO] Server starting on http://127.0.0.1:8000
+[2026-03-22 18:37:28] [app] [INFO] Server starting on http://127.0.0.1:8001
+[2026-03-22 18:37:34] [auth] [INFO] ==================================================
+[2026-03-22 18:37:34] [auth] [INFO] Authentication Browser Opened!
+[2026-03-22 18:37:34] [auth] [INFO] Please log into TikTok in the new Chrome/Edge window.
+[2026-03-22 18:37:34] [auth] [INFO] The window will close automatically when you successfully log in.
+[2026-03-22 18:37:34] [auth] [INFO] ==================================================
+[2026-03-22 18:37:36] [auth] [WARNING] playwright-stealth not installed, trying to proceed without full stealth.
+[2026-03-22 18:38:20] [auth] [INFO] Browser or page closed early by user.
+[2026-03-22 18:38:20] [auth] [WARNING] Login not completed within 5 minutes or window closed.
+[2026-03-22 18:47:53] [app] [INFO] Starting Tikkocampus Backend on port 8000...
+[2026-03-22 18:47:53] [app] [INFO] Server starting on http://127.0.0.1:8000
+[2026-03-22 18:48:25] [app] [INFO] Server starting on http://127.0.0.1:8001
+[2026-03-22 18:48:30] [auth] [INFO] ==================================================
+[2026-03-22 18:48:30] [auth] [INFO] Authentication Browser Opened!
+[2026-03-22 18:48:30] [auth] [INFO] Please log into TikTok in the new Chrome/Edge window.
+[2026-03-22 18:48:30] [auth] [INFO] The window will close automatically when you successfully log in.
+[2026-03-22 18:48:30] [auth] [INFO] ==================================================
+[2026-03-22 18:48:31] [auth] [WARNING] playwright-stealth not installed, trying to proceed without full stealth.
+[2026-03-22 18:48:58] [auth] [INFO] Max attempts error detected! Proceeding to extract cookies and redirect.
+[2026-03-22 18:48:58] [auth] [INFO] Login success detected! Waiting for cookies to settle...
+[2026-03-22 18:49:01] [auth] [INFO] Saved 53 cookies to C:\Users\trily\Desktop\Learning\TIKTOK RAG\cookies.txt
+[2026-03-22 18:50:31] [app] [INFO] Starting Tikkocampus Backend on port 8000...
+[2026-03-22 18:50:31] [app] [INFO] Server starting on http://127.0.0.1:8000
+[2026-03-22 18:50:37] [app] [INFO] Port 8000 is busy, falling back to an available port...
+[2026-03-22 18:50:37] [app] [INFO] Server starting on http://127.0.0.1:61776
+[2026-03-22 18:50:55] [auth] [INFO] ==================================================
+[2026-03-22 18:50:55] [auth] [INFO] Authentication Browser Opened!
+[2026-03-22 18:50:55] [auth] [INFO] Please log into TikTok in the new Chrome/Edge window.
+[2026-03-22 18:50:55] [auth] [INFO] The window will close automatically when you successfully log in.
+[2026-03-22 18:50:55] [auth] [INFO] ==================================================
+[2026-03-22 18:50:56] [auth] [WARNING] playwright-stealth not installed, trying to proceed without full stealth.
+[2026-03-22 18:51:25] [auth] [INFO] Max attempts error detected! Proceeding to extract cookies and redirect.
+[2026-03-22 18:51:25] [auth] [INFO] Login success detected! Waiting for cookies to settle...
+[2026-03-22 18:51:26] [auth] [INFO] Saved 53 cookies to C:\Users\trily\Desktop\Learning\TIKTOK RAG\cookies.txt
+[2026-03-22 18:51:48] [app] [INFO] Phase 1: Verifying dependencies...
+[2026-03-22 18:51:48] [app] [INFO] Phase 1: Checking for system browsers (Edge/Chrome)...
+[2026-03-22 18:51:48] [app] [INFO] Phase 1: Found system browser: C:\Program Files\Google\Chrome\Application\chrome.exe
+[2026-03-22 18:51:48] [app] [INFO] Phase 1: Checking for FFmpeg...
+[2026-03-22 18:51:49] [app] [INFO] Phase 1: FFmpeg is available.
+[2026-03-22 18:51:49] [scraper] [INFO] Starting scrape for https://www.tiktok.com/@faizanas1f (max 1 videos)
+[2026-03-22 18:51:49] [scraper] [INFO] Loaded 53 cookies from C:\Users\trily\Desktop\Learning\TIKTOK RAG\cookies.txt
+[2026-03-22 18:51:50] [scraper] [INFO] Detected system browsers: ['chrome', 'brave']
+[2026-03-22 18:51:51] [scraper] [INFO] Launched via Playwright channel: chrome
+[2026-03-22 18:51:51] [scraper] [INFO] Navigating to profile to intercept API...
+[2026-03-22 18:51:54] [scraper] [DEBUG] INTERCEPTED API: https://www.tiktok.com/api/post/item_list/?WebIdLastTime=1774201856&aid=1988&app_language=en&app_name=tiktok_web&browser_language=en-US&browser_name=Mozilla&browser_online=true&browser_platform=Win32&browser_version=5.0%20%28Windows%20NT%2010.0%3B%20Win64%3B%20x64%29%20AppleWebKit%2F537.36%20%28KHTML%2C%20like%20Gecko%29%20Chrome%2F120.0.0.0%20Safari%2F537.36&channel=tiktok_web&cookie_enabled=true&count=35&coverFormat=2&cursor=0&data_collection_enabled=false&device_id=7620138929790993927&device_platform=web_pc&focus_state=true&history_len=2&is_fullscreen=false&is_page_visible=true&language=en&odinId=7620138993799758868&os=windows&priority_region=&referer=&region=MA&screen_height=720&screen_width=1280&secUid=MS4wLjABAAAAL4FoYq7zZCakEx-K8fme9DViPfsguHhz3Ph5qxbCms7L7bJO5JONxd6IFh-0Q5wf&tz_name=Africa%2FCasablanca&user_is_login=false&video_encoding=mp4&webcast_language=en&msToken=&X-Bogus=DFSzswVO5MkANy5nCq3YXu6-55xB&X-Gnarly=MF-SoX1-k9l1YYvDHxMeHPcfiKBsqIQr0t8mG/jnJjmKe2ihkGhed1hKnte4ojPzEgybfacuJTvgDpbCsqLZvv8LmH78l/9wLHFjmXhJndXgPSgcvb5PW8xCozq-8cUY6-8fvov3O9Li8d-SNjzh3msd8BMSXeVrMQPUnZbrbMvyr-FB3jalmr9A-A0t-6mEjoNf4beI9ThwVx/u5FLoPGQjHhZ/ugYzFWa4sEtZGTlSlu0u48W3RsnFLytCBnzPi7qtRfpNhg3VXHSE2cMgv27WkrOj5venIKKKN4YbUG77cnpAny8E851IBhPLRMBGFee= (status=200)
+[2026-03-22 18:51:54] [scraper] [DEBUG] INTERCEPTED API: https://www.tiktok.com/api/story/item_list/?WebIdLastTime=1774201856&aid=1988&app_language=en&app_name=tiktok_web&authorId=6706979582535304198&browser_language=en-US&browser_name=Mozilla&browser_online=true&browser_platform=Win32&browser_version=5.0%20%28Windows%20NT%2010.0%3B%20Win64%3B%20x64%29%20AppleWebKit%2F537.36%20%28KHTML%2C%20like%20Gecko%29%20Chrome%2F120.0.0.0%20Safari%2F537.36&channel=tiktok_web&cookie_enabled=true&count=4&cursor=0&data_collection_enabled=false&device_id=7620138929790993927&device_platform=web_pc&focus_state=true&from_page=user&history_len=2&is_fullscreen=false&is_page_visible=true&loadBackward=false&odinId=7620138993799758868&os=windows&priority_region=&referer=&region=MA&screen_height=720&screen_width=1280&tz_name=Africa%2FCasablanca&user_is_login=false&webcast_language=en (status=200)
+[2026-03-22 18:51:54] [scraper] [INFO] Found 35 videos in API chunk.
+[2026-03-22 18:51:54] [scraper] [DEBUG] API chunk empty. Keys: ['AllViewed', 'CurrentPosition', 'HasMoreAfter', 'HasMoreBefore', 'MaxCursor', 'MinCursor', 'TotalCount', 'extra', 'log_pb', 'statusCode', 'status_code', 'status_msg']
+[2026-03-22 18:51:56] [scraper] [INFO] Navigation complete. URL: https://www.tiktok.com/@faizanas1f
+[2026-03-22 18:51:58] [scraper] [DEBUG] INTERCEPTED API: https://www.tiktok.com/api/user/collection_list/?WebIdLastTime=1774201856&aid=1988&appId=1988&app_language=en&app_name=tiktok_web&browser_language=en-US&browser_name=Mozilla&browser_online=true&browser_platform=Win32&browser_version=5.0%20%28Windows%20NT%2010.0%3B%20Win64%3B%20x64%29%20AppleWebKit%2F537.36%20%28KHTML%2C%20like%20Gecko%29%20Chrome%2F120.0.0.0%20Safari%2F537.36&channel=tiktok_web&cookie_enabled=true&count=30&coverFormat=2&cursor=0&data_collection_enabled=false&device_id=7620138929790993927&device_platform=web_pc&focus_state=true&from_page=user&history_len=2&is_fullscreen=false&is_page_visible=true&language=en&needPinnedItemIds=true&odinId=7620138993799758868&os=windows&post_item_list_request_type=0&priority_region=&publicOnly=true&referer=&region=MA&screen_height=720&screen_width=1280&secUid=MS4wLjABAAAAL4FoYq7zZCakEx-K8fme9DViPfsguHhz3Ph5qxbCms7L7bJO5JONxd6IFh-0Q5wf&tz_name=Africa%2FCasablanca&user_is_login=false&video_encoding=mp4&webcast_language=en (status=200)
+[2026-03-22 18:51:58] [scraper] [DEBUG] API chunk empty. Keys: ['cursor', 'extra', 'hasMore', 'log_pb', 'statusCode', 'status_code', 'status_msg', 'total']
+[2026-03-22 18:51:59] [scraper] [DEBUG] INTERCEPTED API: https://www.tiktok.com/api/repost/item_list/?WebIdLastTime=1774201856&aid=1988&app_language=en&app_name=tiktok_web&browser_language=en-US&browser_name=Mozilla&browser_online=true&browser_platform=Win32&browser_version=5.0%20%28Windows%20NT%2010.0%3B%20Win64%3B%20x64%29%20AppleWebKit%2F537.36%20%28KHTML%2C%20like%20Gecko%29%20Chrome%2F120.0.0.0%20Safari%2F537.36&channel=tiktok_web&clientABVersions=70508271%2C73720540%2C75182839%2C75294820%2C75331216%2C75381398%2C75388126%2C75436984%2C75440144%2C75492090%2C75528341%2C75583891%2C75604573%2C75611597%2C75615157%2C75616570%2C75617761%2C75636450%2C75637792%2C75654772%2C75662098%2C75665226%2C75667004%2C75675274%2C75694121%2C75704990%2C75710568%2C75744129%2C70405643%2C71057832%2C71200802%2C73004916%2C73171280%2C73208420%2C74276218%2C74844724%2C75330961%2C74733388%2C75323602%2C75596707&cookie_enabled=true&count=30&coverFormat=2&cursor=0&data_collection_enabled=false&device_id=7620138929790993927&device_platform=web_pc&focus_state=true&from_page=user&history_len=2&is_fullscreen=false&is_page_visible=true&language=en&needPinnedItemIds=true&odinId=7620138993799758868&os=windows&post_item_list_request_type=0&priority_region=&referer=&region=MA&screen_height=720&screen_width=1280&secUid=MS4wLjABAAAAL4FoYq7zZCakEx-K8fme9DViPfsguHhz3Ph5qxbCms7L7bJO5JONxd6IFh-0Q5wf&tz_name=Africa%2FCasablanca&user_is_login=false&video_encoding=mp4&webcast_language=en&msToken=R7vQC1Xu3kbRQkeFcso2plrixjJVZWcsBXvJt_7RtLukw9IvGU7NY1lLSCRO6m5n5nNgO_C6ivWD4EY3bwDOfSG_wEHH0oBHhMy96q6nh8mPnHqNYV250N0DgvYFAn-tQmM0LSzZtIXS&X-Bogus=DFSzswVOWEsANy5nCq3Y6u6-559q&X-Gnarly=Mcs4RSZTJl4nKaBDO-DsAqvXcc3m5RZbjeCVY41Wmtsqoj3Hyn2qWpJ55/Rw9b9CkBveBHf7cRCvBH9ZgnrwpWkNpQ35ZIONdtdWBaQ-6wAHhRn8tpbEY/-Wo10xcqnAekTSqx00PvyKgxyUOv0u0B0OCCWIdlyOJm3dFgZIG4iPVTijfP-LFCsxmg7z3PFwPj1OYkBAzts58hP1chE2wHihQZZzvCiQGDo7liXtxJzKJwxIeUchR83NssiUS94XKHRcJ9DazBoEyAqaO37IacXiOkcYo2I3T33yl48kHyYd6jhlxuYYZt0v-K50YwB0CsW= (status=200)
+[2026-03-22 18:51:59] [scraper] [INFO] Found 8 videos in API chunk.
+[2026-03-22 18:52:01] [scraper] [INFO] Intercepted 43 video metadata chunks total.
+[2026-03-22 18:52:01] [scraper] [INFO] [1/1] Downloading 7619436890466340126...
+[2026-03-22 18:52:03] [scraper] [INFO] Scrape complete: 1/1 videos from https://www.tiktok.com/@faizanas1f
+[2026-03-22 21:24:23] [app] [INFO] Server starting on http://127.0.0.1:8001
+[2026-03-22 21:30:49] [app] [INFO] Server starting on http://127.0.0.1:8001
+[2026-03-22 21:49:54] [app] [INFO] Server starting on http://127.0.0.1:8001
+[2026-03-22 21:53:32] [app] [INFO] Server starting on http://127.0.0.1:8001
+[2026-03-22 22:54:40] [app] [INFO] Server starting on http://127.0.0.1:8001
+[2026-03-22 22:57:26] [app] [INFO] Server starting on http://127.0.0.1:8001
+[2026-03-22 22:58:44] [app] [INFO] Phase 1: Verifying dependencies...
+[2026-03-22 22:58:44] [app] [INFO] Phase 1: Checking for system browsers (Edge/Chrome)...
+[2026-03-22 22:58:44] [app] [INFO] Phase 1: Found system browser: C:\Program Files\Google\Chrome\Application\chrome.exe
+[2026-03-22 22:58:44] [app] [INFO] Phase 1: Checking for FFmpeg...
+[2026-03-22 22:58:45] [app] [INFO] Phase 1: FFmpeg is available.
+[2026-03-22 22:58:45] [scraper] [INFO] Starting scrape for https://www.tiktok.com/@rpn (max 1 videos)
+[2026-03-22 22:58:45] [scraper] [INFO] Loaded 53 cookies from C:\Users\trily\Desktop\Learning\TIKTOK RAG\cookies.txt
+[2026-03-22 22:58:46] [scraper] [INFO] Detected system browsers: ['chrome', 'brave']
+[2026-03-22 22:58:46] [scraper] [INFO] Launched via Playwright channel: chrome
+[2026-03-22 22:58:47] [scraper] [INFO] Navigating to profile to intercept API...
+[2026-03-22 22:58:50] [scraper] [DEBUG] INTERCEPTED API: https://www.tiktok.com/api/post/item_list/?WebIdLastTime=1774201856&aid=1988&app_language=en&app_name=tiktok_web&browser_language=en-US&browser_name=Mozilla&browser_online=true&browser_platform=Win32&browser_version=5.0%20%28Windows%20NT%2010.0%3B%20Win64%3B%20x64%29%20AppleWebKit%2F537.36%20%28KHTML%2C%20like%20Gecko%29%20Chrome%2F120.0.0.0%20Safari%2F537.36&channel=tiktok_web&cookie_enabled=true&count=35&coverFormat=2&cursor=0&data_collection_enabled=false&device_id=7620138929790993927&device_platform=web_pc&focus_state=true&history_len=2&is_fullscreen=false&is_page_visible=true&language=en&odinId=7620138993799758868&os=windows&priority_region=&referer=&region=MA&screen_height=720&screen_width=1280&secUid=MS4wLjABAAAAhS-1sVU7j8k-S8LHthbN6usNJYTUyk2qYwU_VCgIX4E&tz_name=Africa%2FCasablanca&user_is_login=false&video_encoding=mp4&webcast_language=en&msToken=&X-Bogus=DFSzswVO/W2ANy5nCqw7US6-55xZ&X-Gnarly=M/y109zX3exoH8pRsp74PQD9Zj9PiXGdN0T-FyIVs56clXe-mHoeJHtVhyP0UnET8hJ/YniiicsD5AL323515w409DVBDQkCY47oGJ5XMluhVmrcRGB5RIeag7uhJ47eT2ybeiA94xiwYORvYyIl3Ybqwha8r-F3HlYuG9uJy8SdUKvOs6MXfkW5xCdDNHnl3DwIFlMDstw81SY0bJsIloO1TgOK/5lAB4pwHJyXUKbwKNCap-5EoW3BM3o-CxbK47sBHQhKEU-X8MC7sV/JhUZcES-2q9IQvZ-9ISeIrIDY53BVbmrO1BKKsDRuc25c/uW= (status=200)
+[2026-03-22 22:58:51] [scraper] [INFO] Found 35 videos in API chunk.
+[2026-03-22 22:58:51] [scraper] [DEBUG] INTERCEPTED API: https://www.tiktok.com/api/story/item_list/?WebIdLastTime=1774201856&aid=1988&app_language=en&app_name=tiktok_web&authorId=1719608&browser_language=en-US&browser_name=Mozilla&browser_online=true&browser_platform=Win32&browser_version=5.0%20%28Windows%20NT%2010.0%3B%20Win64%3B%20x64%29%20AppleWebKit%2F537.36%20%28KHTML%2C%20like%20Gecko%29%20Chrome%2F120.0.0.0%20Safari%2F537.36&channel=tiktok_web&cookie_enabled=true&count=4&cursor=0&data_collection_enabled=false&device_id=7620138929790993927&device_platform=web_pc&focus_state=true&from_page=user&history_len=2&is_fullscreen=false&is_page_visible=true&loadBackward=false&odinId=7620138993799758868&os=windows&priority_region=&referer=&region=MA&screen_height=720&screen_width=1280&tz_name=Africa%2FCasablanca&user_is_login=false&webcast_language=en (status=200)
+[2026-03-22 22:58:51] [scraper] [DEBUG] API chunk empty. Keys: ['AllViewed', 'CurrentPosition', 'HasMoreAfter', 'HasMoreBefore', 'MaxCursor', 'MinCursor', 'TotalCount', 'extra', 'log_pb', 'statusCode', 'status_code', 'status_msg']
+[2026-03-22 22:58:53] [scraper] [DEBUG] INTERCEPTED API: https://www.tiktok.com/api/user/collection_list/?WebIdLastTime=1774201856&aid=1988&appId=1988&app_language=en&app_name=tiktok_web&browser_language=en-US&browser_name=Mozilla&browser_online=true&browser_platform=Win32&browser_version=5.0%20%28Windows%20NT%2010.0%3B%20Win64%3B%20x64%29%20AppleWebKit%2F537.36%20%28KHTML%2C%20like%20Gecko%29%20Chrome%2F120.0.0.0%20Safari%2F537.36&channel=tiktok_web&cookie_enabled=true&count=30&coverFormat=2&cursor=0&data_collection_enabled=false&device_id=7620138929790993927&device_platform=web_pc&focus_state=true&from_page=user&history_len=2&is_fullscreen=false&is_page_visible=true&language=en&needPinnedItemIds=true&odinId=7620138993799758868&os=windows&post_item_list_request_type=0&priority_region=&publicOnly=true&referer=&region=MA&screen_height=720&screen_width=1280&secUid=MS4wLjABAAAAhS-1sVU7j8k-S8LHthbN6usNJYTUyk2qYwU_VCgIX4E&tz_name=Africa%2FCasablanca&user_is_login=false&video_encoding=mp4&webcast_language=en (status=200)
+[2026-03-22 22:58:53] [scraper] [DEBUG] INTERCEPTED API: https://www.tiktok.com/api/repost/item_list/?WebIdLastTime=1774201856&aid=1988&app_language=en&app_name=tiktok_web&browser_language=en-US&browser_name=Mozilla&browser_online=true&browser_platform=Win32&browser_version=5.0%20%28Windows%20NT%2010.0%3B%20Win64%3B%20x64%29%20AppleWebKit%2F537.36%20%28KHTML%2C%20like%20Gecko%29%20Chrome%2F120.0.0.0%20Safari%2F537.36&channel=tiktok_web&clientABVersions=70508271%2C73720540%2C75182839%2C75294820%2C75331216%2C75381398%2C75388126%2C75436984%2C75440144%2C75492090%2C75528341%2C75583891%2C75604573%2C75611597%2C75615157%2C75616570%2C75617761%2C75636450%2C75637792%2C75654772%2C75662098%2C75665226%2C75667004%2C75675274%2C75694121%2C75704990%2C75710568%2C75744129%2C70405643%2C71057832%2C71200802%2C73004916%2C73171280%2C73208420%2C74276218%2C74844724%2C75330961%2C74733388%2C75323602%2C73070175%2C75596708&cookie_enabled=true&count=30&coverFormat=2&cursor=0&data_collection_enabled=false&device_id=7620138929790993927&device_platform=web_pc&focus_state=true&from_page=user&history_len=2&is_fullscreen=false&is_page_visible=true&language=en&needPinnedItemIds=true&odinId=7620138993799758868&os=windows&post_item_list_request_type=0&priority_region=&referer=&region=MA&screen_height=720&screen_width=1280&secUid=MS4wLjABAAAAhS-1sVU7j8k-S8LHthbN6usNJYTUyk2qYwU_VCgIX4E&tz_name=Africa%2FCasablanca&user_is_login=false&video_encoding=mp4&webcast_language=en&msToken=fGeXML5H42EmBd1vROrZN7kPuCCW9-O-pVWVuJc-w_0gePLH1sYMdvyaAPaAAeKpX6xx_-tuoK_rUsEvR1RnvAYWz01Xy_6dZAAnt26t3CXcXMxLR1TNzCz2lEUMkLVRFJ9tWM_PAtZw&X-Bogus=DFSzswVOGRkANy5nCqw7WS6-55H2&X-Gnarly=MR5vVNw7VFhPScaBpf8UKNJHwcLqywXF311Qmy/-2NoI//Q6UVHAtc08djljmeLNCp24E84RgPwe1BXgwwnLDotlbyPZ1uFXJQDYv/T4hmzwhoBnqgB-sqxsySlBwhGMtG/O00sJAL8Q-VxcdufgCzsfj66y7gK2o4WYAP6C45Bmaoapdt3Dc3J8y6ab9kV0XbvT5MqQgh5x3-P1eIMgiprWuVWWPAbKw2TcA3h4G/9FTumdmaE/F/-c7fVUateqnf9LDQu/94PVZjwERaEJRHvEuzmH-N6HJiVLPBD-DzWnxLSs2gFztMNOKDJrEty4oue= (status=200)
+[2026-03-22 22:58:54] [scraper] [DEBUG] API chunk empty. Keys: ['cursor', 'extra', 'hasMore', 'log_pb', 'statusCode', 'status_code', 'status_msg', 'total']
+[2026-03-22 22:58:54] [scraper] [INFO] Found 2 videos in API chunk.
+[2026-03-22 22:58:54] [scraper] [INFO] Navigation complete. URL: https://www.tiktok.com/@rpn
+[2026-03-22 22:58:57] [scraper] [ERROR] Error navigating profile: Page.wait_for_timeout: Target page, context or browser has been closed
+[2026-03-22 22:58:57] [scraper] [INFO] Intercepted 37 video metadata chunks total.
+[2026-03-22 22:58:57] [scraper] [INFO] [1/1] Downloading 7620160104440040735...
+[2026-03-22 22:58:58] [scraper] [INFO] Scrape complete: 1/1 videos from https://www.tiktok.com/@rpn
+[2026-03-22 23:18:26] [app] [INFO] Server starting on http://127.0.0.1:8001
+[2026-03-23 00:11:23] [app] [INFO] Server starting on http://127.0.0.1:8000
