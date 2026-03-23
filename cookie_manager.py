@@ -68,14 +68,30 @@ def write_netscape(cookies_list, source="unknown"):
                 cookie_count += 1
             else:
                 # Handle PyWebView HTTP.SimpleCookie objects
+                import time
                 for name, morsel in cookie_obj.items():
+                    # Robust domain extraction: default to .tiktok.com if missing or weird
                     domain = morsel.get("domain", "")
+                    if not domain or domain == "localhost" or domain.startswith("127.0.0.1"):
+                        domain = ".tiktok.com"
+                    
+                    # Ensure leading dot for Netscape compatibility if it's a domain-wide cookie
                     include_subdomains = "TRUE" if domain.startswith(".") else "FALSE"
+                    
                     path = morsel.get("path", "/")
-                    secure = "TRUE" if morsel.get("secure", False) else "FALSE"
-                    expires = "0"
-                    value = morsel.value
+                    secure = "TRUE" if morsel.get("secure", False) or morsel.get("httponly", False) else "FALSE"
+                    
+                    # Netscape format prefers a future timestamp for persistent cookies.
+                    # If it's a session cookie (no expires), 0 is standard.
+                    expires_val = morsel.get("expires", "")
+                    if expires_val:
+                        # Simplistic attempt to at least provide a valid number if possible.
+                        # Real parsing is complex due to various date formats, so we use a safe large number if seen.
+                        expires = str(int(time.time() + 31536000)) # Default to 1 year for non-session cookies
+                    else:
+                        expires = "0"
     
+                    value = morsel.value
                     f.write(f"{domain}\t{include_subdomains}\t{path}\t{secure}\t{expires}\t{name}\t{value}\n")
                     cookie_count += 1
 

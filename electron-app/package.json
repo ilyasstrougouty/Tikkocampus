@@ -1,6 +1,6 @@
 {
   "name": "tikkocampus",
-  "version": "2.1.6",
+  "version": "2.1.7",
   "description": "Premium Electron interface for Tikkocampus",
   "main": "main.js",
   "scripts": {
@@ -12,7 +12,6 @@
   "build": {
     "appId": "com.tikkocampus.app",
     "productName": "Tikkocampus",
-    "artifactName": "${productName}-Setup-${version}.${ext}",
     "publish": ["github"],
     "directories": {
       "output": "dist"
@@ -35,7 +34,8 @@
     ],
     "win": {
       "target": "nsis",
-      "icon": "app_logo.ico"
+      "icon": "app_logo.ico",
+      "artifactName": "${productName}-Setup-${version}.${ext}"
     },
     "nsis": {
       "include": "installer.nsh",
@@ -53,11 +53,13 @@
     "mac": {
       "target": "dmg",
       "category": "public.app-category.education",
-      "minimumSystemVersion": "11.0.0"
+      "minimumSystemVersion": "11.0.0",
+      "artifactName": "${productName}-Setup-${version}-${arch}.${ext}"
     },
     "linux": {
       "target": "AppImage",
-      "category": "Education"
+      "category": "Education",
+      "artifactName": "${productName}-Setup-${version}-${arch}.${ext}"
     }
   },
   "repository": {
